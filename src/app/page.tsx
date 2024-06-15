@@ -20,7 +20,7 @@ export default function Home() {
       {!isAuthenticated ? (
         <GoogleAuth onSuccess={handleLoginSuccess} onFailure={handleLoginFailure} />
       ) : (
-       <div>'hello'</div>
+        <div>"hello"</div>
       )}
     </main>
   );

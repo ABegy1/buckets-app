@@ -11,6 +11,9 @@ importers:
       '@prisma/client':
         specifier: 5.14.0
         version: 5.14.0(prisma@5.14.0)
+      '@react-oauth/google':
+        specifier: ^0.12.1
+        version: 0.12.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -29,9 +32,6 @@ importers:
       react-dom:
         specifier: ^18
         version: 18.3.1(react@18.3.1)
-      react-google-login:
-        specifier: ^5.2.2
-        version: 5.2.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.12.12)(typescript@5.4.5)
@@ -238,6 +238,12 @@ packages:
 
   '@prisma/get-platform@5.14.0':
     resolution: {integrity: sha512-/yAyBvcEjRv41ynZrhdrPtHgk47xLRRq/o5eWGcUpBJ1YrUZTYB8EoPiopnP7iQrMATK8stXQdPOoVlrzuTQZw==}
+
+  '@react-oauth/google@0.12.1':
+    resolution: {integrity: sha512-qagsy22t+7UdkYAiT5ZhfM4StXi9PPNvw0zuwNmabrWyMKddczMtBIOARflbaIj+wHiQjnMAsZmzsUYuXeyoSg==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@rushstack/eslint-patch@1.10.3':
     resolution: {integrity: sha512-qC/xYId4NMebE6w/V33Fh9gWxLgURiNYgVNObbJl2LZv0GUUItCcCqC5axQSwRaAgaxl2mELq1rMzlswaQ0Zxg==}
@@ -1401,13 +1407,6 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  react-google-login@5.2.2:
-    resolution: {integrity: sha512-JUngfvaSMcOuV0lFff7+SzJ2qviuNMQdqlsDJkUM145xkGPVIfqWXq9Ui+2Dr6jdJWH5KYdynz9+4CzKjI5u6g==}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-    peerDependencies:
-      react: ^16 || ^17
-      react-dom: ^16 || ^17
-
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -1900,6 +1899,11 @@ snapshots:
   '@prisma/get-platform@5.14.0':
     dependencies:
       '@prisma/debug': 5.14.0
+
+  '@react-oauth/google@0.12.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@rushstack/eslint-patch@1.10.3': {}
 
@@ -3203,13 +3207,6 @@ snapshots:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
-
-  react-google-login@5.2.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@types/react': 18.3.3
-      prop-types: 15.8.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
 
   react-is@16.13.1: {}
 

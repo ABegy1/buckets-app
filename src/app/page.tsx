@@ -49,10 +49,11 @@ export default function Home() {
         <GoogleAuth onSuccess={handleLoginSuccess} onFailure={handleLoginFailure} />
       ) : (
         <>
-          <Button onClick={generatePosts}>Generate Posts</Button>
+        'hello'
+          {/* <Button onClick={generatePosts}>Generate Posts</Button>
           {posts.map((post: { id: string, content: string }) => (
             <div key={post.id}>{post.content}</div>
-          ))}
+          ))} */}
         </>
       )}
     </main>

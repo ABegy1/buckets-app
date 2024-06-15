@@ -8,7 +8,7 @@ export default function Home() {
 
   const handleLoginSuccess = (response: any) => {
     console.log('Login Success:', response);
-    setIsAuthenticated(true); // Update authentication state
+    setIsAuthenticated(true); 
   };
 
   const handleLoginFailure = (response: any) => {
@@ -20,7 +20,7 @@ export default function Home() {
       {!isAuthenticated ? (
         <GoogleAuth onSuccess={handleLoginSuccess} onFailure={handleLoginFailure} />
       ) : (
-        <div>"hello"</div>
+        <div></div>
       )}
     </main>
   );

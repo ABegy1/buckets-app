@@ -9,30 +9,18 @@ import GoogleAuth from "@/components/GoogleAuth";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Authentication state
-  const [posts, setPosts] = useState([]);
 
-  // Function to fetch posts
-  const fetchPosts = async () => {
-    const fetchedPosts = await db.post.findMany({ orderBy: { createdAt: "desc" } });
-    setPosts(fetchedPosts);
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchPosts();
-    }
-  }, [isAuthenticated]);
-
-  const generatePosts = async () => {
-    await db.post.createMany({
-      data: [
-        { content: faker.lorem.sentence() },
-        { content: faker.lorem.sentence() },
-        { content: faker.lorem.sentence() },
-      ],
-    });
-    fetchPosts(); // Re-fetch posts after generating new ones
-  };
+  
+  // const generatePosts = async () => {
+  //   await db.post.createMany({
+  //     data: [
+  //       { content: faker.lorem.sentence() },
+  //       { content: faker.lorem.sentence() },
+  //       { content: faker.lorem.sentence() },
+  //     ],
+  //   });
+  //   fetchPosts(); // Re-fetch posts after generating new ones
+  // };
 
   const handleLoginSuccess = (response: any) => {
     console.log('Login Success:', response);

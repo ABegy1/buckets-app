@@ -1,4 +1,4 @@
-// src/components/GoogleAuth.js (or GoogleAuth.tsx)
+"use client"
 import React from 'react';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 

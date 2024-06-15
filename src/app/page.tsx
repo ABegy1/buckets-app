@@ -1,26 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { faker } from "@faker-js/faker";
-import db from "@/modules/db";
-import { revalidatePath } from "next/cache";
-import Button from "@/components/Button";
+import { useState } from 'react';
 import GoogleAuth from "@/components/GoogleAuth";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Authentication state
-
-  
-  // const generatePosts = async () => {
-  //   await db.post.createMany({
-  //     data: [
-  //       { content: faker.lorem.sentence() },
-  //       { content: faker.lorem.sentence() },
-  //       { content: faker.lorem.sentence() },
-  //     ],
-  //   });
-  //   fetchPosts(); // Re-fetch posts after generating new ones
-  // };
 
   const handleLoginSuccess = (response: any) => {
     console.log('Login Success:', response);
@@ -37,11 +21,7 @@ export default function Home() {
         <GoogleAuth onSuccess={handleLoginSuccess} onFailure={handleLoginFailure} />
       ) : (
         <>
-        'hello'
-          {/* <Button onClick={generatePosts}>Generate Posts</Button>
-          {posts.map((post: { id: string, content: string }) => (
-            <div key={post.id}>{post.content}</div>
-          ))} */}
+          "hello"
         </>
       )}
     </main>

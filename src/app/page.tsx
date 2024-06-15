@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import db from "@/modules/db";
 import { revalidatePath } from "next/cache";
 import Button from "@/components/Button";
+import GoogleAuth from "@/components/GoogleAuth";
 
 export default async function Home() {
   const posts = await db.post.findMany({ orderBy: { createdAt: "desc" } });
@@ -19,11 +20,13 @@ export default async function Home() {
   };
 
   return (
+    
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Button onClick={generatePosts}> Generate Posts </Button>
-      {posts.map((post: any) => (
-        <div key={post.id}>{post.content}</div>
-      ))}
-    </main>
+    <GoogleAuth />  
+    <Button onClick={generatePosts}>Generate Posts</Button>
+    {posts.map((post: any) => (
+      <div key={post.id}>{post.content}</div>
+    ))}
+  </main>
   );
 }

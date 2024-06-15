@@ -1,16 +1,29 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import { faker } from "@faker-js/faker";
 import db from "@/modules/db";
 import { revalidatePath } from "next/cache";
 import Button from "@/components/Button";
 import GoogleAuth from "@/components/GoogleAuth";
-import { useState } from "react";
 
-export default async function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const posts = await db.post.findMany({ orderBy: { createdAt: "desc" } });
+export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Authentication state
+  const [posts, setPosts] = useState([]);
+
+  // Function to fetch posts
+  const fetchPosts = async () => {
+    const fetchedPosts = await db.post.findMany({ orderBy: { createdAt: "desc" } });
+    setPosts(fetchedPosts);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPosts();
+    }
+  }, [isAuthenticated]);
+
   const generatePosts = async () => {
-    "use server";
-
     await db.post.createMany({
       data: [
         { content: faker.lorem.sentence() },
@@ -18,18 +31,18 @@ export default async function Home() {
         { content: faker.lorem.sentence() },
       ],
     });
-    revalidatePath("/");
-  };
-  const handleLoginSuccess = (response : any) => {
-    console.log('Login Success:', response);
-    setIsAuthenticated(true); // Update authentication state
-    // handle successful login
+    fetchPosts(); // Re-fetch posts after generating new ones
   };
 
-  const handleLoginFailure = (response : any) => {
-    console.log('Login Failed:', response);
-    // handle failed login
+  const handleLoginSuccess = (response: any) => {
+    console.log('Login Success:', response);
+    setIsAuthenticated(true); // Update authentication state
   };
+
+  const handleLoginFailure = (response: any) => {
+    console.log('Login Failed:', response);
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       {!isAuthenticated ? (
@@ -37,7 +50,7 @@ export default async function Home() {
       ) : (
         <>
           <Button onClick={generatePosts}>Generate Posts</Button>
-          {posts.map((post: any) => (
+          {posts.map((post: { id: string, content: string }) => (
             <div key={post.id}>{post.content}</div>
           ))}
         </>

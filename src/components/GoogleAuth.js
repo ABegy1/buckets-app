@@ -13,7 +13,6 @@ const GoogleAuth = ({ onSuccess, onFailure }) => {
           onSuccess={onSuccess}
           onError={onFailure}
           useOneTap
-          scope="https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar"
         />
       </div>
     </GoogleOAuthProvider>

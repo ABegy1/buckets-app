@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "vercel-build": "prisma generate && pnpm db:migrate && next build"
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.1",

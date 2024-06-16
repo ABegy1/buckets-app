@@ -1,10 +1,7 @@
-// src/app/page.tsx
 "use client";
 import { useState } from 'react';
 import GoogleAuth from "@/components/GoogleAuth";
-import dynamic from 'next/dynamic';
-
-const UserList = dynamic(() => import('@/components/Userlist'), { ssr: false });
+import UserList from '@/components/UserList';
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -1,7 +1,9 @@
+// src/app/page.tsx
 "use client";
 import { useState } from 'react';
 import GoogleAuth from "@/components/GoogleAuth";
 import dynamic from 'next/dynamic';
+import AddDummyUser from '@/components/AddDummyUser';
 
 const UserListContainer = dynamic(() => import('@/components/UserList'), {
   ssr: false,
@@ -29,6 +31,7 @@ export default function Home() {
             Get started by editing&nbsp;
             <code className="font-mono font-bold">src/app/page.tsx</code>
           </p>
+          <AddDummyUser />
           <UserListContainer />
         </>
       )}

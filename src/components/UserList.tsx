@@ -1,4 +1,4 @@
-// src/app/components/UserList.tsx
+"use server"
 import { FC } from 'react';
 import { db } from '@/db/index';
 import { usersTable, SelectUser } from '@/db/schema';

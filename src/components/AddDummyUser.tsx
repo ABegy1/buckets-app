@@ -16,6 +16,7 @@ const AddDummyUser = () => {
     };
 
     try {
+      console.log('Sending user data:', dummyUser); // Add logging here
       const response = await fetch('/api/addUser', {
         method: 'POST',
         headers: {
@@ -25,17 +26,21 @@ const AddDummyUser = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add user');
+        const responseData = await response.json();
+        throw new Error(responseData.error || 'Failed to add user');
       }
+
+      console.log('User added successfully');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
+        console.error('Error adding user:', err.message); // Add logging here
       } else {
         setError('An unknown error occurred');
       }
     } finally {
       setLoading(false);
-      window.location.reload(); // Reload to see the new user
+      // window.location.reload(); // Temporarily disable reload for debugging
     }
   };
 

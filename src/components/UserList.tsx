@@ -1,35 +1,9 @@
-"use client";
-
-import { useEffect, useState, FormEvent } from 'react';
-import { createUser } from '@/db/queries'; 
+// src/components/UserList.tsx
+import { useEffect, useState } from 'react';
 import { SelectUser } from '@/db/schema';
 
-const UserList = () => {
-  const [users, setUsers] = useState<SelectUser[]>([]);
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [email, setEmail] = useState('');
-
-  useEffect(() => {
-    const getUsers = async () => {
-      const response = await fetch('/api/users');
-      const usersList = await response.json();
-      setUsers(usersList);
-    };
-
-    getUsers();
-  }, []);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    await createUser({ name, age: parseInt(age), email });
-    const response = await fetch('/api/users');
-    const usersList = await response.json();
-    setUsers(usersList);
-    setName('');
-    setAge('');
-    setEmail('');
-  };
+const UserList = ({ initialUsers }: { initialUsers: SelectUser[] }) => {
+  const [users, setUsers] = useState<SelectUser[]>(initialUsers);
 
   return (
     <div>
@@ -41,30 +15,6 @@ const UserList = () => {
           </li>
         ))}
       </ul>
-      <form onSubmit={handleSubmit}>
-        <input 
-          type="text" 
-          placeholder="Name" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
-          required 
-        />
-        <input 
-          type="number" 
-          placeholder="Age" 
-          value={age} 
-          onChange={(e) => setAge(e.target.value)} 
-          required 
-        />
-        <input 
-          type="email" 
-          placeholder="Email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-          required 
-        />
-        <button type="submit">Add User</button>
-      </form>
     </div>
   );
 };

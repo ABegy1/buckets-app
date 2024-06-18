@@ -1,4 +1,3 @@
-// src/components/AddDummyUser.tsx
 "use client";
 import { useState } from 'react';
 
@@ -29,7 +28,6 @@ const AddDummyUser = () => {
         throw new Error('Failed to add user');
       }
     } catch (err) {
-      // Use type assertion to specify the error type
       if (err instanceof Error) {
         setError(err.message);
       } else {

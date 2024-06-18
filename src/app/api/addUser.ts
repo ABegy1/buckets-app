@@ -1,19 +1,14 @@
-// src/pages/api/addUser.ts
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import { createUser } from '@/db/queries';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const userData = req.body;
+export async function POST(req: NextRequest) {
+  const userData = await req.json();
 
-    try {
-      await createUser(userData);
-      res.status(200).json({ message: 'User added successfully' });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to add user' });
-    }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+  try {
+    await createUser(userData);
+    return NextResponse.json({ message: 'User added successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Failed to add user:', error);
+    return NextResponse.json({ error: 'Failed to add user' }, { status: 500 });
   }
 }

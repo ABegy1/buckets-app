@@ -1,12 +1,13 @@
 "use client";
 import { useState } from 'react';
 import GoogleAuth from "@/components/GoogleAuth";
-import UserList from '@/components/UserList';
-import { db } from '@/db/index';
+import dynamic from 'next/dynamic';
 
-import { SelectUser, usersTable } from '@/db/schema';
+const UserListContainer = dynamic(() => import('@/components/UserList'), {
+  ssr: false,
+});
 
-export default function Home({ initialUsers }: { initialUsers: SelectUser[] }) {
+export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleLoginSuccess = (response: any) => {
@@ -28,18 +29,9 @@ export default function Home({ initialUsers }: { initialUsers: SelectUser[] }) {
             Get started by editing&nbsp;
             <code className="font-mono font-bold">src/app/page.tsx</code>
           </p>
-          <UserList initialUsers={initialUsers} />
+          <UserListContainer />
         </>
       )}
     </main>
   );
-}
-
-export async function getServerSideProps() {
-  const result = await db.select().from(usersTable).execute();
-  return {
-    props: {
-      initialUsers: result,
-    },
-  };
 }

@@ -8,6 +8,20 @@
       "when": 1718565611169,
       "tag": "0000_romantic_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1718571901588,
+      "tag": "0001_warm_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1718572087986,
+      "tag": "0002_nifty_mentor",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { usersTable, SelectUser } from '@/db/schema';
 
 const fetchUsers = async (): Promise<SelectUser[]> => {
   const result = await db.select().from(usersTable).execute();
+  console.log(result);
   return result;
 };
 

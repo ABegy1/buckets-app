@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 // Define the shape of the user context
 const AuthContext = createContext({

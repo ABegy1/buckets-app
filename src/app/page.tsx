@@ -33,13 +33,23 @@ const Page = () => {
     if (error) console.log('Error signing in with Google:', error.message);
   };
 
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.log('Error signing out:', error.message);
+  };
+
+
   return (
     <div className="App">
       <h1>Supabase Auth with Google</h1>
       {!user ? (
         <button onClick={signInWithGoogle}>Sign In with Google</button>
       ) : (
-        <p>Welcome, {user.email}</p>
+        <p>Welcome, {user.email}
+        <button onClick={signOut}>Sign Out</button>
+        </p>
+        
+
       )}
     </div>
   );

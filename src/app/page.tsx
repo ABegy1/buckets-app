@@ -1,51 +1,22 @@
-"use client";
-import { useState } from 'react';
-import GoogleAuth from "@/components/GoogleAuth";
-import dynamic from 'next/dynamic';
-import {supabase} from '../supabaseClient';
-import AddDummyUser from '@/components/AddDummyUser';
+import React from 'react';
+import { useAuth } from '../components/useAuth'; // Adjust the path as needed
 
-const UserListContainer = dynamic(() => import('@/components/UserList'), {
-  ssr: false,
-});
+interface User {
+  email: string;
+}
 
-async function fetchData() {
-  const { data, error } = await supabase
-    .from('your_table')
-    .select('*');
-  if (error) {
-    console.error('Error fetching data:', error);
-  } else {
-    console.log('Data:', data);
+const Page = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
-}
 
-export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  if (!user) {
+    return <div>You need to be logged in to access this page.</div>;
+  }
 
-  const handleLoginSuccess = (response: any) => {
-    console.log('Login Success:', response);
-    setIsAuthenticated(true);
-  };
+  return <div>Welcome, {(user as User).email}</div>;
+};
 
-  const handleLoginFailure = (response: any) => {
-    console.log('Login Failed:', response);
-  };
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      {!isAuthenticated ? (
-        <GoogleAuth onSuccess={handleLoginSuccess} onFailure={handleLoginFailure} />
-      ) : (
-        <>
-          <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-            Get started by editing&nbsp;
-            <code className="font-mono font-bold">src/app/page.tsx</code>
-          </p>
-          <UserListContainer />
-          <AddDummyUser />
-        </>
-      )}
-    </main>
-  );
-}
+export default Page;

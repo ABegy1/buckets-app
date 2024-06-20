@@ -1,22 +1,25 @@
-"use client";
-
 import React from 'react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { supabase } from './supabaseClient';
 
-const CLIENT_ID = '157780287523-f05ch2ac1t1c6aivr6g11vm9gc3e2f65.apps.googleusercontent.com';
+const Login = () => {
+  const handleGoogleLogin = async () => {
+    const { user, session, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
 
-const GoogleAuth = ({ onSuccess, onFailure }) => {
+    if (error) {
+      console.error('Error logging in with Google:', error);
+    } else {
+      console.log('User:', user);
+      console.log('Session:', session);
+    }
+  };
+
   return (
-    <GoogleOAuthProvider clientId={CLIENT_ID}>
-      <div>
-        <GoogleLogin
-          onSuccess={onSuccess}
-          onError={onFailure}
-          useOneTap
-        />
-      </div>
-    </GoogleOAuthProvider>
+    <div>
+      <button onClick={handleGoogleLogin}>Login with Google</button>
+    </div>
   );
 };
 
-export default GoogleAuth;
+export default Login;

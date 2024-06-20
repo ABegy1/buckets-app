@@ -8,3 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export function loginWithGoogle() {
+  supabase.auth.signIn({
+    provider: 'google',
+  });
+}
+
+export function logout() {
+  supabase.auth.signOut();
+}

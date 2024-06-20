@@ -9,20 +9,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function loginWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+export async function loginWithGoogle() {supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: "https://www.big-buckets.com/auth/callback",  // Replace with your callback URL
-    },
-  });
+  })
+  
+};
 
-  if (error) {
-    console.error('Error logging in:', error.message);
-  } else {
-    console.log('Login data:', data);
-  }
-}
+ 
+
 
 export async function logout() {
   const { error } = await supabase.auth.signOut();

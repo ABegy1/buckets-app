@@ -1,26 +1,47 @@
 'use client';
-import React from 'react';
-import { loginWithGoogle } from '../supabaseClient';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
+import type { User } from '@supabase/supabase-js';
 
 const Page = () => {
+  const [user, setUser] = useState<User | null>(null);
 
+  useEffect(() => {
+    // Function to check for the user session
+    const getUserSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
 
+    getUserSession();
 
-  const handleLogin = async () => {
-    await loginWithGoogle();
+    // Listen for authentication state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Cleanup the listener on component unmount
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) console.log('Error signing in with Google:', error.message);
   };
 
   return (
-    <div>
-      <h1>Page</h1>
-     
-        <div>
-    
-        <button onClick={handleLogin}>Sign in with Google</button>
-        </div>
-           
+    <div className="App">
+      <h1>Supabase Auth with Google</h1>
+      {!user ? (
+        <button onClick={signInWithGoogle}>Sign In with Google</button>
+      ) : (
+        <p>Welcome, {user.email}</p>
+      )}
     </div>
   );
-};
-
+}
 export default Page;

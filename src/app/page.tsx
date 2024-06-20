@@ -5,9 +5,9 @@ import dynamic from 'next/dynamic';
 import {supabase} from '../supabaseClient';
 import AddDummyUser from '@/components/AddDummyUser';
 
-// const UserListContainer = dynamic(() => import('@/components/UserList'), {
-//   ssr: false,
-// });
+const UserListContainer = dynamic(() => import('@/components/UserList'), {
+  ssr: false,
+});
 
 async function fetchData() {
   const { data, error } = await supabase
@@ -42,6 +42,7 @@ export default function Home() {
             Get started by editing&nbsp;
             <code className="font-mono font-bold">src/app/page.tsx</code>
           </p>
+          <UserListContainer />
           <AddDummyUser />
         </>
       )}

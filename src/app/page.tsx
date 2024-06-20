@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { loginWithGoogle } from '../supabaseclient';
+import { loginWithGoogle } from '../supabaseClient';
 
 const Page = () => {
   const handleLogin = async () => {

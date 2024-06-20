@@ -1,6 +1,7 @@
 'use client';
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from './supabaseClient';
 
 // Define the shape of the user context
 const AuthContext = createContext({
@@ -13,11 +14,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Checking session');
     const session = supabase.auth.session();
+    console.log('Session:', session);
+
     setUser(session?.user ?? null);
     setLoading(false);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session);
       setUser(session?.user ?? null);
       setLoading(false);
     });

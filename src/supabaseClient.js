@@ -12,6 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo: "https://www.big-buckets.com/auth/callback",  // Replace with your callback URL
+    },
   });
 
   if (error) {

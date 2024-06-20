@@ -2,11 +2,23 @@
 import { useState } from 'react';
 import GoogleAuth from "@/components/GoogleAuth";
 import dynamic from 'next/dynamic';
+import {supabase} from '../supabaseClient';
 import AddDummyUser from '@/components/AddDummyUser';
 
-const UserListContainer = dynamic(() => import('@/components/UserList'), {
-  ssr: false,
-});
+// const UserListContainer = dynamic(() => import('@/components/UserList'), {
+//   ssr: false,
+// });
+
+async function fetchData() {
+  const { data, error } = await supabase
+    .from('your_table')
+    .select('*');
+  if (error) {
+    console.error('Error fetching data:', error);
+  } else {
+    console.log('Data:', data);
+  }
+}
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,7 +43,6 @@ export default function Home() {
             <code className="font-mono font-bold">src/app/page.tsx</code>
           </p>
           <AddDummyUser />
-          <UserListContainer />
         </>
       )}
     </main>

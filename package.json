@@ -12,6 +12,7 @@
   "dependencies": {
     "@next/env": "^14.2.4",
     "@react-oauth/google": "^0.12.1",
+    "@supabase/supabase-js": "^2.43.5",
     "@vercel/postgres": "^0.8.0",
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",

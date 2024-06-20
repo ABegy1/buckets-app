@@ -1,7 +1,12 @@
 "use client";
 import { useState } from 'react';
 
-const AddDummyUser = () => {
+interface AddUserProps {
+  name: string;
+  email?: string;
+}
+
+const AddUser = ({ name, email }: AddUserProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -9,20 +14,19 @@ const AddDummyUser = () => {
     setLoading(true);
     setError(null);
 
-    const dummyUser = {
-      name: 'John Doe',
-      age: 30,
-      email: `johndoe${Math.floor(Math.random() * 10000)}@example.com`,
+    const user = {
+      name,
+      email,
     };
 
     try {
-      console.log('Sending user data:', dummyUser); // Add logging here
+      console.log('Sending user data:', user); // Add logging here
       const response = await fetch('/api/addUser', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dummyUser),
+        body: JSON.stringify(user),
       });
 
       if (!response.ok) {
@@ -47,11 +51,11 @@ const AddDummyUser = () => {
   return (
     <div>
       <button onClick={addUser} disabled={loading}>
-        {loading ? 'Adding...' : 'Add Dummy User'}
+        {loading ? 'Adding...' : 'Add User'}
       </button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 };
 
-export default AddDummyUser;
+export default AddUser;

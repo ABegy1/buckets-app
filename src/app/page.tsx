@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import AddDummyUser from '@/components/AddDummyUser';
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -33,6 +34,8 @@ const Page = () => {
     if (error) console.log('Error signing in with Google:', error.message);
   };
 
+ 
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log('Error signing out:', error.message);
@@ -42,10 +45,12 @@ const Page = () => {
   return (
     <div className="App">
       <h1>Supabase Auth with Google</h1>
+      
       {!user ? (
         <button onClick={signInWithGoogle}>Sign In with Google</button>
       ) : (
         <p>Welcome, {user.email}
+       <AddDummyUser name={user.id} email={user.email} />
         <button onClick={signOut}>Sign Out</button>
         </p>
         

@@ -9,12 +9,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export function loginWithGoogle() {
-  supabase.auth.signIn({
-    provider: 'google',
-  });
-}
-
-export function logout() {
-  supabase.auth.signOut();
-}
+export async function loginWithGoogle() {
+    const { user, session, error } = await supabase.auth.signIn({
+      provider: 'google',
+    });
+  
+    if (error) {
+      console.error('Error logging in:', error.message);
+    } else {
+      console.log('Logged in user:', user);
+      console.log('Session:', session);
+    }
+  }
+  
+  export async function logout() {
+    const { error } = await supabase.auth.signOut();
+  
+    if (error) {
+      console.error('Error logging out:', error.message);
+    }
+  }

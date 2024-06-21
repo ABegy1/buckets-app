@@ -8,3 +8,10 @@ export async function createUser(data: InsertUser) {
 export async function fetchUsers(): Promise<InsertUser[]> {
   return await db.select().from(usersTable).execute();
 }
+
+import { SelectUser } from '@/db/schema';
+
+export const isAdmin = (user: SelectUser): boolean => {
+  return user.role === 'Admin';
+};
+

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
+import UserList from '@/components/UserList';
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -57,6 +58,7 @@ const Page = () => {
         
 
       )}
+      <UserList/> 
     </div>
   );
 }

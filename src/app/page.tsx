@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
-import AddDummyUser from '@/components/AddDummyUser';
+import AddUser from '@/components/AddDummyUser';
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
-  console.log(user)
+  console.log(user?.user_metadata.full_name);
 
   useEffect(() => {
     // Function to check for the user session
@@ -51,7 +51,7 @@ const Page = () => {
         <button onClick={signInWithGoogle}>Sign In with Google</button>
       ) : (
         <p>Welcome, {user.email}
-       <AddDummyUser name={user.id} email={user.email} />
+       <AddUser name={user?.user_metadata.full_name} email={user.email} />
         <button onClick={signOut}>Sign Out</button>
         </p>
         

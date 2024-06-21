@@ -104,12 +104,12 @@ const HomePage = () => {
               <>
                 <li>
                   <Link href="/About">
-                    <a>About</a>
+                    <a>Home Screen</a>
                   </Link>
                 </li>
                 <li>
                   <Link href="/Contact">
-                    <a>Contact</a>
+                    <a>Score Display</a>
                   </Link>
                 </li>
               </>

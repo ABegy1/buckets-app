@@ -57,15 +57,16 @@ body {
   .container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-gap: 10px;
+    grid-gap: 20px;
     margin: 20px;
   }
   
   .secondary-screen-options {
-    grid-column: span 2;
+    grid-column: span 4;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 20px;
   }
   
   .secondary-screen-options .arrow {
@@ -73,22 +74,38 @@ body {
   }
   
   .rules {
-    grid-column: span 1;
+    grid-column: span 4;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 20px;
   }
   
   .players {
     grid-column: span 4;
     display: flex;
     justify-content: space-around;
+    margin-bottom: 20px;
   }
   
   .column {
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+  
+  .group {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .group .header {
+    font-weight: bold;
+    margin-bottom: 10px;
   }
   
   .top-right {
@@ -106,3 +123,4 @@ body {
     margin: 5px;
     padding: 10px 20px;
   }
+  

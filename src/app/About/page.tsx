@@ -1,6 +1,4 @@
 import React from 'react';
-import '../../../src/styles.css';
-
 
 const About = () => {
   return (
@@ -17,29 +15,37 @@ const About = () => {
           <button>Rules</button>
         </div>
         <div className="players">
-          <div className="column green">
-            <div>Green</div>
-            <div>Stephen</div>
-            <div>David</div>
-            <div>Brandon</div>
+          <div className="column">
+            <div className="group green">
+              <div className="header">Green</div>
+              <div>Stephen</div>
+              <div>David</div>
+              <div>Brandon</div>
+            </div>
           </div>
-          <div className="column yellow">
-            <div>Yellow</div>
-            <div>Andrew</div>
-            <div>McNay</div>
-            <div>Jay</div>
+          <div className="column">
+            <div className="group yellow">
+              <div className="header">Yellow</div>
+              <div>Andrew</div>
+              <div>McNay</div>
+              <div>Jay</div>
+            </div>
           </div>
-          <div className="column red">
-            <div>Red</div>
-            <div>Jarrod</div>
-            <div>Brad</div>
-            <div>Jason</div>
+          <div className="column">
+            <div className="group red">
+              <div className="header">Red</div>
+              <div>Jarrod</div>
+              <div>Brad</div>
+              <div>Jason</div>
+            </div>
           </div>
-          <div className="column black">
-            <div>Black</div>
-            <div>Ryan</div>
-            <div>Kevin</div>
-            <div>Malson</div>
+          <div className="column">
+            <div className="group black">
+              <div className="header">Black</div>
+              <div>Ryan</div>
+              <div>Kevin</div>
+              <div>Malson</div>
+            </div>
           </div>
         </div>
         <div className="top-right">

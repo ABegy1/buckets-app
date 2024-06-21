@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
-import './global.css';
+import './globals.css';
 import Link from 'next/link';
 
 const useUserRole = (fullName: string) => {

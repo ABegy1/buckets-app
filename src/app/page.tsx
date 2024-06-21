@@ -73,9 +73,7 @@ const HomePage = () => {
     if (error) console.log('Error signing out:', error.message);
   };
 
-  if (loading || !user) {
-    return <div>Loading...</div>;
-  }
+
 
   return (
     <div className="app">

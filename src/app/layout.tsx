@@ -22,8 +22,8 @@ export default function RootLayout({
         <nav className="bg-gray-800 p-4">
           <ul className="flex space-x-4">
             <li><Link href="/"><a className="text-white hover:underline">Home</a></Link></li>
-            <li><Link href="/about"><a className="text-white hover:underline">About</a></Link></li>
-            <li><Link href="/contact"><a className="text-white hover:underline">Contact</a></Link></li>
+            <li><Link href="/About"><a className="text-white hover:underline">About</a></Link></li>
+            <li><Link href="/Contact"><a className="text-white hover:underline">Contact</a></Link></li>
           </ul>
         </nav>
         <main className="p-4">

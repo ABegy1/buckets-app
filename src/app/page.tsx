@@ -11,7 +11,7 @@ const useHasAdmin = () => {
   useEffect(() => {
     const fetchAdminStatus = async () => {
       try {
-        const response = await fetch('/api/hasAdmin');
+        const response = await fetch('/api/addUser');
         if (!response.ok) {
           throw new Error('Failed to fetch admin status');
         }
@@ -35,7 +35,7 @@ const Page = () => {
   const [user, setUser] = useState<User | null>(null);
   const { hasAdmin } = useHasAdmin();
 
-  console.log(user?.user_metadata.full_name);
+  console.log(user);
 
   useEffect(() => {
     // Function to check for the user session

@@ -1,10 +1,25 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
-import '../../src/styles.css';
+import '../styles/globals.css';
+import Link from 'next/link';
 
+import { createContext, useContext } from 'react';
+
+interface AuthContextType {
+  user: User | null;
+  role: string | null;
+}
+
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  role: null,
+});
+
+export const useAuth = () => useContext(AuthContext);
 
 const useUserRole = (fullName: string) => {
   const [role, setRole] = useState<string | null>(null);
@@ -32,10 +47,9 @@ const useUserRole = (fullName: string) => {
   return { role, loading };
 };
 
-const Page = () => {
+const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { role } = useUserRole(user?.user_metadata.full_name ?? '');
-  console.log(role);
+  const { role, loading } = useUserRole(user?.user_metadata.full_name ?? '');
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -73,34 +87,59 @@ const Page = () => {
     if (error) console.log('Error signing out:', error.message);
   };
 
+  if (loading || !user) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Buckets</h1>
-      </header>
-      <main className="app-content">
-        {!user ? (
-          <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
-        ) : (
-          <div>
-            <p>Welcome, {user.email}</p>
-            <button className="btn" onClick={signOut}>Sign Out</button>
-          </div>
-        )}
-        <div>
-          {role === 'Admin' ? (
-            <div className="role-message">Welcome, Admin!</div>
+    <AuthContext.Provider value={{ user, role }}>
+      <div className="app">
+        <header className="app-header">
+          <h1>Buckets</h1>
+        </header>
+        <main className="app-content">
+          {!user ? (
+            <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
           ) : (
-            <div className="role-message">Welcome, User!</div>
+            <div>
+              <p>Welcome, {user.email}</p>
+              <button className="btn" onClick={signOut}>Sign Out</button>
+            </div>
           )}
-        </div>
-      </main>
-      <footer className="app-footer">
-        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
-      </footer>
-    </div>
+          <div>
+            {role === 'Admin' ? (
+              <div className="role-message">Welcome, Admin!</div>
+            ) : (
+              <div className="role-message">Welcome, User!</div>
+            )}
+          </div>
+          <nav>
+            <ul>
+              {role === 'Admin' && (
+                <>
+                  <li>
+                    <Link href="/about">
+                      <a>About</a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact">
+                      <a>Contact</a>
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </nav>
+        </main>
+        <footer className="app-footer">
+          <p>&copy; 2024 Buckets Game. All rights reserved.</p>
+        </footer>
+      </div>
+    </AuthContext.Provider>
   );
 };
 
+HomePage.displayName = 'HomePage';
 
-export default Page;
+export default HomePage;

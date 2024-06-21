@@ -19,13 +19,13 @@ export default function RootLayout({
     <html lang="en">
       <script src="https://accounts.google.com/gsi/client" async defer></script>
       <body className={inter.className}>
-        <nav className="bg-gray-800 p-4">
+        {/* <nav className="bg-gray-800 p-4">
           <ul className="flex space-x-4">
             <li><Link href="/"><a className="text-white hover:underline">Home</a></Link></li>
             <li><Link href="/About"><a className="text-white hover:underline">About</a></Link></li>
             <li><Link href="/Contact"><a className="text-white hover:underline">Contact</a></Link></li>
           </ul>
-        </nav>
+        </nav> */}
         <main className="p-4">
           {children}
         </main>

@@ -4,19 +4,19 @@ import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
 
-const useHasAdmin = () => {
-  const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
+const useUserRole = (fullName: string) => {
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAdminStatus = async () => {
+    const fetchUserRole = async () => {
       try {
-        const response = await fetch('/api/addUser');
+        const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch admin status');
+          throw new Error('Failed to fetch user role');
         }
         const data = await response.json();
-        setHasAdmin(data.hasAdmin);
+        setRole(data.role);
       } catch (error) {
         console.error(error);
       } finally {
@@ -24,18 +24,17 @@ const useHasAdmin = () => {
       }
     };
 
-    fetchAdminStatus();
-  }, []);
+    fetchUserRole();
+  }, [fullName]);
 
-  return { hasAdmin, loading };
+  return { role, loading };
 };
-
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { hasAdmin } = useHasAdmin();
 
-  console.log(user);
+  const { role } = useUserRole(user?.user_metadata.full_name ?? '');
+  console.log(user?.user_metadata.full_name);
 
   useEffect(() => {
     // Function to check for the user session
@@ -90,7 +89,7 @@ const Page = () => {
 
       )}
        <div>
-      {hasAdmin ? (
+      {role ? (
         <div>Welcome, Admin!</div>
       ) : (
         <div>Welcome, User!</div>

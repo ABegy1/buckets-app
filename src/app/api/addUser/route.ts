@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, hasAdmin } from '@/db/queries';
+import { createUser, getRoleByName } from '@/db/queries';
 
 
 export async function POST(req: NextRequest) {
@@ -17,11 +17,21 @@ export async function POST(req: NextRequest) {
 
 
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const fullName = searchParams.get('full_name');
+
+  if (!fullName) {
+    return NextResponse.json({ error: 'Full name not provided' }, { status: 400 });
+  }
+
   try {
-    const adminExists = await hasAdmin();
-    return NextResponse.json({ hasAdmin: adminExists }, { status: 200 });
+    const role = await getRoleByName(fullName);
+    if (!role) {
+      return NextResponse.json({ error: 'User not found or no role assigned' }, { status: 404 });
+    }
+    return NextResponse.json({ role }, { status: 200 });
   } catch (error) {
-    console.error('Failed to check for admin:', error);
-    return NextResponse.json({ error: 'Failed to check for admin' }, { status: 500 });
+    console.error('Failed to fetch user role:', error);
+    return NextResponse.json({ error: 'Failed to fetch user role' }, { status: 500 });
   }
 }

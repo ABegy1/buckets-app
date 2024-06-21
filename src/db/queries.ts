@@ -11,15 +11,16 @@ export async function fetchUsers(): Promise<InsertUser[]> {
 }
 
 
-export async function hasAdmin(): Promise<boolean> {
+export async function getRoleByName(fullName: string): Promise<string | null> {
   const result = await db
     .select({
       role: usersTable.role,
     })
     .from(usersTable)
-    .where(eq(usersTable.role, 'Admin'))
+    .where(eq(usersTable.name, fullName))
     .limit(1)
     .execute();
 
-  return result.length > 0;
+  const user = result[0];
+  return user ? user.role : null;
 }

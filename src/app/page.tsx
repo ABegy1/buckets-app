@@ -35,7 +35,7 @@ const useUserRole = (fullName: string) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { role, loading } = useUserRole(user?.user_metadata.full_name ?? '');
+  const { role } = useUserRole(user?.user_metadata.full_name ?? '');
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -72,8 +72,6 @@ const HomePage = () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log('Error signing out:', error.message);
   };
-
-
 
   return (
     <div className="app">

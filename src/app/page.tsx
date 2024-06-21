@@ -11,7 +11,7 @@ const useAdminStatus = () => {
   useEffect(() => {
     const fetchAdminStatus = async () => {
       try {
-        const response = await fetch('/api/adminStatus');
+        const response = await fetch('/api/addUser');
         if (!response.ok) {
           throw new Error('Failed to fetch admin status');
         }

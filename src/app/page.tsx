@@ -34,8 +34,7 @@ const Page = () => {
   const [user, setUser] = useState<User | null>(null);
 
   const { role } = useUserRole(user?.user_metadata.full_name ?? '');
-  console.log(user?.user_metadata.full_name);
-
+console.log(role)
   useEffect(() => {
     // Function to check for the user session
     const getUserSession = async () => {

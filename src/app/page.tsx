@@ -6,6 +6,7 @@ import AddDummyUser from '@/components/AddDummyUser';
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
+  console.log(user)
 
   useEffect(() => {
     // Function to check for the user session

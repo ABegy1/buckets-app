@@ -7,20 +7,6 @@ import AddUser from '@/components/AddDummyUser';
 import '../styles/globals.css';
 import Link from 'next/link';
 
-import { createContext, useContext } from 'react';
-
-interface AuthContextType {
-  user: User | null;
-  role: string | null;
-}
-
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  role: null,
-});
-
-export const useAuth = () => useContext(AuthContext);
-
 const useUserRole = (fullName: string) => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,51 +78,49 @@ const HomePage = () => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, role }}>
-      <div className="app">
-        <header className="app-header">
-          <h1>Buckets</h1>
-        </header>
-        <main className="app-content">
-          {!user ? (
-            <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
-          ) : (
-            <div>
-              <p>Welcome, {user.email}</p>
-              <button className="btn" onClick={signOut}>Sign Out</button>
-            </div>
-          )}
+    <div className="app">
+      <header className="app-header">
+        <h1>Buckets</h1>
+      </header>
+      <main className="app-content">
+        {!user ? (
+          <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
+        ) : (
           <div>
-            {role === 'Admin' ? (
-              <div className="role-message">Welcome, Admin!</div>
-            ) : (
-              <div className="role-message">Welcome, User!</div>
-            )}
+            <p>Welcome, {user.email}</p>
+            <button className="btn" onClick={signOut}>Sign Out</button>
           </div>
-          <nav>
-            <ul>
-              {role === 'Admin' && (
-                <>
-                  <li>
-                    <Link href="/about">
-                      <a>About</a>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/contact">
-                      <a>Contact</a>
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </nav>
-        </main>
-        <footer className="app-footer">
-          <p>&copy; 2024 Buckets Game. All rights reserved.</p>
-        </footer>
-      </div>
-    </AuthContext.Provider>
+        )}
+        <div>
+          {role === 'Admin' ? (
+            <div className="role-message">Welcome, Admin!</div>
+          ) : (
+            <div className="role-message">Welcome, User!</div>
+          )}
+        </div>
+        <nav>
+          <ul>
+            {role === 'Admin' && (
+              <>
+                <li>
+                  <Link href="/About">
+                    <a>About</a>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/Contact">
+                    <a>Contact</a>
+                  </Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </nav>
+      </main>
+      <footer className="app-footer">
+        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
+      </footer>
+    </div>
   );
 };
 

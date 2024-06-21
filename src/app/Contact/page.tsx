@@ -1,9 +1,6 @@
 import React from 'react';
-import withAdminAuth from '@/components/withAdminAuth';
-import { useAuth } from '../page';
 
 const Contact = () => {
-  const { user, role } = useAuth();
   return (
     <div>
       <h1>Contact Page</h1>
@@ -14,4 +11,4 @@ const Contact = () => {
 
 Contact.displayName = 'Contact';
 
-export default withAdminAuth(Contact);
+export default Contact;

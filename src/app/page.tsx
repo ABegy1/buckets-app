@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
+import '../../src/styles.css';
+
 
 const useUserRole = (fullName: string) => {
   const [role, setRole] = useState<string | null>(null);
@@ -32,11 +34,10 @@ const useUserRole = (fullName: string) => {
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
-
   const { role } = useUserRole(user?.user_metadata.full_name ?? '');
-console.log(role)
+  console.log(role);
+
   useEffect(() => {
-    // Function to check for the user session
     const getUserSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
@@ -44,18 +45,22 @@ console.log(role)
 
     getUserSession();
 
-    // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    // Cleanup the listener on component unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-  
+  useEffect(() => {
+    if (user) {
+      console.log('Adding user through AddUser component');
+      <AddUser name={user.user_metadata.full_name} email={user.email} />;
+    }
+  }, [user]);
+
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -63,38 +68,39 @@ console.log(role)
     if (error) console.log('Error signing in with Google:', error.message);
   };
 
- 
-
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log('Error signing out:', error.message);
   };
 
- 
-
-
   return (
-    <div className="App">
-      <h1>Supabase Auth with Google</h1>
-      
-      {!user ? (
-        <button onClick={signInWithGoogle}>Sign In with Google</button>
-      ) : (
-        <p>Welcome, {user.email}
-       <AddUser name={user?.user_metadata.full_name} email={user.email} />
-        <button onClick={signOut}>Sign Out</button>
-        </p>
-        
-
-      )}
-       <div>
-      {role === 'Admin' ? (
-        <div>Welcome, Admin!</div>
-      ) : (
-        <div>Welcome, User!</div>
-      )}
-    </div>
+    <div className="app">
+      <header className="app-header">
+        <h1>Buckets</h1>
+      </header>
+      <main className="app-content">
+        {!user ? (
+          <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
+        ) : (
+          <div>
+            <p>Welcome, {user.email}</p>
+            <button className="btn" onClick={signOut}>Sign Out</button>
+          </div>
+        )}
+        <div>
+          {role === 'Admin' ? (
+            <div className="role-message">Welcome, Admin!</div>
+          ) : (
+            <div className="role-message">Welcome, User!</div>
+          )}
+        </div>
+      </main>
+      <footer className="app-footer">
+        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
+      </footer>
     </div>
   );
-}
+};
+
+
 export default Page;

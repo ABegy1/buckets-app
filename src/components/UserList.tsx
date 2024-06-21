@@ -1,4 +1,4 @@
- "use server"
+ "use client"
 // import { FC } from 'react';
 // import { db } from '@/db/index';
 // import { usersTable, SelectUser } from '@/db/schema';

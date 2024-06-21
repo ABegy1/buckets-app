@@ -11,15 +11,15 @@ export async function fetchUsers(): Promise<InsertUser[]> {
 }
 
 
-export async function isAdmin(userId: number): Promise<boolean> {
+export async function hasAdmin(): Promise<boolean> {
   const result = await db
     .select({
-      role: usersTable.role
+      role: usersTable.role,
     })
     .from(usersTable)
-    .where(eq(usersTable.id, userId))
+    .where(eq(usersTable.role, 'Admin'))
+    .limit(1)
     .execute();
 
-  const user = result[0];
-  return user ? user.role === 'Admin' : false;
+  return result.length > 0;
 }

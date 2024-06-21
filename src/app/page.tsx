@@ -4,19 +4,19 @@ import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
 
-const useAdminStatus = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+const useHasAdmin = () => {
+  const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
       try {
-        const response = await fetch('/api/addUser');
+        const response = await fetch('/api/hasAdmin');
         if (!response.ok) {
           throw new Error('Failed to fetch admin status');
         }
         const data = await response.json();
-        setIsAdmin(data.isAdmin);
+        setHasAdmin(data.hasAdmin);
       } catch (error) {
         console.error(error);
       } finally {
@@ -27,14 +27,13 @@ const useAdminStatus = () => {
     fetchAdminStatus();
   }, []);
 
-  return { isAdmin, loading };
+  return { hasAdmin, loading };
 };
-
 
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { isAdmin, loading } = useAdminStatus();
+  const { hasAdmin } = useHasAdmin();
 
   console.log(user?.user_metadata.full_name);
 
@@ -91,7 +90,7 @@ const Page = () => {
 
       )}
        <div>
-      {isAdmin ? (
+      {hasAdmin ? (
         <div>Welcome, Admin!</div>
       ) : (
         <div>Welcome, User!</div>

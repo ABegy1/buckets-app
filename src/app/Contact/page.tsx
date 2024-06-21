@@ -1,6 +1,13 @@
 import React from 'react';
+import withAdminAuth from '@/components/withAdminAuth';
+import type { User } from '@supabase/supabase-js';
 
-const Contact = () => {
+type ContactProps = {
+  user: User;
+  role: string;
+};
+
+const Contact: React.FC<ContactProps> = ({ user, role }) => {
   return (
     <div>
       <h1>Contact Page</h1>
@@ -9,4 +16,6 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+Contact.displayName = 'Contact';
+
+export default withAdminAuth(Contact);

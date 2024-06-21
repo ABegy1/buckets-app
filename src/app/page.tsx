@@ -1,9 +1,7 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
-import AddUser from '@/components/AddDummyUser';
+// import AddUser from '@/components/AddDummyUser';
 import './HomePage.css'; // Import the new CSS file
 import Link from 'next/link';
 
@@ -55,9 +53,26 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    const addUser = async (user: User) => {
       console.log('Adding user through AddUser component');
-      <AddUser name={user.user_metadata.full_name} email={user.email} />;
+      const response = await fetch('/api/addUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: user.user_metadata.full_name,
+          email: user.email,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to add user');
+      }
+    };
+
+    if (user) {
+      addUser(user);
     }
   }, [user]);
 

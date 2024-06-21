@@ -1,10 +1,5 @@
-body {
-    margin: 0;
-    font-family: 'Roboto', sans-serif;
-    background-color: #f0f2f5;
-  }
-  
-  .about-page {
+/* About.css */
+.about-page {
     display: flex;
     flex-direction: column;
     min-height: 100vh;

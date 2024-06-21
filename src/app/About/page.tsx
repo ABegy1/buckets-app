@@ -2,7 +2,7 @@ import React from 'react';
 
 const About = () => {
   return (
-    <div>
+    <div className="about-page">
       <h1>About Page</h1>
       <p>This is the about page.</p>
       <div className="container">
@@ -16,36 +16,28 @@ const About = () => {
         </div>
         <div className="players">
           <div className="column">
-            <div className="group green">
-              <div className="header">Green</div>
-              <div>Stephen</div>
-              <div>David</div>
-              <div>Brandon</div>
-            </div>
+            <div className="header">Green</div>
+            <div className="box">Stephen</div>
+            <div className="box">David</div>
+            <div className="box">Brandon</div>
           </div>
           <div className="column">
-            <div className="group yellow">
-              <div className="header">Yellow</div>
-              <div>Andrew</div>
-              <div>McNay</div>
-              <div>Jay</div>
-            </div>
+            <div className="header">Yellow</div>
+            <div className="box">Andrew</div>
+            <div className="box">McNay</div>
+            <div className="box">Jay</div>
           </div>
           <div className="column">
-            <div className="group red">
-              <div className="header">Red</div>
-              <div>Jarrod</div>
-              <div>Brad</div>
-              <div>Jason</div>
-            </div>
+            <div className="header">Red</div>
+            <div className="box">Jarrod</div>
+            <div className="box">Brad</div>
+            <div className="box">Jason</div>
           </div>
           <div className="column">
-            <div className="group black">
-              <div className="header">Black</div>
-              <div>Ryan</div>
-              <div>Kevin</div>
-              <div>Malson</div>
-            </div>
+            <div className="header">Black</div>
+            <div className="box">Ryan</div>
+            <div className="box">Kevin</div>
+            <div className="box">Malson</div>
           </div>
         </div>
         <div className="top-right">

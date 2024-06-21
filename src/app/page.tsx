@@ -3,10 +3,39 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
-import UserList from '@/components/UserList';
+
+const useAdminStatus = () => {
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/adminStatus');
+        if (!response.ok) {
+          throw new Error('Failed to fetch admin status');
+        }
+        const data = await response.json();
+        setIsAdmin(data.isAdmin);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdminStatus();
+  }, []);
+
+  return { isAdmin, loading };
+};
+
+
 
 const Page = () => {
   const [user, setUser] = useState<User | null>(null);
+  const { isAdmin, loading } = useAdminStatus();
+
   console.log(user?.user_metadata.full_name);
 
   useEffect(() => {
@@ -29,6 +58,7 @@ const Page = () => {
     };
   }, []);
 
+  
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -42,6 +72,14 @@ const Page = () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log('Error signing out:', error.message);
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isAdmin === null) {
+    return <div>Not logged in</div>;
+  }
 
 
   return (
@@ -58,7 +96,13 @@ const Page = () => {
         
 
       )}
-      <UserList/> 
+       <div>
+      {isAdmin ? (
+        <div>Welcome, Admin!</div>
+      ) : (
+        <div>Welcome, User!</div>
+      )}
+    </div>
     </div>
   );
 }

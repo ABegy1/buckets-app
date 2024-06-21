@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import AddUser from '@/components/AddDummyUser';
-import './globals.css';
+import './HomePage.css'; // Import the new CSS file
 import Link from 'next/link';
 
 const useUserRole = (fullName: string) => {
@@ -35,7 +35,7 @@ const useUserRole = (fullName: string) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { role } = useUserRole(user?.user_metadata.full_name ?? '');
+  const { role, loading } = useUserRole(user?.user_metadata.full_name ?? '');
 
   useEffect(() => {
     const getUserSession = async () => {

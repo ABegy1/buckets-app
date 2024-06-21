@@ -4,6 +4,7 @@ import { createUser, getRoleByName } from '@/db/queries';
 
 export async function POST(req: NextRequest) {
   const userData = await req.json();
+  console.log(userData)
 
   try {
     console.log('Received user data:', userData);

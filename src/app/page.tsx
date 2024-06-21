@@ -88,7 +88,7 @@ console.log(role)
 
       )}
        <div>
-      {role ? (
+      {role === 'Admin' ? (
         <div>Welcome, Admin!</div>
       ) : (
         <div>Welcome, User!</div>

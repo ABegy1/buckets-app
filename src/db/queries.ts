@@ -23,4 +23,3 @@ export async function isAdmin(userId: number): Promise<boolean> {
   const user = result[0];
   return user ? user.role === 'Admin' : false;
 }
-

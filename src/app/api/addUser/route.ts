@@ -18,22 +18,18 @@ export async function POST(req: NextRequest) {
 }
 
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const userId = req.cookies['user_id']; // Assuming user_id is stored in cookies
+export async function GET(req: NextRequest) {
+  const userId = req.cookies.get('user_id'); // Assuming user_id is stored in cookies
 
   if (!userId) {
-    return res.status(401).json({ error: 'User ID not found' });
+    return NextResponse.json({ error: 'User ID not found' }, { status: 401 });
   }
 
   try {
     const adminStatus = await isAdmin(Number(userId));
-    return res.status(200).json({ isAdmin: adminStatus });
+    return NextResponse.json({ isAdmin: adminStatus }, { status: 200 });
   } catch (error) {
     console.error('Failed to check admin status:', error);
-    return res.status(500).json({ error: 'Failed to check admin status' });
+    return NextResponse.json({ error: 'Failed to check admin status' }, { status: 500 });
   }
 }

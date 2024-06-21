@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 // import AddUser from '@/components/AddDummyUser';
 import './HomePage.css'; // Import the new CSS file
 import Link from 'next/link';
+import AddUser from '@/components/AddDummyUser';
 
 const useUserRole = (fullName: string) => {
   const [role, setRole] = useState<string | null>(null);
@@ -101,6 +102,8 @@ const HomePage = () => {
           <div>
             <p>Welcome, {user.email}</p>
             <button className="btn" onClick={signOut}>Sign Out</button>
+            {/* Render AddUser component conditionally */}
+            {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
           </div>
         )}
         <div>
@@ -135,7 +138,6 @@ const HomePage = () => {
     </div>
   );
 };
-
 HomePage.displayName = 'HomePage';
 
 export default HomePage;

@@ -73,13 +73,7 @@ const Page = () => {
     if (error) console.log('Error signing out:', error.message);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isAdmin === null) {
-    return <div>Not logged in</div>;
-  }
+ 
 
 
   return (

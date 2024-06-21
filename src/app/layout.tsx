@@ -1,4 +1,6 @@
+import React from 'react'
 import type { Metadata } from "next";
+import Link from 'next/link';
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -17,7 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <script src="https://accounts.google.com/gsi/client" async defer></script>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <nav>
+          <ul>
+            <li><Link href="/">Home</Link></li>
+            <li><Link href="/about">About</Link></li>
+            <li><Link href="/contact">Contact</Link></li>
+          </ul>
+        </nav>
+        {children}
+      </body>
     </html>
   );
 }

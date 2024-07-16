@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../src/components/Modal.css';
+import '../../src/styles/modal.css';
 
 interface ModalProps {
   name: string;

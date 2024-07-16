@@ -1,15 +1,37 @@
 import { eq } from 'drizzle-orm';
 import { db } from './index';
-import { InsertUser,  SelectUser,  usersTable } from './schema';
+import {
+  InsertUser,
+  SelectUser,
+  usersTable,
+  InsertTier,
+  SelectTier,
+  tiersTable,
+  InsertPlayer,
+  SelectPlayer,
+  playersTable,
+  InsertTeam,
+  SelectTeam,
+  teamsTable,
+  InsertSeason,
+  SelectSeason,
+  seasonsTable,
+  InsertPlayerInstance,
+  SelectPlayerInstance,
+  playerInstanceTable,
+  InsertShot,
+  SelectShot,
+  shotsTable
+} from './schema';
 
+// User related queries
 export async function createUser(data: InsertUser) {
-  await db.insert(usersTable).values(data);
+  await db.insert(usersTable).values(data).execute();
 }
 
-export async function fetchUsers(): Promise<InsertUser[]> {
+export async function fetchUsers(): Promise<SelectUser[]> {
   return await db.select().from(usersTable).execute();
 }
-
 
 export async function getRoleByName(fullName: string): Promise<string | null> {
   const result = await db
@@ -23,4 +45,58 @@ export async function getRoleByName(fullName: string): Promise<string | null> {
 
   const user = result[0];
   return user ? user.role : null;
+}
+
+// Tier related queries
+export async function createTier(data: InsertTier) {
+  await db.insert(tiersTable).values(data).execute();
+}
+
+export async function fetchTiers(): Promise<SelectTier[]> {
+  return await db.select().from(tiersTable).execute();
+}
+
+// Player related queries
+export async function createPlayer(data: InsertPlayer) {
+  await db.insert(playersTable).values(data).execute();
+}
+
+export async function fetchPlayers(): Promise<SelectPlayer[]> {
+  return await db.select().from(playersTable).execute();
+}
+
+// Team related queries
+export async function createTeam(data: InsertTeam) {
+  await db.insert(teamsTable).values(data).execute();
+}
+
+export async function fetchTeams(): Promise<SelectTeam[]> {
+  return await db.select().from(teamsTable).execute();
+}
+
+// Season related queries
+export async function createSeason(data: InsertSeason) {
+  await db.insert(seasonsTable).values(data).execute();
+}
+
+export async function fetchSeasons(): Promise<SelectSeason[]> {
+  return await db.select().from(seasonsTable).execute();
+}
+
+// Player Instance related queries
+export async function createPlayerInstance(data: InsertPlayerInstance) {
+  await db.insert(playerInstanceTable).values(data).execute();
+}
+
+export async function fetchPlayerInstances(): Promise<SelectPlayerInstance[]> {
+  return await db.select().from(playerInstanceTable).execute();
+}
+
+// Shot related queries
+export async function createShot(data: InsertShot) {
+  await db.insert(shotsTable).values(data).execute();
+}
+
+export async function fetchShots(): Promise<SelectShot[]> {
+  return await db.select().from(shotsTable).execute();
 }

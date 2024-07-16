@@ -1,21 +1,20 @@
-import { integer, pgTable, serial, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-// Users table
+// Retaining the old users table
 export const usersTable = pgTable('users', {
-  userId: serial('user_id').primaryKey(),
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  role: text('role').notNull().default('General'), 
-  status: text('status').notNull() 
+  role: text('role').notNull().default('General')
 });
 
-// Tiers table
+// New schema definitions
 export const tiersTable = pgTable('tiers', {
   tierId: serial('tier_id').primaryKey(),
   tierName: text('tier_name').notNull(),
   color: text('color').notNull()
 });
 
-// Players table
 export const playersTable = pgTable('players', {
   playerId: serial('player_id').primaryKey(),
   name: text('name').notNull(),
@@ -24,13 +23,11 @@ export const playersTable = pgTable('players', {
     .references(() => tiersTable.tierId, { onDelete: 'cascade' })
 });
 
-// Teams table
 export const teamsTable = pgTable('teams', {
   teamId: serial('team_id').primaryKey(),
   teamName: text('team_name').notNull()
 });
 
-// Seasons table
 export const seasonsTable = pgTable('seasons', {
   seasonId: serial('season_id').primaryKey(),
   seasonName: text('season_name').notNull(),
@@ -40,7 +37,6 @@ export const seasonsTable = pgTable('seasons', {
   rules: text('rules').notNull()
 });
 
-// PlayerInstance table
 export const playerInstanceTable = pgTable('player_instance', {
   playerInstanceId: serial('player_instance_id').primaryKey(),
   playerId: integer('player_id')
@@ -55,7 +51,6 @@ export const playerInstanceTable = pgTable('player_instance', {
   shotsLeft: integer('shots_left').notNull()
 });
 
-// Shots table
 export const shotsTable = pgTable('shots', {
   shotId: serial('shot_id').primaryKey(),
   instanceId: integer('instance_id')

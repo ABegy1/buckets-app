@@ -15,6 +15,13 @@
       "when": 1721097647459,
       "tag": "0001_demonic_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1721098467171,
+      "tag": "0002_solid_ser_duncan",
+      "breakpoints": true
     }
   ]
 }

@@ -119,12 +119,7 @@ const HomePage = () => {
               <>
                 <li>
                   <Link href="/About">
-                    <a>Home Screen</a>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/Contact">
-                    <a>Score Display</a>
+                    <a>Enter Buckets</a>
                   </Link>
                 </li>
               </>

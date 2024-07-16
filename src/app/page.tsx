@@ -119,7 +119,7 @@ const HomePage = () => {
               <>
                 <li>
                   <Link href="/About">
-                    <a>Enter Buckets</a>
+                    <a>Main Touch Interface</a>
                   </Link>
                 </li>
               </>

@@ -2,11 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
-// import AddUser from '@/components/AddDummyUser';
-import './HomePage.css'; // Import the new CSS file
+import styles from './HomePage.module.css'; // Import the CSS module
 import Link from 'next/link';
 import AddUser from '@/components/AddDummyUser';
-
 const useUserRole = (fullName: string) => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +33,7 @@ const useUserRole = (fullName: string) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { role, loading } = useUserRole(user?.user_metadata.full_name ?? '');
+  const { role, loading  } = useUserRole(user?.user_metadata.full_name ?? '');
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -77,7 +75,6 @@ const HomePage = () => {
       addUser(user);
     }
   }, [user]);
-
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -91,12 +88,12 @@ const HomePage = () => {
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
+    <div className={styles.app}>
+      <header className={styles.appHeader}>
         <h1>Buckets</h1>
       </header>
-      <main className="app-content">
-        {!user ? (
+      <main className={styles.appContent}>
+      {!user ? (
           <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
         ) : (
           <div>
@@ -108,26 +105,27 @@ const HomePage = () => {
         )}
         <div>
           {role === 'Admin' ? (
-            <div className="role-message">Welcome, Admin!</div>
+            <div className={styles.roleMessage}>Welcome, Admin!</div>
           ) : (
-            <div className="role-message">Welcome, User!</div>
+            <div className={styles.roleMessage}>Welcome, User!</div>
           )}
         </div>
-        <nav>
-          <ul>
-            {role === 'Admin' && (
-              <>
-                <li>
-                  <Link href="/About">
-                    <a>Main Touch Interface</a>
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
-        </nav>
+        <nav className={styles.nav}>
+  <ul>
+    {role === 'Admin' && (
+      <>
+        <li>
+          <Link href="/About">Main Touch Interface</Link>
+        </li>
+        <li>
+          <Link href="/Contact">Standings</Link>
+        </li>
+      </>
+    )}
+  </ul>
+</nav>
       </main>
-      <footer className="app-footer">
+      <footer className={styles.appFooter}>
         <p>&copy; 2024 Buckets Game. All rights reserved.</p>
       </footer>
     </div>

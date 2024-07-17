@@ -1,0 +1,77 @@
+.body {
+  background-color: black;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: black;
+}
+
+.title {
+  margin-bottom: 20px;
+}
+
+.teams {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  gap: 20px;
+}
+
+.team {
+  border: 1px solid black;
+  padding: 20px;
+  margin: 5px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.teamTitle {
+  margin-bottom: 10px;
+  border-bottom: 1px solid black;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+.headerRow,
+.player,
+.teamStats {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid black;
+  padding: 5px 0;
+}
+
+.headerRow {
+  font-weight: bold;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.teamStats {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.teamStats span {
+  width: 50%;
+  text-align: center;
+}

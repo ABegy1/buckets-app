@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import styles from './About.module.css';
+import styles from './about.module.css';
 import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';

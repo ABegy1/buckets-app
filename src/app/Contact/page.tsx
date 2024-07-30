@@ -44,7 +44,7 @@ const useUserView = (fullName: string) => {
       .subscribe();
 
     return () => {
-      supabase.channel('user_view_updates').unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [fullName]);
 

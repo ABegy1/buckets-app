@@ -8,7 +8,6 @@ import NextSeasonModal from '@/components/NextSeason/NextSeason';
 import { supabase } from '@/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
-
 const useUserView = (fullName: string) => {
   const [view, setView] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +20,6 @@ const useUserView = (fullName: string) => {
           throw new Error('Failed to fetch user role');
         }
         const data = await response.json();
-        console.log(data)
         setView(data.view);
       } catch (error) {
         console.error(error);
@@ -30,15 +28,16 @@ const useUserView = (fullName: string) => {
       }
     };
 
-    fetchUserRole();
+    if (fullName) {
+      fetchUserRole();
+    }
   }, [fullName]);
 
-  return { view, loading };
+  return { view, setView, loading };
 };
 
 const About = () => {
   const [user, setUser] = useState<User | null>(null);
-  
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -57,9 +56,7 @@ const About = () => {
     };
   }, []);
 
-
-  const { view } = useUserView(user?.user_metadata.full_name ?? '');
-
+  const { view, setView } = useUserView(user?.user_metadata.full_name ?? '');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedName, setSelectedName] = useState('');
@@ -81,7 +78,7 @@ const About = () => {
   };
 
   const handleStandings = async () => {
-    let newView;
+    let newView: string | undefined = undefined;
     if (view === 'Agent') {
       newView = 'Standings';
     } else if (view === 'Standings') {
@@ -90,7 +87,6 @@ const About = () => {
   
     try {
       if (user) {
-        console.log('Sending user data:', user.user_metadata.full_name, newView);
         const response = await fetch('/api/addUser', {
           method: 'POST',
           headers: {
@@ -103,15 +99,13 @@ const About = () => {
           throw new Error('Failed to update user view');
         } else {
           const data = await response.json();
-          console.log('Response data:', data);
+          setView(newView || null);  // Update the view state here
         }
       }
     } catch (error) {
       console.error(error);
     }
   };
-   
-    
 
   const handleCloseSidebar = () => {
     setIsSidebarOpen(false);
@@ -196,5 +190,3 @@ const About = () => {
 About.displayName = 'About';
 
 export default About;
-
-

@@ -3,53 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styles from './SeasonStandings.module.css';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
-
-const useUserView = (fullName: string) => {
-  const [view, setView] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchUserRole = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch user view');
-      }
-      const data = await response.json();
-      setView(data.view);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fullName]);
-
-  useEffect(() => {
-    if (fullName) {
-      fetchUserRole();
-    }
-  }, [fullName, fetchUserRole]);
-
-  useEffect(() => {
-    if (!fullName) return;
-
-    const channel = supabase
-      .channel('user_view_updates')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'users', filter: `full_name=eq.${fullName}` },
-        (payload) => {
-          setView(payload.new.view);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fullName, view]);
-
-  return { view, setView, loading, fetchUserRole };
-};
+import useUserView from '@/hooks/useUserView';
 
 type TeamProps = {
   teamName: string;
@@ -81,7 +35,7 @@ const Team = ({ teamName, players, stats }: TeamProps) => (
 
 const SeasonStandings = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [fullName, setFullName] = useState<string>('');
+  const [fullName, setFullName] = useState('');
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -106,13 +60,7 @@ const SeasonStandings = () => {
     };
   }, []);
 
-  const { view, setView, fetchUserRole } = useUserView(fullName);
-
-  useEffect(() => {
-    if (fullName) {
-      fetchUserRole();
-    }
-  }, [fullName, fetchUserRole]);
+  const { view, loading } = useUserView(fullName);
 
   const teams = [
     {
@@ -150,16 +98,20 @@ const SeasonStandings = () => {
   return (
     <div className={styles.container}>
       <h1>{view === 'Agent' ? 'Free Agency' : 'Season Standings'}</h1>
-      <div className={styles.teams}>
-        {teams.map((team, index) => (
-          <Team
-            key={index}
-            teamName={team.name}
-            players={team.players}
-            stats={team.stats}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div className={styles.teams}>
+          {teams.map((team, index) => (
+            <Team
+              key={index}
+              teamName={team.name}
+              players={team.players}
+              stats={team.stats}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -55,10 +55,10 @@ const SeasonStandings = () => {
 
   const { view } = useUserView(user?.user_metadata.full_name ?? '');
 
-  if (view === 'Standings'){
+  if (view === 'Agent'){
     return (
       <div className={styles.container}>
-        <h1>Season Standings</h1>
+        <h1>Free Agency</h1>
         <div className={styles.teams}>
           <div className={styles.team}>
             <h2>Team 1</h2>
@@ -164,7 +164,7 @@ const SeasonStandings = () => {
   else {
   return (
     <div className={styles.container}>
-      <h1>Free Agency</h1>
+      <h1>Season Standings</h1>
       <div className={styles.teams}>
         <div className={styles.team}>
           <h2>Team 1</h2>

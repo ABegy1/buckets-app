@@ -33,6 +33,7 @@ const useUserRole = (fullName: string) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
+  console.log(user);
   const { role, loading  } = useUserRole(user?.user_metadata.full_name ?? '');
 
   useEffect(() => {

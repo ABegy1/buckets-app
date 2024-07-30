@@ -1,14 +1,22 @@
-'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './SeasonStandings.module.css';
-import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
-import useUserView from '@/hooks/useUserView';
+import useUserView from '@/hooks/useUserView'; // Correctly import the hook
+import { User } from '@supabase/supabase-js';
+
+type Player = {
+  name: string;
+  shots: number;
+  points: number;
+};
 
 type TeamProps = {
   teamName: string;
-  players: Array<{ name: string; shots: number; points: number }>;
-  stats: { shots: string; score: string };
+  players: Player[];
+  stats: {
+    shots: string;
+    score: string;
+  };
 };
 
 const Team = ({ teamName, players, stats }: TeamProps) => (

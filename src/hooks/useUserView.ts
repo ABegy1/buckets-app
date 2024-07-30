@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/supabaseClient';
 
 const useUserView = (fullName: string) => {
-  const [view, setView] = useState(null);
+  const [view, setView] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserRole = useCallback(async () => {

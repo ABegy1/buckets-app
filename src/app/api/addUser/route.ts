@@ -2,16 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createUser, getRoleByName, getViewByName, updateUserView } from '@/db/queries';
 
 export async function POST(req: NextRequest) {
-  const userData = await req.json();
-  console.log(userData);
+  const { name, view } = await req.json();
+  console.log('Received request to update user view:', { name, view });
+
+  if (!name || !view) {
+    console.error('Name or view not provided:', { name, view });
+    return NextResponse.json({ error: 'Name or view not provided' }, { status: 400 });
+  }
 
   try {
-    console.log('Received user data:', userData);
-    await createUser(userData);
-    return NextResponse.json({ message: 'User added successfully' }, { status: 200 });
+    await updateUserView(name, view);
+    console.log('User view updated successfully:', { name, view });
+    return NextResponse.json({ message: 'User view updated successfully' }, { status: 200 });
   } catch (error) {
-    console.error('Failed to add user:', error);
-    return NextResponse.json({ error: 'Failed to add user' }, { status: 500 });
+    console.error('Failed to update user view:', error);
+    return NextResponse.json({ error: 'Failed to update user view' }, { status: 500 });
   }
 }
 
@@ -33,22 +38,5 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch user role/view:', error);
     return NextResponse.json({ error: 'Failed to fetch user role/view' }, { status: 500 });
-  }
-}
-
-export async function PUT(req: NextRequest) {
-  const { fullName, view } = await req.json();
-  console.log(fullName, view);
-
-  if (!fullName || !view) {
-    return NextResponse.json({ error: 'Full name or view not provided' }, { status: 400 });
-  }
-
-  try {
-    await updateUserView(fullName, view);
-    return NextResponse.json({ message: 'User view updated successfully' }, { status: 200 });
-  } catch (error) {
-    console.error('Failed to update user view:', error);
-    return NextResponse.json({ error: 'Failed to update user view' }, { status: 500 });
   }
 }

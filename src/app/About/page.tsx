@@ -81,36 +81,30 @@ const About = () => {
   };
 
   const handleStandings = async () => {
-
-    let newView;
-if (view) {
+    const newView = view === 'Standings' ? 'Agent' : 'Standings';
+    console.log(newView);
   
-  if (view === 'Standings') {
-    newView = 'Agent';
-  } else if (view === 'Agent') {
-    newView = 'Standings';
-  }
-  console.log(newView);
-  try {
-    if (user) {
-      const response = await fetch('/api/addUser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update user view');
+    try {
+      if (user) {
+        const response = await fetch('/api/addUser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to update user view');
+        } else {
+          const data = await response.json();
+          console.log('Response data:', data);
+        }
       }
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-}
+  };
    
     
 

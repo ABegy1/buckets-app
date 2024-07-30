@@ -62,13 +62,19 @@ export async function getViewByName(fullName: string): Promise<string | null> {
 }
 
 export async function updateUserView(fullName: string, view: string): Promise<void> {
-  await db
+  console.log('Updating user view:', { fullName, view });
+  const result = await db
     .update(usersTable)
     .set({
       View: view,
     })
     .where(eq(usersTable.name, fullName))
     .execute();
+
+  console.log('Update result:', result);
+  if (!result) {
+    throw new Error('Failed to update user view in the database');
+  }
 }
 // Tier related queries
 export async function createTier(data: InsertTier) {

@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const { fullName, view } = await req.json();
+  console.log(fullName, view);
 
   if (!fullName || !view) {
     return NextResponse.json({ error: 'Full name or view not provided' }, { status: 400 });

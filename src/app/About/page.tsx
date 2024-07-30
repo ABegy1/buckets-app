@@ -60,7 +60,6 @@ const About = () => {
 
   const { view } = useUserView(user?.user_metadata.full_name ?? '');
 
-  console.log(view);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedName, setSelectedName] = useState('');
@@ -84,31 +83,31 @@ const About = () => {
   const handleStandings = async () => {
 
     let newView;
-console.log(view)
 if (view) {
+  
   if (view === 'Standings') {
     newView = 'Agent';
   } else if (view === 'Agent') {
     newView = 'Standings';
   }
   console.log(newView);
-  try {
-    if (user) {
-      const response = await fetch('/api/addUser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
-      });
+  // try {
+  //   if (user) {
+  //     const response = await fetch('/api/addUser', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to update user view');
-      }
-    }
-  } catch (error) {
-    console.error(error);
-  }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update user view');
+  //     }
+  //   }
+  // } catch (error) {
+  //   console.error(error);
+  // }
 };
 
 }

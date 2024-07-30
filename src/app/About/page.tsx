@@ -81,8 +81,12 @@ const About = () => {
   };
 
   const handleStandings = async () => {
-    const newView = view === 'Standings' ? 'Agent' : 'Standings';
-    console.log(newView);
+    let newView;
+    if (view === 'Agent') {
+      newView = 'Standings';
+    } else if (view === 'Standings') {
+      newView = 'Agent';
+    }
   
     try {
       if (user) {

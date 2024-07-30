@@ -84,7 +84,7 @@ const About = () => {
     } else if (view === 'Standings') {
       newView = 'Agent';
     }
-  
+  console.log(newView);
     try {
       if (user) {
         const response = await fetch('/api/addUser', {

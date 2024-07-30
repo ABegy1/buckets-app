@@ -89,6 +89,8 @@ const SeasonStandings = () => {
 
   const { view, setView, fetchUserRole } = useUserView(fullName);
 
+  console.log(view);
+
   useEffect(() => {
     if (fullName) {
       fetchUserRole();

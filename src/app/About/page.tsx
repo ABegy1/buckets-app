@@ -86,6 +86,7 @@ const About = () => {
   
     try {
       if (user) {
+        console.log('Sending user data:', user.user_metadata.full_name, newView);
         const response = await fetch('/api/addUser', {
           method: 'POST',
           headers: {

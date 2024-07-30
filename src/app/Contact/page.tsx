@@ -89,13 +89,16 @@ const SeasonStandings = () => {
 
   const { view, setView, fetchUserRole } = useUserView(fullName);
 
-  console.log(view);
-
   useEffect(() => {
     if (fullName) {
       fetchUserRole();
     }
   }, [fullName, fetchUserRole]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchUserRole, 5000); // Polling every 5 seconds
+    return () => clearInterval(interval);
+  }, [fetchUserRole]);
 
   const teams = [
     {

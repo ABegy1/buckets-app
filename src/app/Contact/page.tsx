@@ -46,7 +46,7 @@ const useUserView = (fullName: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fullName]);
+  }, [fullName, view]);
 
   return { view, setView, loading, fetchUserRole };
 };

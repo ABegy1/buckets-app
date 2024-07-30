@@ -1,26 +1,73 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styles from './SeasonStandings.module.css';
 import { supabase } from '@/supabaseClient';
-import useUserView from '@/hooks/useUserView'; // Correctly import the hook
 import { User } from '@supabase/supabase-js';
 
-type Player = {
+interface Player {
   name: string;
   shots: number;
   points: number;
-};
+}
 
-type TeamProps = {
+interface TeamProps {
   teamName: string;
   players: Player[];
   stats: {
     shots: string;
     score: string;
   };
+}
+
+const useUserView = (fullName: string) => {
+  const [view, setView] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUserRole = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user view');
+      }
+      const data = await response.json();
+      setView(data.view);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fullName]);
+
+  useEffect(() => {
+    if (fullName) {
+      fetchUserRole();
+    }
+  }, [fullName, fetchUserRole]);
+
+  useEffect(() => {
+    if (!fullName) return;
+
+    const channel = supabase
+      .channel('table-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        (payload: any) => {
+          console.log('Realtime update received:', payload);
+          fetchUserRole();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fullName, fetchUserRole]);
+
+  return { view, loading };
 };
 
-const Team = ({ teamName, players, stats }: TeamProps) => (
+const Team: React.FC<TeamProps> = ({ teamName, players, stats }) => (
   <div className={styles.team}>
     <h2>{teamName}</h2>
     <div className={styles.headerRow}>
@@ -42,9 +89,9 @@ const Team = ({ teamName, players, stats }: TeamProps) => (
   </div>
 );
 
-const SeasonStandings = () => {
+const SeasonStandings: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState<string>('');
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -76,7 +123,6 @@ const SeasonStandings = () => {
       console.log('View updated:', view);
     }
   }, [view]);
-
 
   const teams = [
     {
@@ -113,7 +159,7 @@ const SeasonStandings = () => {
 
   return (
     <div className={styles.container}>
-      <h1>{view === 'Agent' ? 'Free Agency' : 'Season Standings'}</h1>
+      <h1>{view === 'Free Agency' ? 'Free Agency' : 'Season Standings'}</h1>
       {loading ? (
         <p>Loading...</p>
       ) : (

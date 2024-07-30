@@ -159,7 +159,7 @@ const SeasonStandings: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1>{view === 'Free Agency' ? 'Free Agency' : 'Season Standings'}</h1>
+      <h1>{view === 'Agent' ? 'Free Agency' : 'Season Standings'}</h1>
       {loading ? (
         <p>Loading...</p>
       ) : (

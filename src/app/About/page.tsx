@@ -94,7 +94,7 @@ if (view) {
   console.log(newView);
   try {
     if (user) {
-      const response = await fetch('/api/updateUserView', {
+      const response = await fetch('/api/addUser', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -29,6 +29,25 @@ const useUserView = (fullName: string) => {
     }
   }, [fullName, fetchUserRole]);
 
+  useEffect(() => {
+    if (!fullName) return;
+
+    const channel = supabase
+      .channel('user_view_updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `full_name=eq.${fullName}` },
+        (payload) => {
+          setView(payload.new.view);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.channel('user_view_updates').unsubscribe();
+    };
+  }, [fullName]);
+
   return { view, setView, loading, fetchUserRole };
 };
 
@@ -94,11 +113,6 @@ const SeasonStandings = () => {
       fetchUserRole();
     }
   }, [fullName, fetchUserRole]);
-
-  useEffect(() => {
-    const interval = setInterval(fetchUserRole, 5000); // Polling every 5 seconds
-    return () => clearInterval(interval);
-  }, [fetchUserRole]);
 
   const teams = [
     {

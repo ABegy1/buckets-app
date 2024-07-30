@@ -91,23 +91,23 @@ if (view) {
     newView = 'Standings';
   }
   console.log(newView);
-  // try {
-  //   if (user) {
-  //     const response = await fetch('/api/addUser', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
-  //     });
+  try {
+    if (user) {
+      const response = await fetch('/api/addUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
+      });
 
-  //     if (!response.ok) {
-  //       throw new Error('Failed to update user view');
-  //     }
-  //   }
-  // } catch (error) {
-  //   console.error(error);
-  // }
+      if (!response.ok) {
+        throw new Error('Failed to update user view');
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 }

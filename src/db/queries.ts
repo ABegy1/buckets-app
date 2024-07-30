@@ -47,6 +47,29 @@ export async function getRoleByName(fullName: string): Promise<string | null> {
   return user ? user.role : null;
 }
 
+export async function getViewByName(fullName: string): Promise<string | null> {
+  const result = await db
+    .select({
+      view: usersTable.View,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.name, fullName))
+    .limit(1)
+    .execute();
+
+  const user = result[0];
+  return user ? user.view : null;
+}
+
+export async function updateUserView(fullName: string, view: string): Promise<void> {
+  await db
+    .update(usersTable)
+    .set({
+      View: view,
+    })
+    .where(eq(usersTable.name, fullName))
+    .execute();
+}
 // Tier related queries
 export async function createTier(data: InsertTier) {
   await db.insert(tiersTable).values(data).execute();

@@ -38,7 +38,7 @@ const useUserView = (fullName: string) => {
         { event: 'UPDATE', schema: 'public', table: 'users', filter: `full_name=eq.${fullName}` },
         (payload) => {
           console.log('Realtime update received:', payload);
-          setView(payload.new.view);
+          setView(payload.new.View); // Ensure this matches the field name in your database
         }
       )
       .subscribe();

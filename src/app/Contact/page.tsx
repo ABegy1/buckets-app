@@ -71,6 +71,13 @@ const SeasonStandings = () => {
 
   const { view, loading } = useUserView(fullName);
 
+  useEffect(() => {
+    if (view) {
+      console.log('View updated:', view);
+    }
+  }, [view]);
+
+
   const teams = [
     {
       name: 'Team 1',

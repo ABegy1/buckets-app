@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import styles from './SeasonStandings.module.css';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/supabaseClient';
@@ -8,28 +8,28 @@ const useUserView = (fullName: string) => {
   const [view, setView] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch user view');
-        }
-        const data = await response.json();
-        setView(data.view);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+  const fetchUserRole = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user view');
       }
-    };
-
-    if (fullName) {
-      fetchUserRole();
+      const data = await response.json();
+      setView(data.view);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   }, [fullName]);
 
-  return { view, setView, loading };
+  useEffect(() => {
+    if (fullName) {
+      fetchUserRole();
+    }
+  }, [fullName, fetchUserRole]);
+
+  return { view, setView, loading, fetchUserRole };
 };
 
 type TeamProps = {
@@ -62,17 +62,24 @@ const Team = ({ teamName, players, stats }: TeamProps) => (
 
 const SeasonStandings = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [fullName, setFullName] = useState<string>('');
 
   useEffect(() => {
     const getUserSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      if (session?.user?.user_metadata?.full_name) {
+        setFullName(session.user.user_metadata.full_name);
+      }
     };
 
     getUserSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user?.user_metadata?.full_name) {
+        setFullName(session.user.user_metadata.full_name);
+      }
     });
 
     return () => {
@@ -80,7 +87,13 @@ const SeasonStandings = () => {
     };
   }, []);
 
-  const { view } = useUserView(user?.user_metadata.full_name ?? '');
+  const { view, setView, fetchUserRole } = useUserView(fullName);
+
+  useEffect(() => {
+    if (fullName) {
+      fetchUserRole();
+    }
+  }, [fullName, fetchUserRole]);
 
   const teams = [
     {

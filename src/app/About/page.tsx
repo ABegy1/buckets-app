@@ -8,9 +8,23 @@ import NextSeasonModal from '@/components/NextSeason/NextSeason';
 import { supabase } from '@/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
+interface TierWithPlayers {
+  tier_name: string;
+  color: string;
+  players: {
+    name: string;
+    player_id: number;
+  }[];
+}
+
+
+
+
 const useUserView = (fullName: string) => {
   const [view, setView] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -36,8 +50,17 @@ const useUserView = (fullName: string) => {
   return { view, setView, loading };
 };
 
+
+
 const About = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [tiers, setTiers] = useState<TierWithPlayers[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedName, setSelectedName] = useState('');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null); 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false);
+  const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const getUserSession = async () => {
@@ -56,16 +79,28 @@ const About = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchTiersAndPlayers = async () => {
+      const { data: tiersData, error: tiersError } = await supabase
+        .from('tiers')
+        .select('tier_name, color, players(name, player_id)');
+
+      if (tiersError) {
+        console.error('Error fetching tiers:', tiersError);
+      } else {
+        setTiers(tiersData || []);
+      }
+    };
+
+    fetchTiersAndPlayers();
+  }, []);
+
+
   const { view, setView } = useUserView(user?.user_metadata.full_name ?? '');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedName, setSelectedName] = useState('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false);
-  const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false);
-
-  const handleOpenModal = (name: string) => {
+  const handleOpenModal = (playerId: number, name: string) => {
     setSelectedName(name);
+    setSelectedPlayerId(playerId);  // Save the player ID
     setIsModalOpen(true);
   };
 
@@ -84,7 +119,7 @@ const About = () => {
     } else if (view === 'Standings') {
       newView = 'Agent';
     }
-  console.log(newView);
+    console.log(newView);
     try {
       if (user) {
         const response = await fetch('/api/addUser', {
@@ -94,7 +129,7 @@ const About = () => {
           },
           body: JSON.stringify({ name: user.user_metadata.full_name, view: newView }),
         });
-  
+
         if (!response.ok) {
           throw new Error('Failed to update user view');
         } else {
@@ -143,35 +178,20 @@ const About = () => {
         </div>
 
         <div className={styles.players}>
-          <div className={styles.column}>
-            <div className={styles.header}>Green</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Stephen')}>Stephen</div>
-            <div className={styles.box} onClick={() => handleOpenModal('David')}>David</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Brandon')}>Brandon</div>
-          </div>
-          <div className={styles.column}>
-            <div className={styles.header}>Yellow</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Andrew')}>Andrew</div>
-            <div className={styles.box} onClick={() => handleOpenModal('McNay')}>McNay</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Jay')}>Jay</div>
-          </div>
-          <div className={styles.column}>
-            <div className={styles.header}>Red</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Jarrod')}>Jarrod</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Brad')}>Brad</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Jason')}>Jason</div>
-          </div>
-          <div className={styles.column}>
-            <div className={styles.header}>Black</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Ryan')}>Ryan</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Kevin')}>Kevin</div>
-            <div className={styles.box} onClick={() => handleOpenModal('Malson')}>Malson</div>
-          </div>
+  {tiers.map((tier) => (
+    <div key={tier.tier_name} className={styles.column}>
+      <div className={styles.header}>{tier.tier_name}</div>
+      {tier.players.map((player) => (
+        <div key={player.player_id} className={styles.box} onClick={() => handleOpenModal(player.player_id, player.name)}>
+          {player.name}
+        </div>
+      ))}
+    </div>
+  ))}
         </div>
       </div>
 
-      <Modal name={selectedName} isOpen={isModalOpen} onClose={handleCloseModal} />
-      <Sidebar 
+      <Modal name={selectedName} isOpen={isModalOpen} onClose={handleCloseModal}  playerId={selectedPlayerId ?? 0} />      <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={handleCloseSidebar} 
         onCurrentSeasonClick={handleOpenCurrentSeasonModal} 

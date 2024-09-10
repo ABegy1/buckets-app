@@ -1,179 +1,165 @@
 'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './SeasonStandings.module.css';
 import { supabase } from '@/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
+interface Team {
+  team_id: number;
+  team_name: string;
+}
+
+interface PlayerInstance {
+  player_instance_id: number;
+  player_id: number;
+  season_id: number;
+  team_id: number;
+  shots_left: number;
+}
+
 interface Player {
+  player_id: number;
   name: string;
-  shots: number;
-  points: number;
+  tier_id: number;
 }
 
-interface TeamProps {
-  teamName: string;
-  players: Player[];
-  stats: {
-    shots: string;
-    score: string;
-  };
+interface Shot {
+  shot_id: number;
+  instance_id: number;
+  shot_date: string;
+  result: string;
+  tier_id: number;
 }
 
-const useUserView = (fullName: string) => {
-  const [view, setView] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+interface TeamWithPlayers {
+  team_name: string;
+  players: {
+    name: string;
+    shots_left: number;
+    total_points: number;
+  }[];
+  total_shots: number;
+  total_points: number;
+}
 
-  const fetchUserRole = useCallback(async () => {
+const SeasonStandings: React.FC = () => {
+  const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
+
+  const fetchTeamsAndPlayers = async () => {
     try {
-      const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch user view');
-      }
-      const data = await response.json();
-      setView(data.view);
+      // Fetch all teams
+      const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
+      if (teamsError) throw teamsError;
+
+      // Process each team
+      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
+        teamsData.map(async (team: Team) => {
+          // Fetch player instances for the team
+          const { data: playerInstances, error: playerInstancesError } = await supabase
+            .from('player_instance')
+            .select('*')
+            .eq('team_id', team.team_id);
+          if (playerInstancesError) throw playerInstancesError;
+
+          // Process each player instance
+          const playersWithStats = await Promise.all(
+            playerInstances.map(async (instance: PlayerInstance) => {
+              // Fetch player details
+              const { data: player, error: playerError } = await supabase
+                .from('players')
+                .select('*')
+                .eq('player_id', instance.player_id)
+                .single();
+              if (playerError) throw playerError;
+
+              // Fetch shots for this player instance
+              const { data: shots, error: shotsError } = await supabase
+                .from('shots')
+                .select('*')
+                .eq('instance_id', instance.player_instance_id);
+              if (shotsError) throw shotsError;
+
+              // Calculate total points
+              const totalPoints = shots.reduce((acc: number, shot: Shot) => acc + parseInt(shot.result, 10), 0);
+
+              return {
+                name: player.name,
+                shots_left: instance.shots_left,
+                total_points: totalPoints,
+              };
+            })
+          );
+
+          // Calculate team totals
+          const totalShots = playersWithStats.reduce((acc: number, player) => acc + player.shots_left, 0);
+          const totalPoints = playersWithStats.reduce((acc: number, player) => acc + player.total_points, 0);
+
+          return {
+            team_name: team.team_name,
+            players: playersWithStats,
+            total_shots: totalShots,
+            total_points: totalPoints,
+          };
+        })
+      );
+
+      setTeams(teamsWithPlayers);
     } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching teams and players:', error);
     }
-  }, [fullName]);
+  };
 
   useEffect(() => {
-    if (fullName) {
-      fetchUserRole();
-    }
-  }, [fullName, fetchUserRole]);
+    fetchTeamsAndPlayers();
 
-  useEffect(() => {
-    if (!fullName) return;
+    const teamChannel = supabase
+      .channel('team-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeamsAndPlayers)
+      .subscribe();
 
-    const channel = supabase
-      .channel('table-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'users' },
-        (payload: any) => {
-          console.log('Realtime update received:', payload);
-          fetchUserRole();
-        }
-      )
+    const playerInstanceChannel = supabase
+      .channel('player-instance-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+      .subscribe();
+
+    const shotChannel = supabase
+      .channel('shots-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchTeamsAndPlayers)
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fullName, fetchUserRole]);
-
-  return { view, loading };
-};
-
-const Team: React.FC<TeamProps> = ({ teamName, players, stats }) => (
-  <div className={styles.team}>
-    <h2>{teamName}</h2>
-    <div className={styles.headerRow}>
-      <span>Name</span>
-      <span>Shots</span>
-      <span>Points</span>
-    </div>
-    {players.map((player, index) => (
-      <div key={index} className={styles.player}>
-        <span>{player.name}</span>
-        <span>{player.shots}</span>
-        <span>{player.points}</span>
-      </div>
-    ))}
-    <div className={styles.teamStats}>
-      <span>{stats.shots}</span>
-      <span>{stats.score}</span>
-    </div>
-  </div>
-);
-
-const SeasonStandings: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [fullName, setFullName] = useState<string>('');
-
-  useEffect(() => {
-    const getUserSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      if (session?.user?.user_metadata?.full_name) {
-        setFullName(session.user.user_metadata.full_name);
-      }
-    };
-
-    getUserSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user?.user_metadata?.full_name) {
-        setFullName(session.user.user_metadata.full_name);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
+      supabase.removeChannel(teamChannel);
+      supabase.removeChannel(playerInstanceChannel);
+      supabase.removeChannel(shotChannel);
     };
   }, []);
 
-  const { view, loading } = useUserView(fullName);
-
-  useEffect(() => {
-    if (view) {
-      console.log('View updated:', view);
-    }
-  }, [view]);
-
-  const teams = [
-    {
-      name: 'Team 1',
-      players: [
-        { name: 'Ryan', shots: 40, points: 40 },
-        { name: 'Brad', shots: 40, points: 0 },
-        { name: 'McNay', shots: 30, points: 11 },
-        { name: 'David', shots: 20, points: 10 },
-      ],
-      stats: { shots: 'Shots Remaining: 130', score: 'Total Score: 21' }
-    },
-    {
-      name: 'Team 2',
-      players: [
-        { name: 'Mason', shots: 40, points: 0 },
-        { name: 'Jarrod', shots: 40, points: 0 },
-        { name: 'Jay', shots: 40, points: 0 },
-        { name: 'Zeiker', shots: 40, points: 0 },
-      ],
-      stats: { shots: 'Team Shots: 160', score: 'Team Score: 0' }
-    },
-    {
-      name: 'Team 3',
-      players: [
-        { name: 'Alex', shots: 50, points: 20 },
-        { name: 'Jordan', shots: 35, points: 15 },
-        { name: 'Chris', shots: 25, points: 10 },
-        { name: 'Taylor', shots: 45, points: 30 },
-      ],
-      stats: { shots: 'Shots Remaining: 100', score: 'Total Score: 75' }
-    },
-  ];
-
   return (
     <div className={styles.container}>
-      <h1>{view === 'Agent' ? 'Free Agency' : 'Season Standings'}</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className={styles.teams}>
-          {teams.map((team, index) => (
-            <Team
-              key={index}
-              teamName={team.name}
-              players={team.players}
-              stats={team.stats}
-            />
-          ))}
-        </div>
-      )}
+      <h1>Season Standings</h1>
+      <div className={styles.teams}>
+        {teams.map((team, index) => (
+          <div key={index} className={styles.team}>
+            <h2>{team.team_name}</h2>
+            <div className={styles.headerRow}>
+              <span>Name</span>
+              <span>Shots Left</span>
+              <span>Total Points</span>
+            </div>
+            {team.players.map((player, playerIndex) => (
+              <div key={playerIndex} className={styles.player}>
+                <span>{player.name}</span>
+                <span>{player.shots_left}</span>
+                <span>{player.total_points}</span>
+              </div>
+            ))}
+            <div className={styles.teamStats}>
+              <span>Total Shots Remaining: {team.total_shots}</span>
+              <span>Total Score: {team.total_points}</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

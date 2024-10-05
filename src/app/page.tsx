@@ -34,12 +34,12 @@ const useUserRole = (fullName: string | null) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Track if loading is in progress
+  const [authChecked, setAuthChecked] = useState(false); // Track if authentication check is done
   const router = useRouter(); // For navigation
 
   // Fetch the user role once user is signed in
   const { role } = useUserRole(user?.user_metadata.full_name ?? null);
-  console.log(user, role);
 
   // Fetch user session and update state
   useEffect(() => {
@@ -51,6 +51,7 @@ const HomePage = () => {
         setUser(session?.user ?? null);
       }
       setLoading(false); // Loading done after checking session
+      setAuthChecked(true); // Authentication check is complete
     };
 
     getUserSession();
@@ -72,7 +73,7 @@ const HomePage = () => {
 
   // Automatically handle sign-in if no user is authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (authChecked && !loading && !user) {
       const signInWithGoogle = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -82,7 +83,7 @@ const HomePage = () => {
 
       signInWithGoogle();
     }
-  }, [loading, user]);
+  }, [authChecked, loading, user]);
 
   // Handle role-based redirection after session and role are both loaded
   useEffect(() => {
@@ -95,9 +96,9 @@ const HomePage = () => {
     }
   }, [user, role, router]);
 
-  // Show a loading spinner or message until authentication is complete
-  if (loading) {
-    return <div>Loading...</div>;
+  // Prevent rendering of the page until the authentication check is complete
+  if (!authChecked) {
+    return <div>Loading...</div>; // Optionally display a loading spinner or message
   }
 
   // The rest of the component renders only after authentication

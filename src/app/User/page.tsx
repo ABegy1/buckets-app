@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './UserPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 interface Team {
   team_id: number;
@@ -43,7 +44,7 @@ interface TeamWithPlayers {
 
 const UserPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
-
+  const router = useRouter();
   // Function to fetch teams and player data
   const fetchTeamsAndPlayers = async () => {
     try {
@@ -165,7 +166,16 @@ const UserPage: React.FC = () => {
               </div>
             ))}
           </div>
-          <button className={styles.btn} onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
+          <button className={styles.btn} onClick={async () => {
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+              router.push('/'); // Ensure the user is redirected to sign-in page
+            } else {
+              console.error('Sign out error:', error.message);
+            }
+          }}>
+            Sign Out
+          </button>
         </div>
       </main>
       <footer className={styles.userFooter}>
@@ -174,5 +184,4 @@ const UserPage: React.FC = () => {
     </div>
   );
 };
-
 export default UserPage;

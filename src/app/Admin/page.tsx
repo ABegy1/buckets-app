@@ -157,7 +157,6 @@ const AdminPage = () => {
         <h1>Admin Dashboard</h1>
       </header>
       <main className={styles.adminContent}>
-        <p>Welcome, Admin! You have successfully been redirected to the admin dashboard.</p>
         <button className={styles.btn} onClick={handleSignOut}>Sign Out</button>
 
         <div className={styles.container}>

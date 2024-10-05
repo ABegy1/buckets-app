@@ -88,9 +88,9 @@ const HomePage = () => {
   useEffect(() => {
     if (user && role) {
       if (role === 'Admin') {
-        router.push('/admin'); // Redirect to admin page
+        router.push('/Admin'); // Redirect to admin page
       } else {
-        router.push('/user'); // Redirect to user page
+        router.push('/User'); // Redirect to user page
       }
     }
   }, [user, role, router]);

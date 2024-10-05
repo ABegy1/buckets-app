@@ -1,3 +1,4 @@
+/* Existing NextSeasonModal Styles */
 .nextSeasonModal {
   position: fixed;
   top: 0;
@@ -17,6 +18,16 @@
   border-radius: 8px;
   width: 80%;
   max-width: 500px;
+}
+
+.closeButton {
+  /* position: absolute; */
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
 }
 
 .toggleButtons {
@@ -82,4 +93,78 @@
 
 .globalButton:hover {
   background: #d0d0d0;
+}
+
+/* New EditPlayerModal and Backdrop Styles */
+
+/* Backdrop to prevent interactions with the rest of the page */
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);  /* Darker to emphasize blocking */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100; /* Higher than the main modal */
+}
+
+/* Modal container for editing the player */
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1200;
+}
+
+/* Modal content layout */
+.modalContent {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Styling for the form inside the modal */
+.modalContent input,
+.modalContent select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+.modalContent select {
+  background-color: #f0f0f0;
+}
+
+/* Modal action buttons */
+.modalActions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.modalActions button {
+  background: #e0e0e0;
+  color: black;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.modalActions button:hover {
+  background: #d0d0d0;
+}
+
+/* Lock the NextSeasonModal when the EditPlayerModal is open */
+.modalLocked {
+  pointer-events: none; /* Disable interactions */
+  opacity: 0.5; /* Dim the background modal */
 }

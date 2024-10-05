@@ -1,10 +1,8 @@
-'use client';
+'use client'; // Required in Next.js App Router
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation'; // For navigation in App Router
-import styles from './HomePage.module.css'; // Import the CSS module
-import AddUser from '@/components/AddDummyUser';
+import { useRouter } from 'next/navigation';
 
 const useUserRole = (fullName: string | null) => {
   const [role, setRole] = useState<string | null>(null);
@@ -96,33 +94,8 @@ const HomePage = () => {
     }
   }, [user, role, router]);
 
-  // Prevent rendering of the page until the authentication check is complete
-  if (!authChecked) {
-    return <div>Loading...</div>; // Optionally display a loading spinner or message
-  }
-
-  // The rest of the component renders only after authentication
-  return (
-    <div className={styles.app}>
-      <header className={styles.appHeader}>
-        <h1>Buckets</h1>
-      </header>
-      <main className={styles.appContent}>
-        {user && (
-          <div>
-            <p>Welcome, {user.email}</p>
-            <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
-            {user && <AddUser name={user.user_metadata.full_name } email={user.email?? ''} />}
-          </div>
-        )}
-      </main>
-      <footer className={styles.appFooter}>
-        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
-      </footer>
-    </div>
-  );
+  // Prevent rendering until the authentication check is complete
+  return null;
 };
-
-HomePage.displayName = 'HomePage';
 
 export default HomePage;

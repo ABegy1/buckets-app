@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './SeasonStandings.module.css';
 import { supabase } from '@/supabaseClient';
-import { User } from '@supabase/supabase-js';
 
 interface Team {
   team_id: number;

@@ -1,8 +1,10 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { useRouter } from 'next/navigation'; // For navigation in App Router
 import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation'; // For navigation in App Router
+import styles from './HomePage.module.css'; // Import the CSS module
+import AddUser from '@/components/AddDummyUser';
 
 const useUserRole = (fullName: string | null) => {
   const [role, setRole] = useState<string | null>(null);
@@ -12,6 +14,7 @@ const useUserRole = (fullName: string | null) => {
 
     const fetchUserRole = async () => {
       try {
+        console.log('Fetching user role for:', fullName);
         const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
         if (!response.ok) {
           throw new Error('Failed to fetch user role');
@@ -32,6 +35,7 @@ const useUserRole = (fullName: string | null) => {
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Track if loading is in progress
+  const [authChecked, setAuthChecked] = useState(false); // Track if authentication check is done
   const router = useRouter(); // For navigation
 
   // Fetch the user role once user is signed in
@@ -47,6 +51,7 @@ const HomePage = () => {
         setUser(session?.user ?? null);
       }
       setLoading(false); // Loading done after checking session
+      setAuthChecked(true); // Authentication check is complete
     };
 
     getUserSession();
@@ -68,7 +73,7 @@ const HomePage = () => {
 
   // Automatically handle sign-in if no user is authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (authChecked && !loading && !user) {
       const signInWithGoogle = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -78,7 +83,7 @@ const HomePage = () => {
 
       signInWithGoogle();
     }
-  }, [loading, user]);
+  }, [authChecked, loading, user]);
 
   // Handle role-based redirection after session and role are both loaded
   useEffect(() => {
@@ -91,8 +96,31 @@ const HomePage = () => {
     }
   }, [user, role, router]);
 
-  // Render nothing, just handle routing
-  return null;
+  // Prevent rendering of the page until the authentication check is complete
+  if (!authChecked) {
+    return <div>Loading...</div>; // Optionally display a loading spinner or message
+  }
+
+  // The rest of the component renders only after authentication
+  return (
+    <div className={styles.app}>
+      <header className={styles.appHeader}>
+        <h1>Buckets</h1>
+      </header>
+      <main className={styles.appContent}>
+        {user && (
+          <div>
+            <p>Welcome, {user.email}</p>
+            <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
+            {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
+          </div>
+        )}
+      </main>
+      <footer className={styles.appFooter}>
+        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
+      </footer>
+    </div>
+  );
 };
 
 HomePage.displayName = 'HomePage';

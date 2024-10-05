@@ -12,6 +12,7 @@
 }
 
 .modal-content {
+  position: relative; /* Add relative positioning to position the X button */
   background: white;
   padding: 20px;
   border-radius: 8px;
@@ -27,19 +28,52 @@
 
 .points button, .actions button {
   margin: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out; /* Add transition for shadow and background color */
 }
 
 h2, p, span, button {
   color: black; /* Ensure text is black */
 }
 
+/* X Close Button Styles */
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: black;
+}
+
+.close-button:hover {
+  color: red; /* Optional: Change color on hover */
+}
+
+/* Default button styles */
 button {
   background-color: #f0f0f0;
   border: 1px solid #ccc;
-  padding: 5px 10px;
+  padding: 10px 20px;
   cursor: pointer;
 }
 
 button:hover {
   background-color: #e0e0e0;
+}
+
+/* Add shadow to show a button is clicked/toggled */
+button.selected {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect for selected buttons */
+  background-color: #d4edda; /* Optional: Slight color change for selected button */
+}
+
+/* Slightly increase shadow on hover to enhance feedback */
+button.selected:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }

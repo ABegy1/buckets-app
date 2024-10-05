@@ -55,14 +55,20 @@ const HomePage = () => {
 
     getUserSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    // Listen to auth state changes (including sign-out)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser(session.user ?? null); // User signed in or state updated
+      } else {
+        setUser(null); // User signed out
+        router.push('/'); // Redirect to sign-in page after sign out
+      }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   // Automatically handle sign-in if no user is authenticated
   useEffect(() => {

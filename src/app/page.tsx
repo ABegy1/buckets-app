@@ -34,6 +34,7 @@ const useUserRole = (fullName: string | null) => {
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter(); // For navigation
 
   // Fetch the user role once user is signed in
@@ -49,6 +50,7 @@ const HomePage = () => {
       } else {
         setUser(session?.user ?? null);
       }
+      setLoading(false); // Loading done after checking session
     };
 
     getUserSession();
@@ -62,13 +64,24 @@ const HomePage = () => {
     };
   }, []);
 
+  // Automatically handle sign-in if no user is authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      const signInWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+        });
+        if (error) console.error('Error signing in with Google:', error.message);
+      };
+
+      signInWithGoogle();
+    }
+  }, [loading, user]);
+
   // Handle role-based redirection after session and role are both loaded
   useEffect(() => {
-    console.log(user, role);
     if (user && role) {
-      console.log("got user and role")
       if (role === 'Admin') {
-        console.log("pushed to admin page")
         router.push('/admin'); // Redirect to admin page
       } else {
         router.push('/user'); // Redirect to user page
@@ -76,30 +89,22 @@ const HomePage = () => {
     }
   }, [user, role, router]);
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) console.error('Error signing in with Google:', error.message);
-  };
+  // Show a loading spinner or message until authentication is complete
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('Error signing out:', error.message);
-  };
-
+  // The rest of the component renders only after authentication
   return (
     <div className={styles.app}>
       <header className={styles.appHeader}>
         <h1>Buckets</h1>
       </header>
       <main className={styles.appContent}>
-        {!user ? (
-          <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
-        ) : (
+        {user && (
           <div>
             <p>Welcome, {user.email}</p>
-            <button className="btn" onClick={signOut}>Sign Out</button>
+            <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
             {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
           </div>
         )}
@@ -110,6 +115,7 @@ const HomePage = () => {
     </div>
   );
 };
+
 HomePage.displayName = 'HomePage';
 
 export default HomePage;

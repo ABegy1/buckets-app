@@ -113,7 +113,7 @@ const HomePage = () => {
           <div>
             <p>Welcome, {user.email}</p>
             <button className="btn" onClick={signOut}>Sign Out</button>
-            {/* Render AddUser component conditionally */}
+            {/* Render AddUser component test */}
             {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
           </div>
         )}

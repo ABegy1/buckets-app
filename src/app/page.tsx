@@ -34,6 +34,7 @@ const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Track if loading is in progress
   const [authChecked, setAuthChecked] = useState(false); // Track if authentication check is done
+  const [userAdded, setUserAdded] = useState(false); // Track if user is added
   const router = useRouter(); // For navigation
 
   // Fetch the user role once user is signed in
@@ -83,16 +84,44 @@ const HomePage = () => {
     }
   }, [authChecked, loading, user]);
 
+  // Add the user to the Supabase users table if they don't already exist
+  useEffect(() => {
+    const addUserIfNotExists = async () => {
+      if (user && !userAdded) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('email')
+          .eq('email', user.email);
+
+        if (!data || data.length === 0) {
+          // User doesn't exist, so add them
+          console.log('User not found, adding to Supabase');
+          await supabase
+            .from('users')
+            .insert([{ name: user.user_metadata.full_name, email: user.email, role: 'User', View: 'Standings' }]);
+          setUserAdded(true);
+        } else {
+          console.log('User already exists in Supabase');
+          setUserAdded(true);
+        }
+      }
+    };
+
+    if (user) {
+      addUserIfNotExists();
+    }
+  }, [user, userAdded]);
+
   // Handle role-based redirection after session and role are both loaded
   useEffect(() => {
-    if (user && role) {
+    if (user && role && userAdded) {
       if (role === 'Admin') {
         router.push('/Admin'); // Redirect to admin page
       } else {
         router.push('/User'); // Redirect to user page
       }
     }
-  }, [user, role, router]);
+  }, [user, role, router, userAdded]);
 
   // Prevent rendering until the authentication check is complete
   return null;

@@ -112,7 +112,7 @@ const HomePage = () => {
           <div>
             <p>Welcome, {user.email}</p>
             <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
-            {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
+            {user && <AddUser name={user.user_metadata.full_name } email={user.email?? ''} />}
           </div>
         )}
       </main>

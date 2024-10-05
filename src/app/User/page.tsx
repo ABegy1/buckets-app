@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import styles from './SeasonStandings.module.css';
+import styles from './UserPage.module.css';
 import { supabase } from '@/supabaseClient';
 
 interface Team {

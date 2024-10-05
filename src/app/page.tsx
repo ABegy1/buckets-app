@@ -2,16 +2,19 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation'; // For navigation in App Router
 import styles from './HomePage.module.css'; // Import the CSS module
-import Link from 'next/link';
 import AddUser from '@/components/AddDummyUser';
-const useUserRole = (fullName: string) => {
+
+const useUserRole = (fullName: string | null) => {
   const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!fullName) return;
+
     const fetchUserRole = async () => {
       try {
+        console.log('Fetching user role for:', fullName);
         const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
         if (!response.ok) {
           throw new Error('Failed to fetch user role');
@@ -19,114 +22,98 @@ const useUserRole = (fullName: string) => {
         const data = await response.json();
         setRole(data.role);
       } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching user role:', error);
       }
     };
 
     fetchUserRole();
   }, [fullName]);
 
-  return { role, loading };
+  return { role };
 };
 
 const HomePage = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter(); // For navigation
 
-  console.log(user)
+  // Fetch the user role once user is signed in
+  const { role } = useUserRole(user?.user_metadata.full_name ?? null);
+  console.log(user, role);
 
-  const { role, loading  } = useUserRole(user?.user_metadata.full_name ?? '');
-
+  // Fetch user session and update state
   useEffect(() => {
     const getUserSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error);
+      } else {
+        setUser(session?.user ?? null);
+      }
+      setLoading(false); // Loading done after checking session
     };
 
     getUserSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    // Listen to auth state changes (including sign-out)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser(session.user ?? null); // User signed in or state updated
+      } else {
+        setUser(null); // User signed out
+        router.push('/'); // Redirect to sign-in page after sign out
+      }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
+  // Automatically handle sign-in if no user is authenticated
   useEffect(() => {
-    const addUser = async (user: User) => {
-      console.log('Adding user through AddUser component');
-      const response = await fetch('/api/addUser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: user.user_metadata.full_name,
-          email: user.email,
-        }),
-      });
+    if (!loading && !user) {
+      const signInWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+        });
+        if (error) console.error('Error signing in with Google:', error.message);
+      };
 
-      if (!response.ok) {
-        console.error('Failed to add user');
-      }
-    };
-
-    if (user) {
-      addUser(user);
+      signInWithGoogle();
     }
-  }, [user]);
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-    if (error) console.log('Error signing in with Google:', error.message);
-  };
+  }, [loading, user]);
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.log('Error signing out:', error.message);
-  };
+  // Handle role-based redirection after session and role are both loaded
+  useEffect(() => {
+    if (user && role) {
+      if (role === 'Admin') {
+        router.push('/admin'); // Redirect to admin page
+      } else {
+        router.push('/user'); // Redirect to user page
+      }
+    }
+  }, [user, role, router]);
 
+  // Show a loading spinner or message until authentication is complete
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // The rest of the component renders only after authentication
   return (
     <div className={styles.app}>
       <header className={styles.appHeader}>
         <h1>Buckets</h1>
       </header>
       <main className={styles.appContent}>
-      {!user ? (
-          <button className="btn" onClick={signInWithGoogle}>Sign In with Google</button>
-        ) : (
+        {user && (
           <div>
             <p>Welcome, {user.email}</p>
-            <button className="btn" onClick={signOut}>Sign Out</button>
-            {/* Render AddUser component conditionally */}
+            <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
             {user && <AddUser name={user.user_metadata.full_name} email={user.email} />}
           </div>
         )}
-        <div>
-          {role === 'Admin' ? (
-            <div className={styles.roleMessage}>Welcome, Admin!</div>
-          ) : (
-            <div className={styles.roleMessage}>Welcome, User!</div>
-          )}
-        </div>
-        <nav className={styles.nav}>
-  <ul>
-    {role === 'Admin' && (
-      <>
-        <li>
-          <Link href="/About">Main Touch Interface</Link>
-        </li>
-        <li>
-          <Link href="/Contact">Standings</Link>
-        </li>
-      </>
-    )}
-  </ul>
-</nav>
       </main>
       <footer className={styles.appFooter}>
         <p>&copy; 2024 Buckets Game. All rights reserved.</p>
@@ -134,6 +121,7 @@ const HomePage = () => {
     </div>
   );
 };
+
 HomePage.displayName = 'HomePage';
 
 export default HomePage;

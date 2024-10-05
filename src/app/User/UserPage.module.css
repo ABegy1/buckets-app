@@ -1,30 +1,137 @@
+/* General container styles for the entire user page */
 .userContainer {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 20px;
   background-color: #f0f0f0;
+  color: #333;
 }
 
+/* Header styling */
 .userHeader {
-  background-color: #333;
-  color: #fff;
-  padding: 20px;
   width: 100%;
+  padding: 20px;
   text-align: center;
+  background-color: #2a9d8f;
+  color: #fff;
 }
 
+.userHeader h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+/* Content area styling */
 .userContent {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 20px;
-  text-align: center;
 }
 
+/* Footer styling */
 .userFooter {
-  margin-top: auto;
-  background-color: #333;
-  color: #fff;
-  padding: 10px;
   width: 100%;
+  padding: 10px;
   text-align: center;
+  background-color: #2a9d8f;
+  color: #fff;
+  margin-top: auto;
+}
+
+.userFooter p {
+  margin: 0;
+}
+
+/* Button styling */
+.btn {
+  background-color: #e76f51;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #d1495b;
+}
+
+/* Season standings section styling */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Teams container */
+.teams {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Individual team card */
+.team {
+  flex: 1;
+  min-width: 300px;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #fafafa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.team:hover {
+  transform: scale(1.02);
+}
+
+/* Team title */
+.teamTitle {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Header row for player stats */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+  padding: 10px 0;
+}
+
+/* Player row styling */
+.player {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.teamStats {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  font-weight: bold;
 }

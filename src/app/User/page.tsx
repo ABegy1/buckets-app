@@ -1,6 +1,6 @@
 'use client'; // Required in Next.js App Router
 import React, { useEffect, useState } from 'react';
-import styles from './UserPage.module.css'; // Reuse existing styles
+import styles from './UserPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 
 interface Team {
@@ -43,7 +43,7 @@ interface TeamWithPlayers {
 
 const UserPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
-  
+
   // Function to fetch teams and player data
   const fetchTeamsAndPlayers = async () => {
     try {
@@ -136,32 +136,41 @@ const UserPage: React.FC = () => {
   }, []);
 
   return (
-    <div className={styles.container}>
-      <h1>User Dashboard - Season Standings</h1>
-      <div className={styles.teams}>
-        {teams.map((team, index) => (
-          <div key={index} className={styles.team}>
-            <h2>{team.team_name}</h2>
-            <div className={styles.headerRow}>
-              <span>Name</span>
-              <span>Shots Left</span>
-              <span>Total Points</span>
-            </div>
-            {team.players.map((player, playerIndex) => (
-              <div key={playerIndex} className={styles.player}>
-                <span>{player.name}</span>
-                <span>{player.shots_left}</span>
-                <span>{player.total_points}</span>
+    <div className={styles.userContainer}>
+      <header className={styles.userHeader}>
+        <h1>User Dashboard - Season Standings</h1>
+      </header>
+      <main className={styles.userContent}>
+        <div className={styles.container}>
+          <div className={styles.teams}>
+            {teams.map((team, index) => (
+              <div key={index} className={styles.team}>
+                <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                <div className={styles.headerRow}>
+                  <span>Name</span>
+                  <span>Shots Left</span>
+                  <span>Total Points</span>
+                </div>
+                {team.players.map((player, playerIndex) => (
+                  <div key={playerIndex} className={styles.player}>
+                    <span>{player.name}</span>
+                    <span>{player.shots_left}</span>
+                    <span>{player.total_points}</span>
+                  </div>
+                ))}
+                <div className={styles.teamStats}>
+                  <span>Total Shots Remaining: {team.total_shots}</span>
+                  <span>Total Score: {team.total_points}</span>
+                </div>
               </div>
             ))}
-            <div className={styles.teamStats}>
-              <span>Total Shots Remaining: {team.total_shots}</span>
-              <span>Total Score: {team.total_points}</span>
-            </div>
           </div>
-        ))}
-      </div>
-      <button className="btn" onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
+          <button className={styles.btn} onClick={async () => await supabase.auth.signOut()}>Sign Out</button>
+        </div>
+      </main>
+      <footer className={styles.userFooter}>
+        <p>&copy; 2024 Buckets Game. User Panel. All rights reserved.</p>
+      </footer>
     </div>
   );
 };

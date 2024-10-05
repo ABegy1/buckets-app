@@ -38,6 +38,7 @@ const HomePage = () => {
 
   // Fetch the user role once user is signed in
   const { role } = useUserRole(user?.user_metadata.full_name ?? null);
+  console.log(user, role);
 
   // Fetch user session and update state
   useEffect(() => {

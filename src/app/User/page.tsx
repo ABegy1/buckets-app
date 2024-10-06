@@ -125,9 +125,36 @@ const UserPage: React.FC = () => {
     }
   };
 
-  // Fetch the user view on component mount
+  // Real-time updates for the user's View field
   useEffect(() => {
-    fetchUserView();
+    const subscribeToUserViewChanges = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { user } = session;
+
+      // Set up a real-time subscription for changes to the 'users' table
+      const userViewChannel = supabase
+        .channel('user-view-changes')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
+          (payload) => {
+            const updatedView = payload.new.View;
+            setUserView(updatedView); // Update the UI with the new view
+          }
+        )
+        .subscribe();
+
+      // Fetch the initial view
+      fetchUserView();
+
+      return () => {
+        supabase.removeChannel(userViewChannel);
+      };
+    };
+
+    subscribeToUserViewChanges();
   }, []);
 
   // Fetch teams and players data if the user view is Standings

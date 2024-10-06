@@ -136,10 +136,10 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
     if (player) {
       setPlayerName(player.name);
       setTierId(player.tier_id);
-      setTeamId(teams[0]?.team_id || 1);
+      // Ensure you set the player's current team_id from player_instance if available, otherwise fallback to the first available team.
+      setTeamId(player.team_id || teams.find(team => team.team_id === player.team_id)?.team_id || teams[0]?.team_id);
     }
   }, [player, teams]);
-
   const handleUpdatePlayer = async () => {
     // Update the player itself
     const { error: playerError } = await supabase

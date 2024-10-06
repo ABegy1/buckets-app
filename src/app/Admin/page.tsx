@@ -101,8 +101,38 @@ const AdminPage = () => {
   };
 
   const handleStandings = async () => {
-    let newView: string | undefined = undefined;
-    // Logic to toggle between views (if needed)
+    if (!user) return; // Ensure the user is logged in
+  
+    try {
+      // Fetch the current view for the logged-in user
+      const { data, error } = await supabase
+        .from('users') // Ensure this is the correct table name
+        .select('View')
+        .eq('email', user.email)
+        .single();
+  
+      if (error || !data) {
+        console.error('Error fetching user view:', error);
+        return;
+      }
+  
+      // Determine the new view based on the current view
+      let newView = data.View === 'Standings' ? 'FreeAgent' : 'Standings';
+  
+      // Update the user's view in the database
+      const { error: updateError } = await supabase
+        .from('users') // Ensure this is the correct table name
+        .update({ View: newView })
+        .eq('email', user.email);
+  
+      if (updateError) {
+        console.error('Error updating user view:', updateError);
+      } else {
+        console.log(`User view updated to ${newView}`);
+      }
+    } catch (err) {
+      console.error('Error handling standings toggle:', err);
+    }
   };
 
   const handleCloseSidebar = () => {

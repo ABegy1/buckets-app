@@ -131,17 +131,19 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
   const [playerName, setPlayerName] = useState<string>(player?.name || '');
   const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id);
   const [teamId, setTeamId] = useState<number>(teams[0]?.team_id || 1);
-
+  console.log('Selected teamId before update:', teamId);
+console.log('Player instance teamId before update:', player.team_id);
   useEffect(() => {
     if (player) {
+      console.log()
       setPlayerName(player.name);
       setTierId(player.tier_id);
       // Ensure you set the player's current team_id from player_instance if available, otherwise fallback to the first available team.
-      setTeamId(player.team_id || teams.find(team => team.team_id === player.team_id)?.team_id || teams[0]?.team_id);
+      setTeamId(player.team_id || teams.find((team) => team.team_id === player.team_id)?.team_id || teams[0]?.team_id);
     }
   }, [player, teams]);
   const handleUpdatePlayer = async () => {
-    // Update the player itself
+    // Update the player's name and tier_id in the players table
     const { error: playerError } = await supabase
       .from('players')
       .update({ name: playerName, tier_id: tierId })
@@ -154,9 +156,9 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
     // Update the player's team in the player_instance table
     const { error: instanceError } = await supabase
       .from('player_instance')
-      .update({ team_id: teamId })
+      .update({ team_id: teamId }) // <-- Ensure the teamId from state is correct
       .eq('player_id', player.player_id)
-      .eq('season_id', player.season_id); // Assuming you're tracking which season they're in
+      .eq('season_id', player.season_id); // <-- Ensure you're matching the correct season
   
     if (instanceError) {
       console.error('Error updating player instance:', instanceError);

@@ -139,36 +139,25 @@ console.log('Player instance teamId before update:', player.team_id);
       setPlayerName(player.name);
       setTierId(player.tier_id);
       // Ensure you set the player's current team_id from player_instance if available, otherwise fallback to the first available team.
-      setTeamId(player.team_id || teams.find((team) => team.team_id === player.team_id)?.team_id || teams[0]?.team_id);
+      setTeamId(player.team_id);
+
     }
   }, [player, teams]);
   const handleUpdatePlayer = async () => {
-    // Update the player's name and tier_id in the players table
+    // Update the player's name, tier_id, and team_id in the players table
     const { error: playerError } = await supabase
       .from('players')
-      .update({ name: playerName, tier_id: tierId })
+      .update({ name: playerName, tier_id: tierId, team_id: teamId }) // Now updating team_id directly
       .eq('player_id', player.player_id);
   
     if (playerError) {
       console.error('Error updating player:', playerError);
     }
   
-    // Update the player's team in the player_instance table
-    const { error: instanceError } = await supabase
-      .from('player_instance')
-      .update({ team_id: teamId }) // <-- Ensure the teamId from state is correct
-      .eq('player_id', player.player_id)
-      .eq('season_id', player.season_id); // <-- Ensure you're matching the correct season
-  
-    if (instanceError) {
-      console.error('Error updating player instance:', instanceError);
-    }
-  
     // Call the onUpdate callback to reflect changes in the UI
     onUpdate({ ...player, name: playerName, tier_id: tierId, team_id: teamId });
     onClose();
   };
-
   if (!isOpen) return null;
 
   return (

@@ -146,11 +146,22 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
       .from('players')
       .update({ name: playerName, tier_id: tierId })
       .eq('player_id', player.player_id);
-    
+  
     if (playerError) {
       console.error('Error updating player:', playerError);
     }
-
+  
+    // Update the player's team in the player_instance table
+    const { error: instanceError } = await supabase
+      .from('player_instance')
+      .update({ team_id: teamId })
+      .eq('player_id', player.player_id)
+      .eq('season_id', player.season_id); // Assuming you're tracking which season they're in
+  
+    if (instanceError) {
+      console.error('Error updating player instance:', instanceError);
+    }
+  
     // Call the onUpdate callback to reflect changes in the UI
     onUpdate({ ...player, name: playerName, tier_id: tierId, team_id: teamId });
     onClose();

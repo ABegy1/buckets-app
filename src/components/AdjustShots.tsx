@@ -1,4 +1,3 @@
-// AdjustShots.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import styles from './AdjustShots.module.css'; // Create a new CSS module for AdjustShots
@@ -17,19 +16,35 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current shots left
-        const { data, error } = await supabase
+        // Step 1: Fetch the active season where end_date is null
+        const { data: activeSeason, error: activeSeasonError } = await supabase
+          .from('seasons')
+          .select('season_id')
+          .is('end_date', null)
+          .single();
+
+        if (activeSeasonError || !activeSeason) {
+          console.error('No active season found:', activeSeasonError);
+          setLoading(false);
+          return;
+        }
+
+        const activeSeasonId = activeSeason.season_id;
+
+        // Step 2: Fetch players and their current shots left for the active season
+        const { data: playerData, error: playerError } = await supabase
           .from('player_instance')
           .select(`
             player_id,
             shots_left,
             players (name)
-          `);
+          `)
+          .eq('season_id', activeSeasonId); // Filter by the active season
 
-        if (error) {
-          console.error('Error fetching player shots:', error);
+        if (playerError) {
+          console.error('Error fetching player shots:', playerError);
         } else {
-          setPlayers(data || []);
+          setPlayers(playerData || []);
         }
       } catch (error) {
         console.error('Unexpected error:', error);

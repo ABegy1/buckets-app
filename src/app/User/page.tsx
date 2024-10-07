@@ -13,7 +13,6 @@ interface PlayerInstance {
   player_instance_id: number;
   player_id: number;
   season_id: number;
-  team_id: number;
   shots_left: number;
 }
 
@@ -21,6 +20,7 @@ interface Player {
   player_id: number;
   name: string;
   tier_id: number;
+  team_id: number; // Added team_id to players
 }
 
 interface Shot {
@@ -76,32 +76,34 @@ const UserPage: React.FC = () => {
 
       const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
         teamsData.map(async (team: Team) => {
-          const { data: playerInstances, error: playerInstancesError } = await supabase
-            .from('player_instance')
+          // Fetch players for the current team using the team_id from players table
+          const { data: players, error: playersError } = await supabase
+            .from('players')
             .select('*')
-            .eq('team_id', team.team_id);
-          if (playerInstancesError) throw playerInstancesError;
+            .eq('team_id', team.team_id); // Fetch players with team_id directly from players table
+          if (playersError) throw playersError;
 
           const playersWithStats = await Promise.all(
-            playerInstances.map(async (instance: PlayerInstance) => {
-              const { data: player, error: playerError } = await supabase
-                .from('players')
+            players.map(async (player: Player) => {
+              // Fetch player instance details for the player's shots_left
+              const { data: playerInstance, error: playerInstanceError } = await supabase
+                .from('player_instance')
                 .select('*')
-                .eq('player_id', instance.player_id)
+                .eq('player_id', player.player_id)
                 .single();
-              if (playerError) throw playerError;
+              if (playerInstanceError) throw playerInstanceError;
 
               const { data: shots, error: shotsError } = await supabase
                 .from('shots')
                 .select('*')
-                .eq('instance_id', instance.player_instance_id);
+                .eq('instance_id', playerInstance.player_instance_id); // Using player_instance for shots
               if (shotsError) throw shotsError;
 
               const totalPoints = shots.reduce((acc: number, shot: Shot) => acc + parseInt(shot.result, 10), 0);
 
               return {
                 name: player.name,
-                shots_left: instance.shots_left,
+                shots_left: playerInstance.shots_left, // Using shots_left from player_instance table
                 total_points: totalPoints,
               };
             })
@@ -167,9 +169,9 @@ const UserPage: React.FC = () => {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeamsAndPlayers)
         .subscribe();
 
-      const playerInstanceChannel = supabase
-        .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+      const playerChannel = supabase
+        .channel('player-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
         .subscribe();
 
       const shotChannel = supabase
@@ -179,7 +181,7 @@ const UserPage: React.FC = () => {
 
       return () => {
         supabase.removeChannel(teamChannel);
-        supabase.removeChannel(playerInstanceChannel);
+        supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };
     }

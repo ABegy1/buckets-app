@@ -117,7 +117,6 @@ const EditTierModal: React.FC<EditTierModalProps> = ({ isOpen, onClose, tier, on
     </div>
   );
 };
-
 interface EditPlayerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -130,19 +129,16 @@ interface EditPlayerModalProps {
 const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, player, tiers, teams, onUpdate }) => {
   const [playerName, setPlayerName] = useState<string>(player?.name || '');
   const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id);
-  const [teamId, setTeamId] = useState<number>(teams[0]?.team_id || 1);
-  console.log('Selected teamId before update:', teamId);
-console.log('Player instance teamId before update:', player.team_id);
+  const [teamId, setTeamId] = useState<number>(player?.team_id || teams[0]?.team_id);
+  
   useEffect(() => {
     if (player) {
-      console.log()
       setPlayerName(player.name);
       setTierId(player.tier_id);
-      // Ensure you set the player's current team_id from player_instance if available, otherwise fallback to the first available team.
       setTeamId(player.team_id);
-
     }
   }, [player, teams]);
+
   const handleUpdatePlayer = async () => {
     // Update the player's name, tier_id, and team_id in the players table
     const { error: playerError } = await supabase
@@ -158,6 +154,7 @@ console.log('Player instance teamId before update:', player.team_id);
     onUpdate({ ...player, name: playerName, tier_id: tierId, team_id: teamId });
     onClose();
   };
+  
   if (!isOpen) return null;
 
   return (
@@ -391,7 +388,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           const { error: playerInstanceError } = await supabase.from('player_instance').insert({
             player_id: player.player_id,
             season_id: seasonId,
-            team_id: teams[0]?.team_id || 1,
             shots_left: shotCount,
           });
   
@@ -411,6 +407,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       }
     }
   };
+  
   if (!isOpen) return null;
 
   return (
@@ -459,18 +456,18 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
         {/* EditPlayerModal */}
         {isEditPlayerModalOpen && (
-        <EditPlayerModal
-        isOpen={isEditPlayerModalOpen}
-        onClose={handleCloseEditPlayerModal}
-        player={selectedPlayer}
-        tiers={tiers}
-        teams={teams} 
-        onUpdate={(updatedPlayer) => {
-          setPlayers((prevPlayers) =>
-            prevPlayers.map((p) => (p.player_id === updatedPlayer.player_id ? updatedPlayer : p))
-          );
-        }}
-      />
+          <EditPlayerModal
+            isOpen={isEditPlayerModalOpen}
+            onClose={handleCloseEditPlayerModal}
+            player={selectedPlayer}
+            tiers={tiers}
+            teams={teams}
+            onUpdate={(updatedPlayer) => {
+              setPlayers((prevPlayers) =>
+                prevPlayers.map((p) => (p.player_id === updatedPlayer.player_id ? updatedPlayer : p))
+              );
+            }}
+          />
         )}
 
         {/* EditTeamModal */}

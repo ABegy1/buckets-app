@@ -1,4 +1,3 @@
-// AdjustScores.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import styles from './AdjustScores.module.css'; // Create a new CSS module for AdjustScores
@@ -23,19 +22,20 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
           .select(`
             player_instance_id,
             player_id,
-            players (name),  // Nested relation to get the player's name
-            shots (result)
+            players (name), 
+            shots (result) 
           `);
 
         if (error) {
           console.error('Error fetching player instances:', error);
         } else {
+          // Sum up the results of all shots for each player instance to get the total score
           const playersWithScores = data.map((player: any) => {
             const totalScore = player.shots.reduce((sum: number, shot: any) => sum + shot.result, 0);
             return {
               player_instance_id: player.player_instance_id,
-              player_name: player.players.name,  // Access the player name correctly
-              score: totalScore,
+              player_name: player.players?.name || 'Unknown Player', // Player's name
+              score: totalScore,  // Summed score from shot results
             };
           });
           setPlayers(playersWithScores || []);
@@ -60,7 +60,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Update the player's shot results in the database
+    // To adjust the score, we need to insert or update a shot in the database
     const { error } = await supabase
       .from('shots')
       .insert({ result: adjustment, instance_id: playerInstanceId });

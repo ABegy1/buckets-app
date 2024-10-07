@@ -319,8 +319,22 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   // Player Functions
   const handleAddPlayer = async () => {
-    const { error } = await supabase.from('players').insert([{ name: `Player ${players.length + 1}`, tier_id: tiers[0]?.tier_id || 1 }]);
-    if (error) console.error('Error adding player:', error);
+    if (tiers.length === 0 || teams.length === 0) {
+      console.error('No available tiers or teams to assign to the player.');
+      return;
+    }
+  
+    const { error } = await supabase
+      .from('players')
+      .insert([{ 
+        name: `Player ${players.length + 1}`, 
+        tier_id: tiers[0]?.tier_id || 1,  // Assign the first available tier
+        team_id: teams[0]?.team_id || null // Assign the first available team
+      }]);
+  
+    if (error) {
+      console.error('Error adding player:', error);
+    }
   };
 
   const handleDeletePlayer = async (playerId: number) => {

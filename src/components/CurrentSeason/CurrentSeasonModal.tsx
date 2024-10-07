@@ -3,6 +3,7 @@ import styles from './CurrentSeasonModal.module.css';
 import AdjustShots from '../AdjustShots';
 import AdjustTeams from '../AdjustTeams';
 import AdjustScores from '../AdjustScores';
+import AdjustTiers from '../AdjustTier';
 
 interface CurrentSeasonModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />} {/* Use the AdjustShots component */}
           {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />} {/* Use the AdjustTeams component */}
           {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />} {/* Use the AdjustTeams component */}
+          {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />} {/* Use the AdjustTeams component */}
           {/* Keep the other tabs the same */}
         </div>
       </div>

@@ -13,13 +13,44 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Original Adjust Shots functionality
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchPlayersAndTeams = async () => {
+    const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current teams
+        // Fetch players and their current shots left
+        const { data, error } = await supabase
+          .from('player_instance')
+          .select(`
+            player_id,
+            shots_left,
+            players (name)
+          `);
+
+        if (error) {
+          console.error('Error fetching player shots:', error);
+        } else {
+          setPlayers(data || []);
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlayers();
+  }, [isOpen]);
+
+  // Adjust Teams functionality
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchTeams = async () => {
+      setLoading(true);
+      try {
         const { data: playerData, error: playerError } = await supabase
           .from('players')
           .select(`
@@ -34,7 +65,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           setPlayers(playerData || []);
         }
 
-        // Fetch all teams
         const { data: teamData, error: teamError } = await supabase
           .from('teams')
           .select('*');
@@ -51,35 +81,14 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
       }
     };
 
-    fetchPlayersAndTeams();
+    fetchTeams();
   }, [isOpen]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
 
-  const handleTeamChange = async (playerId: number, newTeamId: number) => {
-    // Optimistically update the team in the UI
-    const updatedPlayers = players.map(player => {
-      if (player.player_id === playerId) {
-        return { ...player, team_id: newTeamId };
-      }
-      return player;
-    });
-    setPlayers(updatedPlayers);
-
-    // Update the player's team in the database
-    const { error } = await supabase
-      .from('players')
-      .update({ team_id: newTeamId })
-      .eq('player_id', playerId);
-
-    if (error) {
-      console.error('Error updating player team:', error);
-    }
-  };
-
-  // RESTORE: Adjust shots functionality
+  // Handle adjusting shots for players
   const handleAdjustShots = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -101,6 +110,27 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     }
   };
 
+  // Handle changing teams for players
+  const handleTeamChange = async (playerId: number, newTeamId: number) => {
+    const updatedPlayers = players.map(player => {
+      if (player.player_id === playerId) {
+        return { ...player, team_id: newTeamId };
+      }
+      return player;
+    });
+    setPlayers(updatedPlayers);
+
+    // Update player's team in the database
+    const { error } = await supabase
+      .from('players')
+      .update({ team_id: newTeamId })
+      .eq('player_id', playerId);
+
+    if (error) {
+      console.error('Error updating player team:', error);
+    }
+  };
+
   return (
     <div className={`${styles.currentSeasonModal} ${isOpen ? styles.currentSeasonModalOpen : ''}`}>
       <div className={styles.modalContent}>
@@ -112,7 +142,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Tier Adjust')}>Tier Adjust</button>
         </div>
         <div className={styles.content}>
-          {/* RESTORE: Adjust Shots tab */}
           {activeTab === 'Adjust Shots' && (
             <div className={styles.adjustShots}>
               <h2>Adjust Shots</h2>
@@ -129,7 +158,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                   <tbody>
                     {players.map(player => (
                       <tr key={player.player_id}>
-                        <td>{player.name}</td>
+                        <td>{player.players.name}</td>
                         <td>
                           <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
                           {player.shots_left}
@@ -143,7 +172,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
             </div>
           )}
 
-          {/* Adjust Teams tab */}
           {activeTab === 'Teams' && (
             <div className={styles.teams}>
               <h2>Adjust Teams</h2>

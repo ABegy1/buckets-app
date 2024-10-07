@@ -92,10 +92,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (isDouble) finalPoints *= 2;
 
     try {
+      // Step 1: Insert the new shot into the shots table
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
-        result: finalPoints.toString(),
+        result: finalPoints,  // Note: result should be a number, not a string
         tier_id: tierId,
       });
 
@@ -104,6 +105,31 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
+      // Step 2: Fetch the updated score by summing all shot results for this player instance
+      const { data: shotsData, error: shotsError } = await supabase
+        .from('shots')
+        .select('result')
+        .eq('instance_id', playerInstanceId);
+
+      if (shotsError || !shotsData) {
+        console.error('Error fetching shots for score calculation:', shotsError);
+        return;
+      }
+
+      const newScore = shotsData.reduce((sum: number, shot: { result: number }) => sum + shot.result, 0);
+
+      // Step 3: Update the score in the player_instance table
+      const { error: updateScoreError } = await supabase
+        .from('player_instance')
+        .update({ score: newScore })
+        .eq('player_instance_id', playerInstanceId);
+
+      if (updateScoreError) {
+        console.error('Error updating player score:', updateScoreError);
+        return;
+      }
+
+      // Step 4: Update shots_left for this player
       const { data: playerInstance, error: fetchError } = await supabase
         .from('player_instance')
         .select('shots_left')

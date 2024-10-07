@@ -14,21 +14,14 @@ interface PlayerInstance {
   player_id: number;
   season_id: number;
   shots_left: number;
+  score: number;  // Include score field from player_instance
 }
 
 interface Player {
   player_id: number;
   name: string;
   tier_id: number;
-  team_id: number; // Added team_id to players
-}
-
-interface Shot {
-  shot_id: number;
-  instance_id: number;
-  shot_date: string;
-  result: string;
-  tier_id: number;
+  team_id: number;
 }
 
 interface TeamWithPlayers {
@@ -47,30 +40,10 @@ const UserPage: React.FC = () => {
   const [userView, setUserView] = useState<string>('Standings'); // Default view
   const router = useRouter();
 
-  // Function to fetch the user's view from the database
-  const fetchUserView = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase
-        .from('users')
-        .select('View')
-        .eq('email', session?.user?.email)
-        .single();
-      
-      if (error || !data) {
-        console.error('Error fetching user view:', error);
-        return;
-      }
-      
-      setUserView(data.View); // Set the current user view
-    } catch (err) {
-      console.error('Error fetching user view:', err);
-    }
-  };
-
   // Fetch teams and players (for Standings view)
   const fetchTeamsAndPlayers = async () => {
     try {
+      // Fetch all teams
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
       if (teamsError) throw teamsError;
 
@@ -80,35 +53,29 @@ const UserPage: React.FC = () => {
           const { data: players, error: playersError } = await supabase
             .from('players')
             .select('*')
-            .eq('team_id', team.team_id); // Fetch players with team_id directly from players table
+            .eq('team_id', team.team_id);
           if (playersError) throw playersError;
 
           const playersWithStats = await Promise.all(
             players.map(async (player: Player) => {
-              // Fetch player instance details for the player's shots_left
+              // Fetch player instance details for the player's shots_left and score
               const { data: playerInstance, error: playerInstanceError } = await supabase
                 .from('player_instance')
-                .select('*')
+                .select('shots_left, score') // Select score directly
                 .eq('player_id', player.player_id)
                 .single();
-              if (playerInstanceError) throw playerInstanceError;
 
-              const { data: shots, error: shotsError } = await supabase
-                .from('shots')
-                .select('*')
-                .eq('instance_id', playerInstance.player_instance_id); // Using player_instance for shots
-              if (shotsError) throw shotsError;
-
-              const totalPoints = shots.reduce((acc: number, shot: Shot) => acc + parseInt(shot.result, 10), 0);
+              if (playerInstanceError || !playerInstance) throw playerInstanceError;
 
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left, // Using shots_left from player_instance table
-                total_points: totalPoints,
+                total_points: playerInstance.score,    // Using score from player_instance table
               };
             })
           );
 
+          // Calculate total shots left and total points for the entire team
           const totalShots = playersWithStats.reduce((acc: number, player) => acc + player.shots_left, 0);
           const totalPoints = playersWithStats.reduce((acc: number, player) => acc + player.total_points, 0);
 
@@ -124,6 +91,27 @@ const UserPage: React.FC = () => {
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error('Error fetching teams and players:', error);
+    }
+  };
+
+  // Fetch the user view from the database
+  const fetchUserView = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase
+        .from('users')
+        .select('View')
+        .eq('email', session?.user?.email)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching user view:', error);
+        return;
+      }
+
+      setUserView(data.View); // Set the current user view
+    } catch (err) {
+      console.error('Error fetching user view:', err);
     }
   };
 

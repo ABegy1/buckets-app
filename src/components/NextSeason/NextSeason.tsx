@@ -357,28 +357,47 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   };
 
   const startNewSeason = async (): Promise<number | null> => {
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(startDate.getDate() + 30);
+    const currentDate = new Date();
   
     try {
+      // Step 1: End the current season (if exists)
+      const { data: currentSeason, error: currentSeasonError } = await supabase
+        .from('seasons')
+        .select('season_id, end_date')
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .single();
+  
+      if (currentSeasonError) {
+        console.error('Error fetching current season:', currentSeasonError);
+      } else if (currentSeason && !currentSeason.end_date) {
+        // Update the end date for the current active season
+        const { error: updateSeasonError } = await supabase
+          .from('seasons')
+          .update({ end_date: currentDate.toISOString() })
+          .eq('season_id', currentSeason.season_id);
+  
+        if (updateSeasonError) throw updateSeasonError;
+      }
+  
+      // Step 2: Start the new season
       const { data: seasonData, error: seasonError } = await supabase
         .from('seasons')
         .insert({
-          season_name: `Season ${startDate.getFullYear()}`,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
+          season_name: `Season ${currentDate.getFullYear()}`,
+          start_date: currentDate.toISOString(),
+          end_date: null, // Leave end_date as null initially
           shot_total: shotCount,
           rules: 'Default Rules',
         })
         .select();
-      
+  
       if (seasonError || !seasonData || seasonData.length === 0) {
         throw new Error('Error starting season');
       }
   
       return seasonData[0].season_id;
-      
+  
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -388,7 +407,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       return null;
     }
   };
-
   const handleSubmit = async () => {
     const seasonId = await startNewSeason();
   

@@ -1,12 +1,13 @@
+// AdjustShots.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
-import styles from './AdjustScores.module.css'; // Create a new CSS module for AdjustScores
+import styles from './AdjustShots.module.css'; // Create a new CSS module for AdjustShots
 
-interface AdjustScoresProps {
+interface AdjustShotsProps {
   isOpen: boolean;
 }
 
-const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
+const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
           .from('player_instance')
           .select(`
             player_id,
-            shots_left,
+            score,
             players (name)
           `);
 
@@ -40,8 +41,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     fetchPlayers();
   }, [isOpen]);
 
-  const handleAdjustScore = async (playerId: number, adjustment: number) => {
-    // Optimistically update the score in the UI
+  const handleAdjustShots = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
         return { ...player, score: player.score + adjustment };
@@ -50,21 +50,21 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Update the score in the database
+    // Update shots left in the database
     const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
     const { error } = await supabase
       .from('player_instance')
-      .update({ score: playerToUpdate.score })  // Update score instead of shots_left
+      .update({ score: playerToUpdate.score })
       .eq('player_id', playerId);
 
     if (error) {
-      console.error('Error updating player score:', error);
+      console.error('Error updating shots left:', error);
     }
   };
 
   return (
-    <div className={styles.adjustScores}>
-      <h2>Adjust Scores</h2>
+    <div className={styles.AdjustShots}>
+      <h2>Adjust Shots</h2>
       {loading ? (
         <p>Loading players...</p>
       ) : (
@@ -72,7 +72,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
           <thead>
             <tr>
               <th>Player</th>
-              <th>Score</th>
+              <th>Shots</th>
             </tr>
           </thead>
           <tbody>
@@ -80,9 +80,9 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
               <tr key={player.player_id}>
                 <td>{player.players.name}</td>
                 <td>
-                  <button onClick={() => handleAdjustScore(player.player_id, -1)} disabled={player.score <= 0}>-</button>
+                  <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.score <= 0}>-</button>
                   {player.score}
-                  <button onClick={() => handleAdjustScore(player.player_id, 1)}>+</button>
+                  <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
                 </td>
               </tr>
             ))}
@@ -93,4 +93,4 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
   );
 };
 
-export default AdjustScores;
+export default AdjustShots;

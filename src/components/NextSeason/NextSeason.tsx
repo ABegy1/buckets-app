@@ -207,6 +207,9 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [players, setPlayers] = useState<any[]>([]);
   const [shotCount, setShotCount] = useState<number>(40);
 
+  const [seasonName, setSeasonName] = useState<string>(''); // New state for season name
+  const [seasonRules, setSeasonRules] = useState<string>(''); // New state for season rules
+
   // Modals state
   const [isEditPlayerModalOpen, setEditPlayerModalOpen] = useState<boolean>(false);
   const [isEditTeamModalOpen, setEditTeamModalOpen] = useState<boolean>(false);
@@ -323,7 +326,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       console.error('No available tiers or teams to assign to the player.');
       return;
     }
-  
+
     const { error } = await supabase
       .from('players')
       .insert([{ 
@@ -331,7 +334,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         tier_id: tiers[0]?.tier_id || 1,  // Assign the first available tier
         team_id: teams[0]?.team_id || null // Assign the first available team
       }]);
-  
+
     if (error) {
       console.error('Error adding player:', error);
     }
@@ -358,7 +361,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const startNewSeason = async (): Promise<number | null> => {
     const currentDate = new Date();
-  
+
     try {
       // Step 1: Check if a current season exists
       const { data: currentSeason, error: currentSeasonError } = await supabase
@@ -367,7 +370,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .order('start_date', { ascending: false }) // Get the most recent season
         .limit(1)
         .single();
-  
+
       if (currentSeasonError) {
         console.error('Error fetching current season:', currentSeasonError);
       } else if (currentSeason && !currentSeason.end_date) {
@@ -376,28 +379,28 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           .from('seasons')
           .update({ end_date: currentDate.toISOString() })
           .eq('season_id', currentSeason.season_id);
-  
+
         if (updateSeasonError) throw updateSeasonError;
       }
-  
-      // Step 2: Insert a new season regardless of whether a previous one exists
+
+      // Step 2: Insert a new season with user-provided name and rules
       const { data: seasonData, error: seasonError } = await supabase
         .from('seasons')
         .insert({
-          season_name: `Season ${currentDate.getFullYear()}`,
+          season_name: seasonName || `Season ${currentDate.getFullYear()}`,
           start_date: currentDate.toISOString(),
           end_date: null, 
           shot_total: shotCount,
-          rules: 'Default Rules',
+          rules: seasonRules || 'Default Rules',
         })
         .select();
-  
+
       if (seasonError || !seasonData || seasonData.length === 0) {
         throw new Error('Error starting season');
       }
-  
+
       return seasonData[0].season_id;
-  
+
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -407,17 +410,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       return null;
     }
   };
-  
-  
+
   const handleSubmit = async () => {
     const seasonId = await startNewSeason();
-  
+
     if (seasonId !== null) {
       try {
         if (tiers.length === 0 || teams.length === 0 || players.length === 0) {
           throw new Error('Tiers, Teams, and Players must be added before starting a season');
         }
-  
+
         for (const player of players) {
           const { error: playerInstanceError } = await supabase.from('player_instance').insert({
             player_id: player.player_id,
@@ -425,12 +427,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             shots_left: shotCount,
             score: 0,
           });
-  
+
           if (playerInstanceError) {
             console.error('Error adding player instance:', playerInstanceError);
           }
         }
-  
+
         onClose();
         onStartSeason();
       } catch (error) {
@@ -442,7 +444,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       }
     }
   };
-  
+
   if (!isOpen) return null;
 
   return (
@@ -450,7 +452,26 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       <div className={styles.modalContent}>
         <button onClick={onClose}>X</button>
 
-        <h2>Team Setup</h2>
+        {/* Season Name Input */}
+        <h2>Season Name</h2>
+        <input
+          type="text"
+          value={seasonName}
+          onChange={(e) => setSeasonName(e.target.value)}
+          placeholder="Enter season name"
+          className={styles.input}
+        />
+
+        {/* Season Rules Input */}
+        <h2>Season Rules</h2>
+        <textarea
+          value={seasonRules}
+          onChange={(e) => setSeasonRules(e.target.value)}
+          placeholder="Enter season rules"
+          className={styles.textarea}
+        />
+
+        {/* Other UI components for teams, tiers, players, and shot count */}
         {teams.map((team) => (
           <div key={team.team_id} className={styles.team}>
             {team.team_name}
@@ -460,7 +481,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         ))}
         <button className={styles.globalButton} onClick={handleAddTeam}>Add Team</button>
 
-        <h2>Tier Setup</h2>
         {tiers.map((tier) => (
           <div key={tier.tier_id} className={styles.tier}>
             {tier.tier_name} (Color: {tier.color})
@@ -470,7 +490,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         ))}
         <button className={styles.globalButton} onClick={handleAddTier}>Add Tier</button>
 
-        <h2>Player Setup</h2>
         {players.map((player) => (
           <div key={player.player_id} className={styles.player}>
             {player.name}

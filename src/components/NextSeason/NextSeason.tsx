@@ -360,18 +360,18 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     const currentDate = new Date();
   
     try {
-      // Step 1: End the current season (if exists)
+      // Step 1: Check if a current season exists
       const { data: currentSeason, error: currentSeasonError } = await supabase
         .from('seasons')
         .select('season_id, end_date')
-        .order('start_date', { ascending: false })
+        .order('start_date', { ascending: false }) // Get the most recent season
         .limit(1)
         .single();
   
       if (currentSeasonError) {
         console.error('Error fetching current season:', currentSeasonError);
       } else if (currentSeason && !currentSeason.end_date) {
-        // Update the end date for the current active season
+        // Only update the end date if a season exists and doesn't have an end date
         const { error: updateSeasonError } = await supabase
           .from('seasons')
           .update({ end_date: currentDate.toISOString() })
@@ -380,13 +380,13 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         if (updateSeasonError) throw updateSeasonError;
       }
   
-      // Step 2: Start the new season
+      // Step 2: Insert a new season regardless of whether a previous one exists
       const { data: seasonData, error: seasonError } = await supabase
         .from('seasons')
         .insert({
           season_name: `Season ${currentDate.getFullYear()}`,
           start_date: currentDate.toISOString(),
-          end_date: null, // Leave end_date as null initially
+          end_date: null, 
           shot_total: shotCount,
           rules: 'Default Rules',
         })
@@ -407,6 +407,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       return null;
     }
   };
+  
+  
   const handleSubmit = async () => {
     const seasonId = await startNewSeason();
   

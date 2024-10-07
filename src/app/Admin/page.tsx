@@ -30,6 +30,8 @@ const AdminPage = () => {
   const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState(true); // For handling loading state of role check
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // To store the admin role check
+  const [seasonName, setSeasonName] = useState<string>(''); // State to store the current season name
+  const [userView, setUserView] = useState<string>(''); // New state for user view
 
   // Fetch user session and role
   useEffect(() => {
@@ -40,7 +42,7 @@ const AdminPage = () => {
       if (session?.user) {
         const { data, error } = await supabase
           .from('users') // Adjust if needed to match your actual users table
-          .select('role')
+          .select('role, View')
           .eq('email', session.user.email)
           .single();
 
@@ -48,6 +50,7 @@ const AdminPage = () => {
           router.push('/'); // Redirect if not an admin
         } else {
           setIsAdmin(true); // Set as admin if role matches
+          setUserView(data.View || ''); // Set the current view
         }
       }
       setLoading(false); // Loading complete
@@ -85,6 +88,29 @@ const AdminPage = () => {
     fetchTiersAndPlayers();
   }, []);
 
+  // Fetch the current season name
+  useEffect(() => {
+    const fetchSeasonName = async () => {
+      try {
+        const { data: activeSeason, error: seasonError } = await supabase
+          .from('seasons')
+          .select('season_name')
+          .is('end_date', null)
+          .single();
+
+        if (seasonError || !activeSeason) {
+          throw seasonError;
+        }
+
+        setSeasonName(activeSeason.season_name); // Set the season name
+      } catch (error) {
+        console.error('Error fetching current season:', error);
+      }
+    };
+
+    fetchSeasonName();
+  }, []);
+
   // Modal and sidebar handlers
   const handleOpenModal = (playerId: number, name: string) => {
     setSelectedName(name);
@@ -100,39 +126,33 @@ const AdminPage = () => {
     setIsSidebarOpen(true);
   };
 
-  const handleStandings = async () => {
-    if (!user) return; // Ensure the user is logged in
-  
+  const handleViewUpdate = async (newView: string) => {
+    if (!user) return;
+
     try {
-      // Fetch the current view for the logged-in user
-      const { data, error } = await supabase
-        .from('users') // Ensure this is the correct table name
-        .select('View')
-        .eq('email', user.email)
-        .single();
-  
-      if (error || !data) {
-        console.error('Error fetching user view:', error);
-        return;
-      }
-  
-      // Determine the new view based on the current view
-      let newView = data.View === 'Standings' ? 'FreeAgent' : 'Standings';
-  
-      // Update the user's view in the database
       const { error: updateError } = await supabase
-        .from('users') // Ensure this is the correct table name
+        .from('users')
         .update({ View: newView })
         .eq('email', user.email);
-  
+
       if (updateError) {
         console.error('Error updating user view:', updateError);
       } else {
+        setUserView(newView); // Update local state with new view
         console.log(`User view updated to ${newView}`);
       }
     } catch (err) {
-      console.error('Error handling standings toggle:', err);
+      console.error('Error handling view update:', err);
     }
+  };
+
+  const handleToggleView = () => {
+    const newView = userView === 'Standings' ? 'FreeAgent' : 'Standings';
+    handleViewUpdate(newView);
+  };
+
+  const handleRulesClick = () => {
+    handleViewUpdate('Rules');
   };
 
   const handleCloseSidebar = () => {
@@ -190,9 +210,13 @@ const AdminPage = () => {
         <button className={styles.btn} onClick={handleSignOut}>Sign Out</button>
 
         <div className={styles.container}>
+          <h2>{seasonName} Standings</h2> {/* Display the current season name */}
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>Settings</button>
-            <button className={styles.button} onClick={handleStandings}>Standings</button>
+            <button className={styles.button} onClick={handleToggleView}>
+              {userView === 'Standings' ? 'Free Agency' : 'Standings'}
+            </button>
+            <button className={styles.button} onClick={handleRulesClick}>Rules</button>
           </div>
 
           <div className={styles.players}>

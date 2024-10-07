@@ -16,17 +16,17 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current score
+        // Fetch players and their current shots left
         const { data, error } = await supabase
           .from('player_instance')
           .select(`
             player_id,
-            score,         
-            players (name) 
+            shots_left,
+            players (name)
           `);
 
         if (error) {
-          console.error('Error fetching player scores:', error);
+          console.error('Error fetching player shots:', error);
         } else {
           setPlayers(data || []);
         }

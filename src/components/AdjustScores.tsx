@@ -21,7 +21,6 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
           .from('player_instance')
           .select(`
             player_id,
-            player_instance_id,   // Include player_instance_id for shots table insertion
             score,         
             players (name) 
           `);
@@ -51,33 +50,15 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Find the player instance ID for shots insertion
+    // Update the score in the database
     const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
-    const { player_instance_id, score } = playerToUpdate;
-
-    // Step 1: Insert a new shot into the shots table with the adjustment
-    const { error: shotError } = await supabase
-      .from('shots')
-      .insert({
-        instance_id: player_instance_id,        // Insert related player_instance_id
-        result: adjustment,                     // Record the score adjustment as a shot result
-        shot_date: new Date().toISOString(),    // Add the current timestamp for shot_date
-        tier_id: null // You should update this value with the relevant tier_id or logic to get it
-      });
-
-    if (shotError) {
-      console.error('Error inserting shot:', shotError);
-      return;  // Exit if there's an error inserting the shot
-    }
-
-    // Step 2: Update the score in the player_instance table
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from('player_instance')
-      .update({ score })  // Update the score after adjusting
+      .update({ score: playerToUpdate.score })  // Update score instead of shots_left
       .eq('player_id', playerId);
 
-    if (updateError) {
-      console.error('Error updating player score:', updateError);
+    if (error) {
+      console.error('Error updating player score:', error);
     }
   };
 

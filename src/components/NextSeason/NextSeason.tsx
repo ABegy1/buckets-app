@@ -403,6 +403,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             player_id: player.player_id,
             season_id: seasonId,
             shots_left: shotCount,
+            score: 0,
           });
   
           if (playerInstanceError) {

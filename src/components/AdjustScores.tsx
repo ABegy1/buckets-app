@@ -1,13 +1,13 @@
-// AdjustShots.tsx
+// AdjustScores.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
-import styles from './AdjustShots.module.css'; // Create a new CSS module for AdjustShots
+import styles from './AdjustScores.module.css'; // Create a new CSS module for adjustScores
 
-interface AdjustShotsProps {
+interface AdjustScoresProps {
   isOpen: boolean;
 }
 
-const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
+const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
   const [players, setPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +17,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current shots left
+        // Fetch players and their current score left
         const { data, error } = await supabase
           .from('player_instance')
           .select(`
@@ -27,7 +27,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
           `);
 
         if (error) {
-          console.error('Error fetching player shots:', error);
+          console.error('Error fetching player score:', error);
         } else {
           setPlayers(data || []);
         }
@@ -41,7 +41,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     fetchPlayers();
   }, [isOpen]);
 
-  const handleAdjustShots = async (playerId: number, adjustment: number) => {
+  const handleAdjustScores = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
         return { ...player, score: player.score + adjustment };
@@ -50,7 +50,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Update shots left in the database
+    // Update score left in the database
     const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
     const { error } = await supabase
       .from('player_instance')
@@ -58,13 +58,13 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
       .eq('player_id', playerId);
 
     if (error) {
-      console.error('Error updating shots left:', error);
+      console.error('Error updating score left:', error);
     }
   };
 
   return (
-    <div className={styles.AdjustShots}>
-      <h2>Adjust Shots</h2>
+    <div className={styles.AdjustScores}>
+      <h2>Adjust Score</h2>
       {loading ? (
         <p>Loading players...</p>
       ) : (
@@ -72,7 +72,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
           <thead>
             <tr>
               <th>Player</th>
-              <th>Shots</th>
+              <th>Score</th>
             </tr>
           </thead>
           <tbody>
@@ -80,9 +80,9 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
               <tr key={player.player_id}>
                 <td>{player.players.name}</td>
                 <td>
-                  <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.score <= 0}>-</button>
+                  <button onClick={() => handleAdjustScores(player.player_id, -1)} disabled={player.score <= 0}>-</button>
                   {player.score}
-                  <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
+                  <button onClick={() => handleAdjustScores(player.player_id, 1)}>+</button>
                 </td>
               </tr>
             ))}
@@ -93,4 +93,4 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
   );
 };
 
-export default AdjustShots;
+export default AdjustScores;

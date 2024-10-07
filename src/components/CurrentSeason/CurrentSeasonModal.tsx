@@ -53,9 +53,11 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
 
     fetchPlayersAndTeams();
   }, [isOpen]);
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
+
   const handleTeamChange = async (playerId: number, newTeamId: number) => {
     // Optimistically update the team in the UI
     const updatedPlayers = players.map(player => {
@@ -76,6 +78,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
       console.error('Error updating player team:', error);
     }
   };
+
   const handleAdjustShots = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -89,7 +92,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
     const { error } = await supabase
       .from('player_instance')
-      .update({ shots_left: playerToUpdate.shots_left })
+      .update({ shots_left: playerToUpdate?.shots_left }) // Optional chaining to avoid null values
       .eq('player_id', playerId);
 
     if (error) {
@@ -108,7 +111,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Tier Adjust')}>Tier Adjust</button>
         </div>
         <div className={styles.content}>
-        {activeTab === 'Adjust Shots' && (
+          {activeTab === 'Adjust Shots' && (
             <div className={styles.adjustShots}>
               <h2>Adjust Shots</h2>
               {loading ? (
@@ -122,16 +125,22 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                     </tr>
                   </thead>
                   <tbody>
-                    {players.map(player => (
-                      <tr key={player.player_id}>
-                        <td>{player.players.name}</td>
-                        <td>
-                          <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
-                          {player.shots_left}
-                          <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
-                        </td>
+                    {players.length > 0 ? (
+                      players.map(player => (
+                        <tr key={player?.player_id}>
+                          <td>{player?.name || 'Unknown Player'}</td>
+                          <td>
+                            <button onClick={() => handleAdjustShots(player?.player_id, -1)} disabled={player?.shots_left <= 0}>-</button>
+                            {player?.shots_left ?? 0} {/* Ensure shots_left is defined */}
+                            <button onClick={() => handleAdjustShots(player?.player_id, 1)}>+</button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={2}>No players found</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               )}
@@ -139,7 +148,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           )}
           {activeTab === 'Teams' && (
             <div className={styles.teams}>
-              {/* Adjust Teams Tab */}
               <h2>Adjust Teams</h2>
               {loading ? (
                 <p>Loading teams and players...</p>
@@ -152,89 +160,37 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                     </tr>
                   </thead>
                   <tbody>
-                    {players.map(player => (
-                      <tr key={player.player_id}>
-                        <td>{player.name}</td>
-                        <td>
-                          <select
-                            value={player.team_id || ''}
-                            onChange={(e) => handleTeamChange(player.player_id, Number(e.target.value))}
-                          >
-                            <option value="">No Team</option>
-                            {teams.map(team => (
-                              <option key={team.team_id} value={team.team_id}>
-                                {team.team_name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
+                    {players.length > 0 ? (
+                      players.map(player => (
+                        <tr key={player?.player_id}>
+                          <td>{player?.name || 'Unknown Player'}</td>
+                          <td>
+                            <select
+                              value={player?.team_id || ''}
+                              onChange={(e) => handleTeamChange(player?.player_id, Number(e.target.value))}
+                            >
+                              <option value="">No Team</option>
+                              {teams.length > 0 ? (
+                                teams.map(team => (
+                                  <option key={team?.team_id} value={team?.team_id}>
+                                    {team?.team_name || 'Unknown Team'}
+                                  </option>
+                                ))
+                              ) : (
+                                <option disabled>No teams available</option>
+                              )}
+                            </select>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={2}>No players found</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               )}
-            </div>
-          )}
-          {activeTab === 'Adjust Scores' && (
-            <div className={styles.adjustScores}>
-              <h2>Adjust Scores</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Shots</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Ryan</td>
-                    <td><button>-</button> 30 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>Brad</td>
-                    <td><button>-</button> 20 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>McNay</td>
-                    <td><button>-</button> 12 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>David</td>
-                    <td><button>-</button> 0 <button>+</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-          {activeTab === 'Tier Adjust' && (
-            <div className={styles.tierAdjust}>
-              <h2>Tier Adjust</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Shots</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Ryan</td>
-                    <td><button>-</button> 30 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>Brad</td>
-                    <td><button>-</button> 20 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>McNay</td>
-                    <td><button>-</button> 12 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>David</td>
-                    <td><button>-</button> 0 <button>+</button></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           )}
         </div>

@@ -10,27 +10,39 @@ interface CurrentSeasonModalProps {
 const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('Adjust Shots');
   const [players, setPlayers] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchPlayers = async () => {
+    const fetchPlayersAndTeams = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current shots left
-        const { data, error } = await supabase
-          .from('player_instance')
+        // Fetch players and their current teams
+        const { data: playerData, error: playerError } = await supabase
+          .from('players')
           .select(`
             player_id,
-            shots_left,
-            players (name)
+            name,
+            team_id
           `);
 
-        if (error) {
-          console.error('Error fetching player shots:', error);
+        if (playerError) {
+          console.error('Error fetching players:', playerError);
         } else {
-          setPlayers(data || []);
+          setPlayers(playerData || []);
+        }
+
+        // Fetch all teams
+        const { data: teamData, error: teamError } = await supabase
+          .from('teams')
+          .select('*');
+
+        if (teamError) {
+          console.error('Error fetching teams:', teamError);
+        } else {
+          setTeams(teamData || []);
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -39,13 +51,31 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
       }
     };
 
-    fetchPlayers();
+    fetchPlayersAndTeams();
   }, [isOpen]);
-
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
   };
+  const handleTeamChange = async (playerId: number, newTeamId: number) => {
+    // Optimistically update the team in the UI
+    const updatedPlayers = players.map(player => {
+      if (player.player_id === playerId) {
+        return { ...player, team_id: newTeamId };
+      }
+      return player;
+    });
+    setPlayers(updatedPlayers);
 
+    // Update the player's team in the database
+    const { error } = await supabase
+      .from('players')
+      .update({ team_id: newTeamId })
+      .eq('player_id', playerId);
+
+    if (error) {
+      console.error('Error updating player team:', error);
+    }
+  };
   const handleAdjustShots = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -109,33 +139,40 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           )}
           {activeTab === 'Teams' && (
             <div className={styles.teams}>
+              {/* Adjust Teams Tab */}
               <h2>Adjust Teams</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Shots</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Ryan</td>
-                    <td><button>-</button> 30 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>Brad</td>
-                    <td><button>-</button> 20 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>McNay</td>
-                    <td><button>-</button> 12 <button>+</button></td>
-                  </tr>
-                  <tr>
-                    <td>David</td>
-                    <td><button>-</button> 0 <button>+</button></td>
-                  </tr>
-                </tbody>
-              </table>
+              {loading ? (
+                <p>Loading teams and players...</p>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Team</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {players.map(player => (
+                      <tr key={player.player_id}>
+                        <td>{player.name}</td>
+                        <td>
+                          <select
+                            value={player.team_id || ''}
+                            onChange={(e) => handleTeamChange(player.player_id, Number(e.target.value))}
+                          >
+                            <option value="">No Team</option>
+                            {teams.map(team => (
+                              <option key={team.team_id} value={team.team_id}>
+                                {team.team_name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
           {activeTab === 'Adjust Scores' && (

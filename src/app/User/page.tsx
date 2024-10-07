@@ -41,58 +41,72 @@ const UserPage: React.FC = () => {
   const router = useRouter();
 
   // Fetch teams and players (for Standings view)
-  const fetchTeamsAndPlayers = async () => {
-    try {
-      // Fetch all teams
-      const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
-      if (teamsError) throw teamsError;
+  // Fetch teams and players (for Standings view)
+const fetchTeamsAndPlayers = async () => {
+  try {
+    // Step 1: Fetch the most recent season based on the end_date
+    const { data: latestSeason, error: seasonError } = await supabase
+      .from('seasons')
+      .select('season_id')
+      .order('end_date', { ascending: false })
+      .limit(1)
+      .single();
 
-      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        teamsData.map(async (team: Team) => {
-          // Fetch players for the current team using the team_id from players table
-          const { data: players, error: playersError } = await supabase
-            .from('players')
-            .select('*')
-            .eq('team_id', team.team_id);
-          if (playersError) throw playersError;
+    if (seasonError || !latestSeason) throw seasonError;
 
-          const playersWithStats = await Promise.all(
-            players.map(async (player: Player) => {
-              // Fetch player instance details for the player's shots_left and score
-              const { data: playerInstance, error: playerInstanceError } = await supabase
-                .from('player_instance')
-                .select('shots_left, score') // Select score directly
-                .eq('player_id', player.player_id)
-                .single();
+    const mostRecentSeasonId = latestSeason.season_id;  // Store the most recent season_id
 
-              if (playerInstanceError || !playerInstance) throw playerInstanceError;
+    // Step 2: Fetch all teams
+    const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
+    if (teamsError) throw teamsError;
 
-              return {
-                name: player.name,
-                shots_left: playerInstance.shots_left, // Using shots_left from player_instance table
-                total_points: playerInstance.score,    // Using score from player_instance table
-              };
-            })
-          );
+    const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
+      teamsData.map(async (team: Team) => {
+        // Step 3: Fetch players for the current team using the team_id from players table
+        const { data: players, error: playersError } = await supabase
+          .from('players')
+          .select('*')
+          .eq('team_id', team.team_id);
+        if (playersError) throw playersError;
 
-          // Calculate total shots left and total points for the entire team
-          const totalShots = playersWithStats.reduce((acc: number, player) => acc + player.shots_left, 0);
-          const totalPoints = playersWithStats.reduce((acc: number, player) => acc + player.total_points, 0);
+        const playersWithStats = await Promise.all(
+          players.map(async (player: Player) => {
+            // Step 4: Fetch player instance details for the most recent season
+            const { data: playerInstance, error: playerInstanceError } = await supabase
+              .from('player_instance')
+              .select('shots_left, score') // Select score directly
+              .eq('player_id', player.player_id)
+              .eq('season_id', mostRecentSeasonId) // Filter by the most recent season
+              .single();
 
-          return {
-            team_name: team.team_name,
-            players: playersWithStats,
-            total_shots: totalShots,
-            total_points: totalPoints,
-          };
-        })
-      );
+            if (playerInstanceError || !playerInstance) throw playerInstanceError;
 
-      setTeams(teamsWithPlayers);
-    } catch (error) {
-      console.error('Error fetching teams and players:', error);
-    }
-  };
+            return {
+              name: player.name,
+              shots_left: playerInstance.shots_left, // Using shots_left from player_instance table
+              total_points: playerInstance.score,    // Using score from player_instance table
+            };
+          })
+        );
+
+        // Calculate total shots left and total points for the entire team
+        const totalShots = playersWithStats.reduce((acc: number, player) => acc + player.shots_left, 0);
+        const totalPoints = playersWithStats.reduce((acc: number, player) => acc + player.total_points, 0);
+
+        return {
+          team_name: team.team_name,
+          players: playersWithStats,
+          total_shots: totalShots,
+          total_points: totalPoints,
+        };
+      })
+    );
+
+    setTeams(teamsWithPlayers);
+  } catch (error) {
+    console.error('Error fetching teams and players:', error);
+  }
+};
 
   // Fetch the user view from the database
   const fetchUserView = async () => {

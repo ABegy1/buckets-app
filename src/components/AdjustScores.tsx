@@ -13,32 +13,22 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchPlayerScores = async () => {
+    const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Fetch player instances and their shot results
+        // Fetch players and their current score
         const { data, error } = await supabase
           .from('player_instance')
           .select(`
-            player_instance_id,
             player_id,
-            players (name), 
-            shots (result) 
+            score,         // Fetch the score instead of shots_left
+            players (name) // Get player name from related table
           `);
 
         if (error) {
-          console.error('Error fetching player instances:', error);
+          console.error('Error fetching player scores:', error);
         } else {
-          // Sum up the results of all shots for each player instance to get the total score
-          const playersWithScores = data.map((player: any) => {
-            const totalScore = player.shots.reduce((sum: number, shot: any) => sum + shot.result, 0);
-            return {
-              player_instance_id: player.player_instance_id,
-              player_name: player.players?.name || 'Unknown Player', // Player's name
-              score: totalScore,  // Summed score from shot results
-            };
-          });
-          setPlayers(playersWithScores || []);
+          setPlayers(data || []);
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -47,23 +37,25 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
       }
     };
 
-    fetchPlayerScores();
+    fetchPlayers();
   }, [isOpen]);
 
-  const handleScoreAdjust = async (playerInstanceId: number, adjustment: number) => {
+  const handleAdjustScore = async (playerId: number, adjustment: number) => {
     // Optimistically update the score in the UI
     const updatedPlayers = players.map(player => {
-      if (player.player_instance_id === playerInstanceId) {
+      if (player.player_id === playerId) {
         return { ...player, score: player.score + adjustment };
       }
       return player;
     });
     setPlayers(updatedPlayers);
 
-    // To adjust the score, we need to insert or update a shot in the database
+    // Update the score in the database
+    const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
     const { error } = await supabase
-      .from('shots')
-      .insert({ result: adjustment, instance_id: playerInstanceId });
+      .from('player_instance')
+      .update({ score: playerToUpdate.score })  // Update score instead of shots_left
+      .eq('player_id', playerId);
 
     if (error) {
       console.error('Error updating player score:', error);
@@ -74,7 +66,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
     <div className={styles.adjustScores}>
       <h2>Adjust Scores</h2>
       {loading ? (
-        <p>Loading players and scores...</p>
+        <p>Loading players...</p>
       ) : (
         <table>
           <thead>
@@ -84,22 +76,16 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
             </tr>
           </thead>
           <tbody>
-            {players.length > 0 ? (
-              players.map(player => (
-                <tr key={player.player_instance_id}>
-                  <td>{player.player_name}</td>
-                  <td>
-                    <button onClick={() => handleScoreAdjust(player.player_instance_id, -1)} disabled={player.score <= 0}>-</button>
-                    {player.score}
-                    <button onClick={() => handleScoreAdjust(player.player_instance_id, 1)}>+</button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2}>No players found</td>
+            {players.map(player => (
+              <tr key={player.player_id}>
+                <td>{player.players.name}</td>
+                <td>
+                  <button onClick={() => handleAdjustScore(player.player_id, -1)} disabled={player.score <= 0}>-</button>
+                  {player.score}
+                  <button onClick={() => handleAdjustScore(player.player_id, 1)}>+</button>
+                </td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       )}

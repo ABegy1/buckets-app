@@ -13,7 +13,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Original Adjust Shots functionality
+  // Fetch players and their shots_left for the Adjust Shots tab
   useEffect(() => {
     if (!isOpen) return;
 
@@ -26,7 +26,9 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           .select(`
             player_id,
             shots_left,
-            players (name)
+            players (
+              name
+            )
           `);
 
         if (error) {
@@ -44,7 +46,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     fetchPlayers();
   }, [isOpen]);
 
-  // Adjust Teams functionality
+  // Fetch teams and players for the Adjust Teams tab
   useEffect(() => {
     if (!isOpen) return;
 
@@ -158,7 +160,8 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                   <tbody>
                     {players.map(player => (
                       <tr key={player.player_id}>
-                        <td>{player.players.name}</td>
+                        {/* Use optional chaining to safely access player data */}
+                        <td>{player.players?.name || 'Unknown Player'}</td>
                         <td>
                           <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
                           {player.shots_left}
@@ -188,7 +191,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                   <tbody>
                     {players.map(player => (
                       <tr key={player.player_id}>
-                        <td>{player.name}</td>
+                        <td>{player.name || 'Unknown Player'}</td>
                         <td>
                           <select
                             value={player.team_id || ''}
@@ -197,7 +200,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                             <option value="">No Team</option>
                             {teams.map(team => (
                               <option key={team.team_id} value={team.team_id}>
-                                {team.team_name}
+                                {team.team_name || 'Unknown Team'}
                               </option>
                             ))}
                           </select>
@@ -209,8 +212,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
               )}
             </div>
           )}
-
-          {/* Placeholder for other tabs */}
         </div>
       </div>
     </div>

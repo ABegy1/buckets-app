@@ -157,7 +157,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
               )}
             </div>
           )}
-          {activeTab === 'Teams' && (
+         {activeTab === 'Teams' && (
   <div className={styles.teams}>
     <h2>Adjust Teams</h2>
     {loading ? (
@@ -176,8 +176,9 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
             <tr key={player.player_id}>
               <td>{player.players.name}</td>
               <td>
+                {/* Ensure current team_id is correctly set as the value */}
                 <select 
-                  value={player.team_id} 
+                  value={player.team_id} // This should match the current team_id of the player
                   onChange={(e) => handleAdjustTeam(player.player_id, Number(e.target.value))}
                 >
                   {teams.map(team => (

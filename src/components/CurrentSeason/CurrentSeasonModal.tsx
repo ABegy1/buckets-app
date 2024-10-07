@@ -79,6 +79,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     }
   };
 
+  // RESTORE: Adjust shots functionality
   const handleAdjustShots = async (playerId: number, adjustment: number) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -92,7 +93,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     const playerToUpdate = updatedPlayers.find(p => p.player_id === playerId);
     const { error } = await supabase
       .from('player_instance')
-      .update({ shots_left: playerToUpdate?.shots_left }) // Optional chaining to avoid null values
+      .update({ shots_left: playerToUpdate.shots_left })
       .eq('player_id', playerId);
 
     if (error) {
@@ -111,6 +112,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Tier Adjust')}>Tier Adjust</button>
         </div>
         <div className={styles.content}>
+          {/* RESTORE: Adjust Shots tab */}
           {activeTab === 'Adjust Shots' && (
             <div className={styles.adjustShots}>
               <h2>Adjust Shots</h2>
@@ -125,27 +127,23 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                     </tr>
                   </thead>
                   <tbody>
-                    {players.length > 0 ? (
-                      players.map(player => (
-                        <tr key={player?.player_id}>
-                          <td>{player?.name || 'Unknown Player'}</td>
-                          <td>
-                            <button onClick={() => handleAdjustShots(player?.player_id, -1)} disabled={player?.shots_left <= 0}>-</button>
-                            {player?.shots_left ?? 0} {/* Ensure shots_left is defined */}
-                            <button onClick={() => handleAdjustShots(player?.player_id, 1)}>+</button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={2}>No players found</td>
+                    {players.map(player => (
+                      <tr key={player.player_id}>
+                        <td>{player.name}</td>
+                        <td>
+                          <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
+                          {player.shots_left}
+                          <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
+                        </td>
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               )}
             </div>
           )}
+
+          {/* Adjust Teams tab */}
           {activeTab === 'Teams' && (
             <div className={styles.teams}>
               <h2>Adjust Teams</h2>
@@ -160,39 +158,31 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                     </tr>
                   </thead>
                   <tbody>
-                    {players.length > 0 ? (
-                      players.map(player => (
-                        <tr key={player?.player_id}>
-                          <td>{player?.name || 'Unknown Player'}</td>
-                          <td>
-                            <select
-                              value={player?.team_id || ''}
-                              onChange={(e) => handleTeamChange(player?.player_id, Number(e.target.value))}
-                            >
-                              <option value="">No Team</option>
-                              {teams.length > 0 ? (
-                                teams.map(team => (
-                                  <option key={team?.team_id} value={team?.team_id}>
-                                    {team?.team_name || 'Unknown Team'}
-                                  </option>
-                                ))
-                              ) : (
-                                <option disabled>No teams available</option>
-                              )}
-                            </select>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={2}>No players found</td>
+                    {players.map(player => (
+                      <tr key={player.player_id}>
+                        <td>{player.name}</td>
+                        <td>
+                          <select
+                            value={player.team_id || ''}
+                            onChange={(e) => handleTeamChange(player.player_id, Number(e.target.value))}
+                          >
+                            <option value="">No Team</option>
+                            {teams.map(team => (
+                              <option key={team.team_id} value={team.team_id}>
+                                {team.team_name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
                       </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               )}
             </div>
           )}
+
+          {/* Placeholder for other tabs */}
         </div>
       </div>
     </div>

@@ -38,6 +38,7 @@ interface TeamWithPlayers {
 const UserPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings'); // Default view
+  const [seasonName, setSeasonName] = useState<string>(''); // New state for the season name
   const router = useRouter();
 
   // Fetch teams and players (for Standings view)
@@ -46,14 +47,15 @@ const UserPage: React.FC = () => {
       // Step 1: Fetch the active season where end_date is null
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id')
+        .select('season_id, season_name')
         .is('end_date', null)
         .single();
   
       if (seasonError || !activeSeason) throw seasonError;
   
       const activeSeasonId = activeSeason.season_id;  // Store the active season_id
-  
+      setSeasonName(activeSeason.season_name); // Set the season name
+
       // Step 2: Fetch all teams
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
       if (teamsError) throw teamsError;
@@ -105,62 +107,7 @@ const UserPage: React.FC = () => {
       console.error('Error fetching teams and players:', error);
     }
   };
-  
 
-  // Fetch the user view from the database
-  const fetchUserView = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase
-        .from('users')
-        .select('View')
-        .eq('email', session?.user?.email)
-        .single();
-
-      if (error || !data) {
-        console.error('Error fetching user view:', error);
-        return;
-      }
-
-      setUserView(data.View); // Set the current user view
-    } catch (err) {
-      console.error('Error fetching user view:', err);
-    }
-  };
-
-  // Real-time updates for the user's View field
-  useEffect(() => {
-    const subscribeToUserViewChanges = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { user } = session;
-
-      // Set up a real-time subscription for changes to the 'users' table
-      const userViewChannel = supabase
-        .channel('user-view-changes')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
-          (payload) => {
-            const updatedView = payload.new.View;
-            setUserView(updatedView); // Update the UI with the new view
-          }
-        )
-        .subscribe();
-
-      // Fetch the initial view
-      fetchUserView();
-
-      return () => {
-        supabase.removeChannel(userViewChannel);
-      };
-    };
-
-    subscribeToUserViewChanges();
-  }, []);
-
-  // Fetch teams and players data if the user view is Standings
   useEffect(() => {
     if (userView === 'Standings') {
       fetchTeamsAndPlayers();
@@ -188,7 +135,6 @@ const UserPage: React.FC = () => {
     }
   }, [userView]);
 
-  // Conditional rendering based on the user's view
   return (
     <div className={styles.userContainer}>
       <header className={styles.userHeader}>
@@ -197,7 +143,7 @@ const UserPage: React.FC = () => {
       <main className={styles.userContent}>
         {userView === 'Standings' ? (
           <div className={styles.container}>
-            <h2>Season Standings</h2>
+            <h2>{seasonName} Standings</h2> {/* Dynamically show the season name */}
             <div className={styles.teams}>
               {teams.map((team, index) => (
                 <div key={index} className={styles.team}>

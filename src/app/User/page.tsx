@@ -343,19 +343,6 @@ const UserPage: React.FC = () => {
             <p>{seasonRules}</p> {/* Display the season rules */}
           </div>
         ) : null}
-        <button
-          className={styles.btn}
-          onClick={async () => {
-            const { error } = await supabase.auth.signOut();
-            if (!error) {
-              router.push('/'); // Redirect to sign-in page
-            } else {
-              console.error('Sign out error:', error.message);
-            }
-          }}
-        >
-          Sign Out
-        </button>
       </main>
       <footer className={styles.userFooter}>
         <p>&copy; 2024 Buckets Game. User Panel. All rights reserved.</p>

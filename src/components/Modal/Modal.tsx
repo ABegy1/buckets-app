@@ -16,8 +16,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
   const [tierId, setTierId] = useState<number | null>(null);
   const [shotCount, setShotCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true); // Loading state
 
-  // Reset the form and internal states when the modal is opened or closed
   const resetForm = () => {
     setPoints(null);
     setIsMoneyball(false);
@@ -25,6 +25,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setShotCount(0);
     setPlayerInstanceId(null);
     setTierId(null);
+    setLoading(true); // Reset loading state when modal is closed
   };
 
   const handleClose = () => {
@@ -36,6 +37,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (!isOpen) return;
 
     const fetchPlayerInstanceAndTier = async () => {
+      setLoading(true);  // Start loading when fetching data
       try {
         const { data: playerInstance, error: instanceError } = await supabase
           .from('player_instance')
@@ -76,8 +78,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         } else {
           setShotCount(shots.length);
         }
+
+        setLoading(false);  // Data fetched successfully
       } catch (error) {
         console.error('Unexpected error:', error);
+        setLoading(false);  // Ensure loading is stopped on error
       }
     };
 
@@ -92,7 +97,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (isDouble) finalPoints *= 2;
 
     try {
-      // Step 1: Insert the new shot into the shots table
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
@@ -105,7 +109,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
-      // Step 2: Fetch the updated score by summing all shot results for this player instance
       const { data: shotsData, error: shotsError } = await supabase
         .from('shots')
         .select('result')
@@ -118,7 +121,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
       const newScore = shotsData.reduce((sum: number, shot: { result: number }) => sum + shot.result, 0);
 
-      // Step 3: Update the score in the player_instance table
       const { error: updateScoreError } = await supabase
         .from('player_instance')
         .update({ score: newScore })
@@ -129,7 +131,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
-      // Step 4: Update shots_left for this player
       const { data: playerInstance, error: fetchError } = await supabase
         .from('player_instance')
         .select('shots_left')
@@ -161,10 +162,22 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
   if (!isOpen) return null;
 
+  // Render loading indicator if still fetching data
+  if (loading) {
+    return (
+      <div className="modal-overlay" onClick={handleClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <button className="close-button" onClick={handleClose}>X</button>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render modal content after loading completes
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* X Button to close modal */}
         <button className="close-button" onClick={handleClose}>X</button>
 
         <h2>{name}</h2>

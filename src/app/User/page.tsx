@@ -227,7 +227,7 @@ const UserPage: React.FC = () => {
   
       const playerInstanceChannel = supabase
         .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchAndSetFreeAgents)
         .subscribe();
 
       const playerChannel = supabase
@@ -249,6 +249,11 @@ const UserPage: React.FC = () => {
     if (userView === 'Standings') {
       fetchTeamsAndPlayers();
 
+      const playerInstanceChannel = supabase
+        .channel('player-instance-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+        .subscribe();
+
       const teamChannel = supabase
         .channel('team-db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeamsAndPlayers)
@@ -265,6 +270,7 @@ const UserPage: React.FC = () => {
         .subscribe();
 
       return () => {
+        supabase.removeChannel(playerInstanceChannel);
         supabase.removeChannel(teamChannel);
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);

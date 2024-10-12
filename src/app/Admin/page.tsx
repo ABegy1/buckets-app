@@ -219,16 +219,21 @@ const AdminPage = () => {
           </div>
 
           <div className={styles.players}>
-            {tiers.map((tier) => (
-              <div key={tier.tier_name} className={styles.column}>
-                <div className={styles.header}>{tier.tier_name}</div>
-                {tier.players.map((player) => (
-                  <div key={player.player_id} className={styles.box} onClick={() => handleOpenModal(player.player_id, player.name)}>
-                    {player.name}
-                  </div>
-                ))}
-              </div>
-            ))}
+          {tiers.map((tier) => (
+            <div key={tier.tier_name} className={styles.column}>
+              <div className={styles.header}>{tier.tier_name}</div>
+              {tier.players.map((player) => (
+                <div 
+                  key={player.player_id} 
+                  className={styles.box} 
+                  onClick={() => handleOpenModal(player.player_id, player.name)}
+                  style={{ color: tier.color }} // Apply tier color to player name
+                >
+                  {player.name}
+                </div>
+              ))}
+            </div>
+          ))}
           </div>
         </div>
 

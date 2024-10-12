@@ -302,7 +302,7 @@ const UserPage: React.FC = () => {
           </div>
         ) : userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
-          <h2>Free Agents</h2>
+          <h2>{seasonName}Free Agents</h2>
           <div className={styles.players}>
             <div className={styles.headerRow}>
               <span>Name</span>

@@ -225,6 +225,11 @@ const UserPage: React.FC = () => {
   
       fetchAndSetFreeAgents();
   
+      const playerInstanceChannel = supabase
+        .channel('player-instance-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+        .subscribe();
+
       const playerChannel = supabase
         .channel('player-db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchAndSetFreeAgents)
@@ -236,6 +241,7 @@ const UserPage: React.FC = () => {
         .subscribe();
   
       return () => {
+        supabase.removeChannel(playerInstanceChannel);
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };

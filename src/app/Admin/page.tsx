@@ -76,15 +76,30 @@ const AdminPage = () => {
       const { data: tiersData, error: tiersError } = await supabase
         .from('tiers')
         .select('tier_name, color, players(name, player_id)');
-
+  
       if (tiersError) {
         console.error('Error fetching tiers:', tiersError);
       } else {
         setTiers(tiersData || []);
       }
     };
-
+  
     fetchTiersAndPlayers();
+  
+    const tiersChannel = supabase
+      .channel('tiers-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiersAndPlayers)
+      .subscribe();
+  
+    const playersChannel = supabase
+      .channel('players-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTiersAndPlayers)
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(tiersChannel);
+      supabase.removeChannel(playersChannel);
+    };
   }, []);
 
   useEffect(() => {

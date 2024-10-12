@@ -19,7 +19,7 @@ interface TierWithPlayers {
 }
 
 const AdminPage = () => {
-  const router = useRouter(); // Use router for navigation
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [tiers, setTiers] = useState<TierWithPlayers[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,12 +28,13 @@ const AdminPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false);
   const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true); // For handling loading state of role check
-  const [isAdmin, setIsAdmin] = useState<boolean>(false); // To store the admin role check
-  const [seasonName, setSeasonName] = useState<string>(''); // State to store the current season name
-  const [userView, setUserView] = useState<string>(''); // New state for user view
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [seasonName, setSeasonName] = useState<string>('');
+  const [userView, setUserView] = useState<string>('');
 
-  // Fetch user session and role
+  const pageOptions = ['Standings', 'Free Agency', 'Rules'];
+
   useEffect(() => {
     const getUserSessionAndRole = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -41,28 +42,27 @@ const AdminPage = () => {
 
       if (session?.user) {
         const { data, error } = await supabase
-          .from('users') // Adjust if needed to match your actual users table
+          .from('users')
           .select('role, View')
           .eq('email', session.user.email)
           .single();
 
         if (error || data.role !== 'Admin') {
-          router.push('/'); // Redirect if not an admin
+          router.push('/');
         } else {
-          setIsAdmin(true); // Set as admin if role matches
-          setUserView(data.View || ''); // Set the current view
+          setIsAdmin(true);
+          setUserView(data.View || 'Standings');
         }
       }
-      setLoading(false); // Loading complete
+      setLoading(false);
     };
 
     getUserSessionAndRole();
 
-    // Listen to auth state changes (e.g., sign-out)
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
-        router.push('/'); // Redirect to sign-in page after sign out
+        router.push('/');
       }
     });
 
@@ -71,7 +71,6 @@ const AdminPage = () => {
     };
   }, [router]);
 
-  // Fetch tiers and players
   useEffect(() => {
     const fetchTiersAndPlayers = async () => {
       const { data: tiersData, error: tiersError } = await supabase
@@ -88,7 +87,6 @@ const AdminPage = () => {
     fetchTiersAndPlayers();
   }, []);
 
-  // Fetch the current season name
   useEffect(() => {
     const fetchSeasonName = async () => {
       try {
@@ -102,7 +100,7 @@ const AdminPage = () => {
           throw seasonError;
         }
 
-        setSeasonName(activeSeason.season_name); // Set the season name
+        setSeasonName(activeSeason.season_name);
       } catch (error) {
         console.error('Error fetching current season:', error);
       }
@@ -111,7 +109,6 @@ const AdminPage = () => {
     fetchSeasonName();
   }, []);
 
-  // Modal and sidebar handlers
   const handleOpenModal = (playerId: number, name: string) => {
     setSelectedName(name);
     setSelectedPlayerId(playerId);
@@ -126,6 +123,10 @@ const AdminPage = () => {
     setIsSidebarOpen(true);
   };
 
+  const handleCloseSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   const handleViewUpdate = async (newView: string) => {
     if (!user) return;
 
@@ -138,7 +139,7 @@ const AdminPage = () => {
       if (updateError) {
         console.error('Error updating user view:', updateError);
       } else {
-        setUserView(newView); // Update local state with new view
+        setUserView(newView);
         console.log(`User view updated to ${newView}`);
       }
     } catch (err) {
@@ -147,16 +148,10 @@ const AdminPage = () => {
   };
 
   const handleToggleView = () => {
-    const newView = userView === 'Standings' ? 'FreeAgent' : 'Standings';
+    const currentIndex = pageOptions.indexOf(userView);
+    const nextIndex = (currentIndex + 1) % pageOptions.length;
+    const newView = pageOptions[nextIndex];
     handleViewUpdate(newView);
-  };
-
-  const handleRulesClick = () => {
-    handleViewUpdate('Rules');
-  };
-
-  const handleCloseSidebar = () => {
-    setIsSidebarOpen(false);
   };
 
   const handleOpenCurrentSeasonModal = () => {
@@ -187,16 +182,14 @@ const AdminPage = () => {
     if (error) {
       console.error('Error signing out:', error.message);
     } else {
-      router.push('/'); // Redirect to sign-in page after successful sign-out
+      router.push('/');
     }
   };
-  
-  // Show loading while role check is in progress getting vercel build
+
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  // Return null if the user is not an admin
   if (!isAdmin) {
     return null;
   }
@@ -210,13 +203,10 @@ const AdminPage = () => {
         <button className={styles.btn} onClick={handleSignOut}>Sign Out</button>
 
         <div className={styles.container}>
-          <h2>{seasonName} Standings</h2> {/* Display the current season name */}
+          <h2>{seasonName} Standings</h2>
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>Settings</button>
-            <button className={styles.button} onClick={handleToggleView}>
-              {userView === 'Standings' ? 'Free Agency' : 'Standings'}
-            </button>
-            <button className={styles.button} onClick={handleRulesClick}>Rules</button>
+            <button className={styles.button} onClick={handleToggleView}>Page Options: {userView}</button>
           </div>
 
           <div className={styles.players}>

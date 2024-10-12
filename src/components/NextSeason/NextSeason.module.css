@@ -162,6 +162,19 @@
 .modalActions button:hover {
   background: #d0d0d0;
 }
+/* Container for scrollable lists */
+.scrollableList {
+  max-height: 150px; /* Set a reasonable max height */
+  overflow-y: auto;  /* Enable vertical scroll */
+  padding-right: 10px; /* Extra padding for scroll bar spacing */
+}
+
+/* Ensure modal content doesn't overflow */
+.modalContent {
+  max-height: 90vh; /* Constrain modal height */
+  overflow-y: auto; /* Scroll inside the modal */
+  padding: 20px;
+}
 
 /* Lock the NextSeasonModal when the EditPlayerModal is open */
 .modalLocked {

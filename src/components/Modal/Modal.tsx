@@ -15,17 +15,15 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [isDouble, setIsDouble] = useState<boolean>(false);
   const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
   const [tierId, setTierId] = useState<number | null>(null);
-  const [shotCount, setShotCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
+  const [shotCount, setShotCount] = useState<number | null>(null); // Updated shotCount to null initially
 
   const resetForm = () => {
     setPoints(null);
     setIsMoneyball(false);
     setIsDouble(false);
-    setShotCount(0);
+    setShotCount(null);  // Reset shotCount when modal is closed
     setPlayerInstanceId(null);
     setTierId(null);
-    setLoading(true); // Reset loading state when modal is closed
   };
 
   const handleClose = () => {
@@ -37,7 +35,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (!isOpen) return;
 
     const fetchPlayerInstanceAndTier = async () => {
-      setLoading(true);  // Start loading when fetching data
       try {
         const { data: playerInstance, error: instanceError } = await supabase
           .from('player_instance')
@@ -76,13 +73,10 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         if (shotsError) {
           console.error('Error fetching shot count:', shotsError);
         } else {
-          setShotCount(shots.length);
+          setShotCount(shots.length); // Update shot count once data is fetched
         }
-
-        setLoading(false);  // Data fetched successfully
       } catch (error) {
         console.error('Unexpected error:', error);
-        setLoading(false);  // Ensure loading is stopped on error
       }
     };
 
@@ -162,19 +156,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
   if (!isOpen) return null;
 
-  // Render loading indicator if still fetching data
-  if (loading) {
-    return (
-      <div className="modal-overlay" onClick={handleClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="close-button" onClick={handleClose}>X</button>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Render modal content after loading completes
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -183,7 +164,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <h2>{name}</h2>
         <div className="modal-body">
           <div>
-            <p>Shot#: <span>{shotCount + 1}</span></p>
+            {/* Conditionally render shotCount or a loading indicator */}
+            <p>Shot#: <span>{shotCount !== null ? shotCount + 1 : 'Loading...'}</span></p>
           </div>
           <div className="points">
             <button

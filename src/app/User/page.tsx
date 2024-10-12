@@ -108,6 +108,59 @@ const UserPage: React.FC = () => {
     }
   };
 
+  const fetchUserView = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase
+        .from('users')
+        .select('View')
+        .eq('email', session?.user?.email)
+        .single();
+
+      if (error || !data) {
+        console.error('Error fetching user view:', error);
+        return;
+      }
+
+      setUserView(data.View); // Set the current user view
+    } catch (err) {
+      console.error('Error fetching user view:', err);
+    }
+  };
+
+  // Real-time updates for the user's View field
+  useEffect(() => {
+    const subscribeToUserViewChanges = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { user } = session;
+
+      // Set up a real-time subscription for changes to the 'users' table
+      const userViewChannel = supabase
+        .channel('user-view-changes')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
+          (payload) => {
+            const updatedView = payload.new.View;
+            setUserView(updatedView); // Update the UI with the new view
+          }
+        )
+        .subscribe();
+
+      // Fetch the initial view
+      fetchUserView();
+
+      return () => {
+        supabase.removeChannel(userViewChannel);
+      };
+    };
+
+    subscribeToUserViewChanges();
+  }, []);
+
+
   useEffect(() => {
     if (userView === 'Standings') {
       fetchTeamsAndPlayers();
@@ -168,12 +221,16 @@ const UserPage: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : (
+        ) : userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
             <h2>This is the Free Agency page</h2>
             {/* You can add more functionality to the Free Agency UI here in the future */}
           </div>
-        )}
+        ) : userView === 'Rules' ? (
+          <div className={styles.rulesPage}>
+            <h2>This is the Rules page</h2>
+          </div>
+        ) : null}
         <button
           className={styles.btn}
           onClick={async () => {

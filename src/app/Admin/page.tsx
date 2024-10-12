@@ -33,7 +33,7 @@ const AdminPage = () => {
   const [seasonName, setSeasonName] = useState<string>('');
   const [userView, setUserView] = useState<string>('');
 
-  const pageOptions = ['Standings', 'Free Agency', 'Rules'];
+  const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
 
   useEffect(() => {
     const getUserSessionAndRole = async () => {
@@ -147,11 +147,10 @@ const AdminPage = () => {
     }
   };
 
-  const handleToggleView = () => {
-    const currentIndex = pageOptions.indexOf(userView);
-    const nextIndex = (currentIndex + 1) % pageOptions.length;
-    const newView = pageOptions[nextIndex];
-    handleViewUpdate(newView);
+  // Dropdown selection handler
+  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedView = event.target.value;
+    handleViewUpdate(selectedView);
   };
 
   const handleOpenCurrentSeasonModal = () => {
@@ -206,7 +205,17 @@ const AdminPage = () => {
           <h2>{seasonName} Standings</h2>
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>Settings</button>
-            <button className={styles.button} onClick={handleToggleView}>Page Options: {userView}</button>
+
+            {/* Dropdown for Page Options */}
+            <select 
+              className={styles.dropdown} 
+              value={userView} 
+              onChange={handleSelectChange}
+            >
+              {pageOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.players}>

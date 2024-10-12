@@ -6,8 +6,6 @@ import EditTeamModal from './EditTeamModal';
 import EditTierModal from './EditTierModal';
 import EditPlayerModal from './EditPlayerModal';
 
-
-// Main NextSeasonModal Component
 interface NextSeasonModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,16 +17,14 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [tiers, setTiers] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
   const [shotCount, setShotCount] = useState<number>(40);
-  const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // State for free agent
-  const [seasonName, setSeasonName] = useState<string>(''); // New state for season name
-  const [seasonRules, setSeasonRules] = useState<string>(''); // New state for season rules
+  const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false);
+  const [seasonName, setSeasonName] = useState<string>('');
+  const [seasonRules, setSeasonRules] = useState<string>('');
 
-  // Modals state
   const [isEditPlayerModalOpen, setEditPlayerModalOpen] = useState<boolean>(false);
   const [isEditTeamModalOpen, setEditTeamModalOpen] = useState<boolean>(false);
   const [isEditTierModalOpen, setEditTierModalOpen] = useState<boolean>(false);
 
-  // Selected entities for editing
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<any>(null);
@@ -39,50 +35,29 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     // Fetch initial data
     const fetchTeams = async () => {
       const { data, error } = await supabase.from('teams').select('*');
-      if (error) {
-        console.error('Error fetching teams:', error);
-      } else {
-        setTeams(data || []);
-      }
+      if (error) console.error('Error fetching teams:', error);
+      else setTeams(data || []);
     };
 
     const fetchTiers = async () => {
       const { data, error } = await supabase.from('tiers').select('*');
-      if (error) {
-        console.error('Error fetching tiers:', error);
-      } else {
-        setTiers(data || []);
-      }
+      if (error) console.error('Error fetching tiers:', error);
+      else setTiers(data || []);
     };
 
     const fetchPlayers = async () => {
       const { data, error } = await supabase.from('players').select('*');
-      if (error) {
-        console.error('Error fetching players:', error);
-      } else {
-        setPlayers(data || []);
-      }
+      if (error) console.error('Error fetching players:', error);
+      else setPlayers(data || []);
     };
 
     fetchTeams();
     fetchTiers();
     fetchPlayers();
 
-    // Set up real-time subscriptions
-    const teamChannel = supabase
-      .channel('team-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeams)
-      .subscribe();
-
-    const tierChannel = supabase
-      .channel('tier-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiers)
-      .subscribe();
-
-    const playerChannel = supabase
-      .channel('player-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchPlayers)
-      .subscribe();
+    const teamChannel = supabase.channel('team-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeams).subscribe();
+    const tierChannel = supabase.channel('tier-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiers).subscribe();
+    const playerChannel = supabase.channel('player-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchPlayers).subscribe();
 
     return () => {
       supabase.removeChannel(teamChannel);
@@ -144,9 +119,9 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .from('players')
       .insert([{ 
         name: `Player ${players.length + 1}`, 
-        tier_id: tiers[0]?.tier_id || 1,  // Assign the first available tier
-        team_id: isFreeAgent ? null : teams[0]?.team_id || null, // Assign null team if Free Agent is checked
-        is_free_agent: isFreeAgent // Set free agent status
+        tier_id: tiers[0]?.tier_id || 1,  
+        team_id: isFreeAgent ? null : teams[0]?.team_id || null, 
+        is_free_agent: isFreeAgent 
       }]);
   
     if (error) {
@@ -177,18 +152,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     const currentDate = new Date();
 
     try {
-      // Step 1: Check if a current season exists
       const { data: currentSeason, error: currentSeasonError } = await supabase
         .from('seasons')
         .select('season_id, end_date')
-        .order('start_date', { ascending: false }) // Get the most recent season
+        .order('start_date', { ascending: false }) 
         .limit(1)
         .single();
 
       if (currentSeasonError) {
         console.error('Error fetching current season:', currentSeasonError);
       } else if (currentSeason && !currentSeason.end_date) {
-        // Only update the end date if a season exists and doesn't have an end date
         const { error: updateSeasonError } = await supabase
           .from('seasons')
           .update({ end_date: currentDate.toISOString() })
@@ -197,7 +170,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         if (updateSeasonError) throw updateSeasonError;
       }
 
-      // Step 2: Insert a new season with user-provided name and rules
       const { data: seasonData, error: seasonError } = await supabase
         .from('seasons')
         .insert({
@@ -262,76 +234,87 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   if (!isOpen) return null;
 
   return (
-    <div className={styles.nextSeasonModal}>
-      <div className={styles.modalContent}>
-        <button onClick={onClose}>X</button>
-  
-        <h2>Season Name</h2>
-        <input
-          type="text"
-          value={seasonName}
-          onChange={(e) => setSeasonName(e.target.value)}
-          placeholder="Enter season name"
-          className={styles.input}
-        />
-  
-        <h2>Season Rules</h2>
-        <textarea
-          value={seasonRules}
-          onChange={(e) => setSeasonRules(e.target.value)}
-          placeholder="Enter season rules"
-          className={styles.textarea}
-        />
-  
-        {/* Scrollable teams list */}
-        <h2>Teams</h2>
-        <div className={styles.scrollableList}>
-          {teams.map((team) => (
-            <div key={team.team_id} className={styles.team}>
-              {team.team_name}
-              <button className={styles.editButton} onClick={() => handleOpenEditTeamModal(team)}>Edit</button>
-              <button className={styles.deleteButton} onClick={() => handleDeleteTeam(team.team_id)}>X</button>
-            </div>
-          ))}
+    <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
+      <div className={styles.modal}>
+        <button onClick={onClose} className={styles.closeButton}>X</button>
+
+        <h2>Start New Season</h2>
+
+        <div className={styles.formSection}>
+          <label htmlFor="seasonName">Season Name</label>
+          <input
+            id="seasonName"
+            type="text"
+            value={seasonName}
+            onChange={(e) => setSeasonName(e.target.value)}
+            placeholder="Enter season name"
+          />
         </div>
-        <button className={styles.globalButton} onClick={handleAddTeam}>Add Team</button>
-  
-        {/* Scrollable tiers list */}
-        <h2>Tiers</h2>
-        <div className={styles.scrollableList}>
-          {tiers.map((tier) => (
-            <div key={tier.tier_id} className={styles.tier}>
-              {tier.tier_name} (Color: {tier.color})
-              <button className={styles.editButton} onClick={() => handleOpenEditTierModal(tier)}>Edit</button>
-              <button className={styles.deleteButton} onClick={() => handleDeleteTier(tier.tier_id)}>X</button>
-            </div>
-          ))}
+
+        <div className={styles.formSection}>
+          <label htmlFor="seasonRules">Season Rules</label>
+          <textarea
+            id="seasonRules"
+            value={seasonRules}
+            onChange={(e) => setSeasonRules(e.target.value)}
+            placeholder="Enter season rules"
+          />
         </div>
-        <button className={styles.globalButton} onClick={handleAddTier}>Add Tier</button>
-  
-        {/* Scrollable players list */}
-        <h2>Players</h2>
-        <div className={styles.scrollableList}>
-          {players.map((player) => (
-            <div key={player.player_id} className={styles.player}>
-              {player.name}
-              <button className={styles.editButton} onClick={() => handleOpenEditPlayerModal(player)}>Edit</button>
-              <button className={styles.deleteButton} onClick={() => handleDeletePlayer(player.player_id)}>X</button>
-            </div>
-          ))}
+
+        <div className={styles.listSection}>
+          <h3>Teams</h3>
+          <div className={styles.scrollableList}>
+            {teams.map((team) => (
+              <div key={team.team_id} className={styles.listItem}>
+                {team.team_name}
+                <button className={styles.editButton} onClick={() => handleOpenEditTeamModal(team)}>Edit</button>
+                <button className={styles.deleteButton} onClick={() => handleDeleteTeam(team.team_id)}>X</button>
+              </div>
+            ))}
+          </div>
+          <button className={styles.addButton} onClick={handleAddTeam}>Add Team</button>
         </div>
-        <button className={styles.globalButton} onClick={handleAddPlayer}>Add Player</button>
-  
-        <h2>Season Shot Count</h2>
-        <div className={styles.shotCount}>
-          <button onClick={() => handleShotCountChange(-1)}>-</button>
-          <span>{shotCount}</span>
-          <button onClick={() => handleShotCountChange(1)}>+</button>
+
+        <div className={styles.listSection}>
+          <h3>Tiers</h3>
+          <div className={styles.scrollableList}>
+            {tiers.map((tier) => (
+              <div key={tier.tier_id} className={styles.listItem}>
+                {tier.tier_name} (Color: {tier.color})
+                <button className={styles.editButton} onClick={() => handleOpenEditTierModal(tier)}>Edit</button>
+                <button className={styles.deleteButton} onClick={() => handleDeleteTier(tier.tier_id)}>X</button>
+              </div>
+            ))}
+          </div>
+          <button className={styles.addButton} onClick={handleAddTier}>Add Tier</button>
         </div>
-  
+
+        <div className={styles.listSection}>
+          <h3>Players</h3>
+          <div className={styles.scrollableList}>
+            {players.map((player) => (
+              <div key={player.player_id} className={styles.listItem}>
+                {player.name}
+                <button className={styles.editButton} onClick={() => handleOpenEditPlayerModal(player)}>Edit</button>
+                <button className={styles.deleteButton} onClick={() => handleDeletePlayer(player.player_id)}>X</button>
+              </div>
+            ))}
+          </div>
+          <button className={styles.addButton} onClick={handleAddPlayer}>Add Player</button>
+        </div>
+
+        <div className={styles.shotCountSection}>
+          <h3>Season Shot Count</h3>
+          <div className={styles.shotCount}>
+            <button onClick={() => handleShotCountChange(-1)}>-</button>
+            <span>{shotCount}</span>
+            <button onClick={() => handleShotCountChange(1)}>+</button>
+          </div>
+        </div>
+
         <button className={styles.globalButton} onClick={handleSubmit}>Start Season</button>
 
-        {/* EditPlayerModal */}
+        {/* Modals */}
         {isEditPlayerModalOpen && (
           <EditPlayerModal
             isOpen={isEditPlayerModalOpen}
@@ -347,7 +330,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           />
         )}
 
-        {/* EditTeamModal */}
         {isEditTeamModalOpen && (
           <EditTeamModal 
             isOpen={isEditTeamModalOpen} 
@@ -361,7 +343,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           />
         )}
 
-        {/* EditTierModal */}
         {isEditTierModalOpen && (
           <EditTierModal 
             isOpen={isEditTierModalOpen} 

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css';
 import { supabase } from '@/supabaseClient';
 
-// EditTeamModal Component
 interface EditTeamModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +24,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, onClose, team, on
       .from('teams')
       .update({ team_name: teamName })
       .eq('team_id', team.team_id);
-    
+
     if (error) {
       console.error('Error updating team:', error);
     } else {
@@ -37,19 +36,22 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, onClose, team, on
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalBackdrop}>
+    <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
       <div className={styles.modal}>
         <div className={styles.modalContent}>
           <h2>Edit Team</h2>
+          <label htmlFor="teamName">Team Name</label>
           <input
+            id="teamName"
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder="Team Name"
+            placeholder="Enter Team Name"
+            aria-label="Team Name"
           />
           <div className={styles.modalActions}>
-            <button onClick={handleUpdateTeam}>Save</button>
-            <button onClick={onClose}>Cancel</button>
+            <button onClick={handleUpdateTeam} className={styles.saveButton}>Save</button>
+            <button onClick={onClose} className={styles.cancelButton}>Cancel</button>
           </div>
         </div>
       </div>

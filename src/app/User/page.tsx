@@ -39,6 +39,7 @@ const UserPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings'); // Default view
   const [seasonName, setSeasonName] = useState<string>(''); // New state for the season name
+  const [seasonRules, setSeasonRules] = useState<string>(''); // New state for the season rules
   const router = useRouter();
 
   // Fetch teams and players (for Standings view)
@@ -47,7 +48,7 @@ const UserPage: React.FC = () => {
       // Step 1: Fetch the active season where end_date is null
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, season_name')
+        .select('season_id, season_name, rules') // Fetch rules as well
         .is('end_date', null)
         .single();
   
@@ -55,6 +56,7 @@ const UserPage: React.FC = () => {
   
       const activeSeasonId = activeSeason.season_id;  // Store the active season_id
       setSeasonName(activeSeason.season_name); // Set the season name
+      setSeasonRules(activeSeason.rules); // Set the season rules
 
       // Step 2: Fetch all teams
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
@@ -104,7 +106,7 @@ const UserPage: React.FC = () => {
   
       setTeams(teamsWithPlayers);
     } catch (error) {
-      console.error('Error fetching teams and players:', error);
+      console.error('Error fetching teams, players, and season info:', error);
     }
   };
 
@@ -159,7 +161,6 @@ const UserPage: React.FC = () => {
 
     subscribeToUserViewChanges();
   }, []);
-
 
   useEffect(() => {
     if (userView === 'Standings') {
@@ -228,7 +229,8 @@ const UserPage: React.FC = () => {
           </div>
         ) : userView === 'Rules' ? (
           <div className={styles.rulesPage}>
-            <h2>This is the Rules page</h2>
+            <h2>{seasonName} Rules</h2> {/* Display the season name */}
+            <p>{seasonRules}</p> {/* Display the season rules */}
           </div>
         ) : null}
         <button

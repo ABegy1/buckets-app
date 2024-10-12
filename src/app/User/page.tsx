@@ -18,6 +18,7 @@ interface PlayerInstance {
 }
 
 interface Player {
+  tiers: any;
   player_id: number;
   name: string;
   tier_id?: number; // Optional if not fetched
@@ -28,6 +29,7 @@ interface Player {
 interface TeamWithPlayers {
   team_name: string;
   players: {
+    tier_color: string | undefined;
     name: string;
     shots_left: number;
     total_points: number;
@@ -58,7 +60,7 @@ const UserPage: React.FC = () => {
       const activeSeasonId = activeSeason.season_id;  // Store the active season_id
       setSeasonName(activeSeason.season_name); // Set the season name
       setSeasonRules(activeSeason.rules); // Set the season rules
-
+  
       // Step 2: Fetch all teams
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
       if (teamsError) throw teamsError;
@@ -68,7 +70,7 @@ const UserPage: React.FC = () => {
           // Step 3: Fetch players for the current team using the team_id from players table
           const { data: players, error: playersError } = await supabase
             .from('players')
-            .select('*')
+            .select('*, tiers(color)') // Include tier color
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
   
@@ -86,8 +88,9 @@ const UserPage: React.FC = () => {
   
               return {
                 name: player.name,
-                shots_left: playerInstance.shots_left, // Using shots_left from player_instance table
-                total_points: playerInstance.score,    // Using score from player_instance table
+                shots_left: playerInstance.shots_left,
+                total_points: playerInstance.score,
+                tier_color: player.tiers?.color || '#000',  
               };
             })
           );
@@ -110,10 +113,8 @@ const UserPage: React.FC = () => {
       console.error('Error fetching teams, players, and season info:', error);
     }
   };
-
   const fetchFreeAgents = async () => {
     try {
-      // Step 1: Fetch the active season where end_date is null
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
         .select('season_id')
@@ -121,37 +122,35 @@ const UserPage: React.FC = () => {
         .single();
   
       if (seasonError || !activeSeason) throw seasonError;
+      const activeSeasonId = activeSeason.season_id;
   
-      const activeSeasonId = activeSeason.season_id;  // Store the active season_id
-  
-      // Step 2: Fetch free agent players (players with is_free_agent = true)
       const { data: freeAgents, error: freeAgentsError } = await supabase
         .from('players')
-        .select('player_id, name') // Fetch player_id and name
-        .eq('is_free_agent', true); // Only fetch players who are free agents
+        .select('*, tiers(color)')  // Fetch tier color as well
+        .eq('is_free_agent', true);
   
       if (freeAgentsError) throw freeAgentsError;
   
-      // Step 3: Fetch player instances for the active season
       const freeAgentsWithStats = await Promise.all(
-        freeAgents.map(async (player: { player_id: number; name: string }) => {
+        freeAgents.map(async (player: { player_id: number; name: string; tiers: { color: string } }) => {
           const { data: playerInstance, error: playerInstanceError } = await supabase
             .from('player_instance')
             .select('shots_left, score')
             .eq('player_id', player.player_id)
             .eq('season_id', activeSeasonId)
             .single();
-      
+  
           if (playerInstanceError || !playerInstance) throw playerInstanceError;
-      
+  
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
+            tier_color: player.tiers?.color || '#000',  // Use player tier color or fallback to black
           };
         })
       );
-      // Return the free agents with stats
+  
       return freeAgentsWithStats;
     } catch (error) {
       console.error('Error fetching free agents and stats:', error);
@@ -285,13 +284,13 @@ const UserPage: React.FC = () => {
                     <span>Shots Left</span>
                     <span>Total Points</span>
                   </div>
-                  {team.players.map((player, playerIndex) => (
-                    <div key={playerIndex} className={styles.player}>
-                      <span>{player.name}</span>
-                      <span>{player.shots_left}</span>
-                      <span>{player.total_points}</span>
-                    </div>
-                  ))}
+                 {team.players.map((player, playerIndex) => (
+  <div key={playerIndex} className={styles.player}>
+    <span style={{ color: player.tier_color }}>{player.name}</span>  {/* Apply tier color */}
+    <span>{player.shots_left}</span>
+    <span>{player.total_points}</span>
+  </div>
+))}
                   <div className={styles.teamStats}>
                     <span>Total Shots Remaining: {team.total_shots}</span>
                     <span>Total Score: {team.total_points}</span>

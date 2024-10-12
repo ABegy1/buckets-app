@@ -9,7 +9,46 @@
   background-color: #f0f0f0;
   color: #333;
 }
+/* Navbar styling */
+.navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* Spacing between the title and button */
+  align-items: center;
+  padding: 20px;
+  background-color: #2a9d8f; /* Same as before for consistency */
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for navbar */
+}
 
+.navbarTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Updated Sign Out button styling (carried over from previous update) */
+.signOutButton {
+  background-color: #ff6b6b;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.signOutButton:hover {
+  background-color: #d64545;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.signOutButton:active {
+  background-color: #bf3333;
+  box-shadow: none;
+}
 /* Header styling */
 .adminHeader {
   width: 100%;

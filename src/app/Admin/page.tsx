@@ -210,12 +210,11 @@ const AdminPage = () => {
 
   return (
     <div className={styles.adminContainer}>
-      <header className={styles.adminHeader}>
-        <h1>Admin Dashboard</h1>
-      </header>
+      <header className={styles.navbar}>
+  <h1 className={styles.navbarTitle}>Admin Dashboard</h1>
+  <button className={styles.signOutButton} onClick={handleSignOut}>Sign Out</button>
+</header>
       <main className={styles.adminContent}>
-        <button className={styles.btn} onClick={handleSignOut}>Sign Out</button>
-
         <div className={styles.container}>
           <h2>{seasonName} Standings</h2>
           <div className={styles.secondaryScreenOptions}>

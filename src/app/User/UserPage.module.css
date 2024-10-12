@@ -120,7 +120,46 @@
   border-bottom: 2px solid #333;
   padding: 10px 0;
 }
+/* Navbar styling */
+.navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* Spacing between the title and button */
+  align-items: center;
+  padding: 20px;
+  background-color: #2a9d8f; /* Consistent background */
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for navbar */
+}
 
+.navbarTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Updated Sign Out button styling */
+.signOutButton {
+  background-color: #ff6b6b; /* Modern red shade */
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px; /* Rounded corners */
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.signOutButton:hover {
+  background-color: #d64545; /* Darker red shade on hover */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+}
+
+.signOutButton:active {
+  background-color: #bf3333; /* Even darker shade when clicked */
+  box-shadow: none; /* No shadow when clicked */
+}
 /* Player row styling */
 .player {
   display: flex;

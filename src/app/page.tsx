@@ -61,7 +61,7 @@ const HomePage = () => {
         setUser(session.user ?? null); // User signed in or state updated
       } else {
         setUser(null); // User signed out
-        router.push('/'); // Redirect to sign-in page after sign out
+        router.push('/'); // Redirect to sign-in page after 
       }
     });
 

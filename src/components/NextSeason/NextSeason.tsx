@@ -130,28 +130,40 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
   const [playerName, setPlayerName] = useState<string>(player?.name || '');
   const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id);
   const [teamId, setTeamId] = useState<number>(player?.team_id || teams[0]?.team_id);
+  const [isFreeAgent, setIsFreeAgent] = useState<boolean>(player?.is_free_agent || false);
+
   
   useEffect(() => {
     if (player) {
       setPlayerName(player.name);
       setTierId(player.tier_id);
       setTeamId(player.team_id);
+      setIsFreeAgent(player.is_free_agent); 
     }
   }, [player, teams]);
 
   const handleUpdatePlayer = async () => {
-    // Update the player's name, tier_id, and team_id in the players table
     const { error: playerError } = await supabase
       .from('players')
-      .update({ name: playerName, tier_id: tierId, team_id: teamId }) // Now updating team_id directly
+      .update({ 
+        name: playerName, 
+        tier_id: tierId, 
+        team_id: isFreeAgent ? null : teamId, // Set team_id to null if free agent
+        is_free_agent: isFreeAgent // Update free agent status
+      })
       .eq('player_id', player.player_id);
   
     if (playerError) {
       console.error('Error updating player:', playerError);
     }
   
-    // Call the onUpdate callback to reflect changes in the UI
-    onUpdate({ ...player, name: playerName, tier_id: tierId, team_id: teamId });
+    onUpdate({ 
+      ...player, 
+      name: playerName, 
+      tier_id: tierId, 
+      team_id: isFreeAgent ? null : teamId, 
+      is_free_agent: isFreeAgent 
+    });
     onClose();
   };
   
@@ -206,7 +218,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [tiers, setTiers] = useState<any[]>([]);
   const [players, setPlayers] = useState<any[]>([]);
   const [shotCount, setShotCount] = useState<number>(40);
-
+  const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // State for free agent
   const [seasonName, setSeasonName] = useState<string>(''); // New state for season name
   const [seasonRules, setSeasonRules] = useState<string>(''); // New state for season rules
 
@@ -322,19 +334,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   // Player Functions
   const handleAddPlayer = async () => {
-    if (tiers.length === 0 || teams.length === 0) {
-      console.error('No available tiers or teams to assign to the player.');
+    if (tiers.length === 0) {
+      console.error('No available tiers to assign to the player.');
       return;
     }
-
+  
     const { error } = await supabase
       .from('players')
       .insert([{ 
         name: `Player ${players.length + 1}`, 
         tier_id: tiers[0]?.tier_id || 1,  // Assign the first available tier
-        team_id: teams[0]?.team_id || null // Assign the first available team
+        team_id: isFreeAgent ? null : teams[0]?.team_id || null, // Assign null team if Free Agent is checked
+        is_free_agent: isFreeAgent // Set free agent status
       }]);
-
+  
     if (error) {
       console.error('Error adding player:', error);
     }

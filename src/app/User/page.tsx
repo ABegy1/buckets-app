@@ -20,8 +20,9 @@ interface PlayerInstance {
 interface Player {
   player_id: number;
   name: string;
-  tier_id: number;
-  team_id: number;
+  tier_id?: number; // Optional if not fetched
+  team_id?: number; // Optional if not fetched
+  is_free_agent: boolean; // Add this field
 }
 
 interface TeamWithPlayers {
@@ -110,6 +111,53 @@ const UserPage: React.FC = () => {
     }
   };
 
+  const fetchFreeAgents = async () => {
+    try {
+      // Step 1: Fetch the active season where end_date is null
+      const { data: activeSeason, error: seasonError } = await supabase
+        .from('seasons')
+        .select('season_id')
+        .is('end_date', null)
+        .single();
+  
+      if (seasonError || !activeSeason) throw seasonError;
+  
+      const activeSeasonId = activeSeason.season_id;  // Store the active season_id
+  
+      // Step 2: Fetch free agent players (players with is_free_agent = true)
+      const { data: freeAgents, error: freeAgentsError } = await supabase
+        .from('players')
+        .select('player_id, name') // Fetch player_id and name
+        .eq('is_free_agent', true); // Only fetch players who are free agents
+  
+      if (freeAgentsError) throw freeAgentsError;
+  
+      // Step 3: Fetch player instances for the active season
+      const freeAgentsWithStats = await Promise.all(
+        freeAgents.map(async (player: { player_id: number; name: string }) => {
+          const { data: playerInstance, error: playerInstanceError } = await supabase
+            .from('player_instance')
+            .select('shots_left, score')
+            .eq('player_id', player.player_id)
+            .eq('season_id', activeSeasonId)
+            .single();
+      
+          if (playerInstanceError || !playerInstance) throw playerInstanceError;
+      
+          return {
+            name: player.name,
+            shots_left: playerInstance.shots_left,
+            total_points: playerInstance.score,
+          };
+        })
+      );
+      // Return the free agents with stats
+      return freeAgentsWithStats;
+    } catch (error) {
+      console.error('Error fetching free agents and stats:', error);
+    }
+  };
+
   const fetchUserView = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -163,6 +211,36 @@ const UserPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (userView === 'FreeAgent') {
+      const fetchAndSetFreeAgents = async () => {
+        const freeAgents = await fetchFreeAgents();
+        
+        // Ensure freeAgents is always an array before passing to setTeams
+        setTeams([{ 
+          team_name: 'Free Agents', 
+          players: freeAgents ?? [],  // Fallback to an empty array if freeAgents is undefined
+          total_shots: 0, 
+          total_points: 0 
+        }]);
+      };
+  
+      fetchAndSetFreeAgents();
+  
+      const playerChannel = supabase
+        .channel('player-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchAndSetFreeAgents)
+        .subscribe();
+  
+      const shotChannel = supabase
+        .channel('shots-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchAndSetFreeAgents)
+        .subscribe();
+  
+      return () => {
+        supabase.removeChannel(playerChannel);
+        supabase.removeChannel(shotChannel);
+      };
+    }
     if (userView === 'Standings') {
       fetchTeamsAndPlayers();
 
@@ -224,9 +302,22 @@ const UserPage: React.FC = () => {
           </div>
         ) : userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
-            <h2>This is the Free Agency page</h2>
-            {/* You can add more functionality to the Free Agency UI here in the future */}
+          <h2>Free Agents</h2>
+          <div className={styles.players}>
+            <div className={styles.headerRow}>
+              <span>Name</span>
+              <span>Shots Left</span>
+              <span>Total Points</span>
+            </div>
+            {teams[0]?.players.map((player, playerIndex) => (
+              <div key={playerIndex} className={styles.player}>
+                <span>{player.name}</span>
+                <span>{player.shots_left}</span>
+                <span>{player.total_points}</span>
+              </div>
+            ))}
           </div>
+        </div>
         ) : userView === 'Rules' ? (
           <div className={styles.rulesPage}>
             <h2>{seasonName} Rules</h2> {/* Display the season name */}

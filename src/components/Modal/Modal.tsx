@@ -113,20 +113,38 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
-      // Update the player's score by adding the shot's result to the current score
-      const newScore = currentScore + finalPoints;
-
-      const { error: updateScoreError } = await supabase
+      // Fetch the current shots_left value
+      const { data: playerInstance, error: fetchError } = await supabase
         .from('player_instance')
-        .update({ score: newScore })
-        .eq('player_instance_id', playerInstanceId);
+        .select('shots_left')
+        .eq('player_instance_id', playerInstanceId)
+        .single();
 
-      if (updateScoreError) {
-        console.error('Error updating player score:', updateScoreError);
+      if (fetchError || !playerInstance) {
+        console.error('Error fetching current shots_left:', fetchError);
         return;
       }
 
-      console.log('Score updated successfully');
+      const newShotsLeft = playerInstance.shots_left - 1;
+
+      // Update the player's score by adding the shot's result to the current score
+      const newScore = currentScore + finalPoints;
+
+      // Update player_instance with the new score and shots_left
+      const { error: updateScoreError } = await supabase
+        .from('player_instance')
+        .update({ 
+          score: newScore, 
+          shots_left: newShotsLeft  // Decrement shots_left by 1
+        })
+        .eq('player_instance_id', playerInstanceId);
+
+      if (updateScoreError) {
+        console.error('Error updating player score and shots_left:', updateScoreError);
+        return;
+      }
+
+      console.log('Score and shots_left updated successfully');
       handleClose();
     } catch (error) {
       console.error('Unexpected error:', error);

@@ -15,12 +15,14 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [isDouble, setIsDouble] = useState<boolean>(false);
   const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
   const [currentScore, setCurrentScore] = useState<number>(0);  // Keep track of current score
+  const [tierId, setTierId] = useState<number | null>(null);  // Track tier_id
 
   const resetForm = () => {
     setPoints(null);
     setIsMoneyball(false);
     setIsDouble(false);
     setPlayerInstanceId(null);
+    setTierId(null);
   };
 
   const handleClose = () => {
@@ -28,13 +30,13 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     onClose();
   };
 
-  // useCallback ensures that the function identity doesn't change and fixes the useEffect dependency warning
-  const fetchPlayerInstance = useCallback(async () => {
+  // Fetch player instance and tier information
+  const fetchPlayerInstanceAndTier = useCallback(async () => {
     try {
-      // Get the player's instance
+      // Get the player's instance and tier_id from the players table
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score')
+        .select('player_instance_id, score, player_id')
         .eq('player_id', playerId)
         .order('season_id', { ascending: false })
         .limit(1);
@@ -47,6 +49,20 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       const instanceId = playerInstance[0].player_instance_id;
       setPlayerInstanceId(instanceId);
       setCurrentScore(playerInstance[0].score);  // Set the current score for this instance
+
+      // Fetch tier information from the players table using playerId
+      const { data: player, error: playerError } = await supabase
+        .from('players')
+        .select('tier_id')
+        .eq('player_id', playerId)
+        .single();
+
+      if (playerError || !player) {
+        console.error('Error fetching player information:', playerError);
+        return;
+      }
+
+      setTierId(player.tier_id);  // Set the tier_id for this player
     } catch (error) {
       console.error('Unexpected error:', error);
     }
@@ -56,17 +72,17 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (!isOpen) return;
 
     // Fetch initial data
-    fetchPlayerInstance();
+    fetchPlayerInstanceAndTier();
 
     // Subscribe to real-time changes in player_instance and shots
     const playerInstanceChannel = supabase
       .channel('player-instance-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerInstance)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerInstanceAndTier)
       .subscribe();
 
     const shotChannel = supabase
       .channel('shots-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchPlayerInstance)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchPlayerInstanceAndTier)
       .subscribe();
 
     return () => {
@@ -74,21 +90,22 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       supabase.removeChannel(playerInstanceChannel);
       supabase.removeChannel(shotChannel);
     };
-  }, [isOpen, fetchPlayerInstance]);
+  }, [isOpen, fetchPlayerInstanceAndTier]);
 
   const handleSubmit = async () => {
-    if (points === null || playerInstanceId === null) return;
+    if (points === null || playerInstanceId === null || tierId === null) return;
 
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
 
     try {
-      // Insert the new shot
+      // Insert the new shot, now including tier_id
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
         result: finalPoints,
+        tier_id: tierId,  // Include the tier_id here
       });
 
       if (shotError) {

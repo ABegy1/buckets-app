@@ -64,17 +64,34 @@
 .btn:hover {
   background-color: #d1495b;
 }
-.playerRow {
+.row {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid #ddd;
   font-size: 1.5rem;
+  border-bottom: 1px solid #ddd;
 }
 
+/* Ensure that the columns are evenly spaced and aligned */
+.columnHeader {
+  flex-basis: 33%;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Player columns share the same flex structure */
 .playerName, .shotsLeft, .totalPoints {
-  flex-basis: 33%; /* Each column will take 33% of the row */
-  text-align: center; /* Center the content inside each column */
+  flex-basis: 33%;
+  text-align: center; /* Center-align the content */
+}
+
+/* Adjust team stats to match the layout */
+.teamStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.3rem;
+  padding-top: 15px;
+  font-weight: bold;
 }
 
 /* Season standings section styling */

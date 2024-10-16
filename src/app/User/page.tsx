@@ -297,25 +297,25 @@ const UserPage: React.FC = () => {
             <h2 className={styles.seasonTitle}>{seasonName} Standings</h2> {/* Updated with seasonTitle class */}
             <div className={styles.teams}>
               {teams.map((team, index) => (
-                <div key={index} className={styles.team}>
-                  <h2 className={styles.teamTitle}>{team.team_name}</h2>
-                  <div className={styles.headerRow}>
-                    <span>Name</span>
-                    <span>Shots Left</span>
-                    <span>Total Points</span>
-                  </div>
-                  {team.players.map((player, playerIndex) => (
-                    <div key={playerIndex} className={styles.playerRow}>
-                      <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
-                      <span className={styles.shotsLeft}>{player.shots_left}</span>
-                      <span className={styles.totalPoints}>{player.total_points}</span>
-                    </div>
-                  ))}
-                  <div className={styles.teamStats}>
-                    <span>Total Shots Remaining: {team.total_shots}</span>
-                    <span>Total Score: {team.total_points}</span>
-                  </div>
-                </div>
+               <div key={index} className={styles.team}>
+               <h2 className={styles.teamTitle}>{team.team_name}</h2>
+               <div className={styles.row}>
+                 <span className={styles.columnHeader}>Name</span>
+                 <span className={styles.columnHeader}>Shots Left</span>
+                 <span className={styles.columnHeader}>Total Points</span>
+               </div>
+               {team.players.map((player, playerIndex) => (
+                 <div key={playerIndex} className={styles.row}>
+                   <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
+                   <span className={styles.shotsLeft}>{player.shots_left}</span>
+                   <span className={styles.totalPoints}>{player.total_points}</span>
+                 </div>
+               ))}
+               <div className={styles.teamStats}>
+                 <span>Total Shots Remaining: {team.total_shots}</span>
+                 <span>Total Score: {team.total_points}</span>
+               </div>
+             </div>
               ))}
             </div>
           </div>

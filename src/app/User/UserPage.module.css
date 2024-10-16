@@ -1,8 +1,8 @@
 /* General container styles for the entire user page */
 .userContainer {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   width: 100%;
   padding: 0;
   background-color: #f0f0f0;
@@ -16,6 +16,7 @@
   text-align: center;
   background-color: #264653; /* Darker color for better contrast */
   color: #fff;
+  flex-shrink: 0;
 }
 
 .userHeader h1 {
@@ -27,6 +28,7 @@
 /* Content area styling */
 .userContent {
   width: 100%; 
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,6 +42,7 @@
   text-align: center;
   background-color: #264653; /* Darker color for better contrast */
   color: #fff;
+  flex-shrink: 0;
 }
 
 .userFooter p {
@@ -78,7 +81,9 @@
 }
 
 /* Player columns share the same flex structure */
-.playerName, .shotsLeft, .totalPoints {
+.playerName,
+.shotsLeft,
+.totalPoints {
   flex-basis: 33%;
   text-align: center;
 }
@@ -160,6 +165,7 @@
   background-color: #264653; /* Darker color for better contrast */
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .navbarTitle {
@@ -199,3 +205,24 @@
   border-bottom: 1px solid #ddd;
 }
 
+/* Responsive font sizes for accessibility */
+:global(html) {
+  font-size: 16px;
+}
+
+@media (min-width: 1200px) {
+  :global(html) {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 800px) {
+  :global(html) {
+    font-size: 14px;
+  }
+}
+
+:global(body) {
+  font-size: 1rem;
+  line-height: 1.5;
+}

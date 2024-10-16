@@ -66,20 +66,15 @@
 }
 .playerRow {
   display: flex;
-  justify-content: space-between; /* Evenly distribute the columns */
+  justify-content: space-between;
   padding: 12px 0;
   border-bottom: 1px solid #ddd;
-  font-size: 1.5rem; /* Keep font size consistent */
+  font-size: 1.5rem;
 }
 
-.playerName {
-  flex: 2; /* Flexible width for longer player names */
-  text-align: left;
-}
-
-.shotsLeft, .totalPoints {
-  flex: 1; /* Fixed width for the shots left and points */
-  text-align: right; /* Align these values to the right */
+.playerName, .shotsLeft, .totalPoints {
+  flex-basis: 33%; /* Each column will take 33% of the row */
+  text-align: center; /* Center the content inside each column */
 }
 
 /* Season standings section styling */
@@ -138,10 +133,10 @@
 .headerRow {
   display: flex;
   justify-content: space-between;
-  font-size: 1.5rem; /* Increased font size */
+  font-size: 1.5rem;
   font-weight: bold;
   border-bottom: 2px solid #333;
-  padding: 12px 0; /* Increased padding */
+  padding: 12px 0;
 }
 
 /* Navbar styling */

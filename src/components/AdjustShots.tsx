@@ -79,32 +79,35 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
 
   return (
     <div className={styles.adjustShots}>
-      <h2>Adjust Shots</h2>
-      {loading ? (
-        <p>Loading players...</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Shots</th>
+  <h2>Adjust Shots</h2>
+  {loading ? (
+    <p>Loading players...</p>
+  ) : (
+    <div className={styles['table-container']}>
+      <table>
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Shots</th>
+          </tr>
+        </thead>
+        <tbody>
+          {players.map(player => (
+            <tr key={player.player_id}>
+              <td>{player.players.name}</td>
+              <td>
+                <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
+                {player.shots_left}
+                <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {players.map(player => (
-              <tr key={player.player_id}>
-                <td>{player.players.name}</td>
-                <td>
-                  <button onClick={() => handleAdjustShots(player.player_id, -1)} disabled={player.shots_left <= 0}>-</button>
-                  {player.shots_left}
-                  <button onClick={() => handleAdjustShots(player.player_id, 1)}>+</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
+  )}
+</div>
+
   );
 };
 

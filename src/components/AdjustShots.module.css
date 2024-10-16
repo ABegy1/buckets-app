@@ -20,6 +20,11 @@
   color: #666;
 }
 
+.adjustShots .table-container {
+  max-height: 400px; /* Set the max height for the scroll area */
+  overflow-y: auto; /* Allow vertical scrolling */
+}
+
 .adjustShots table {
   width: 100%;
   border-collapse: collapse;
@@ -38,19 +43,6 @@
   padding: 12px 15px;
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
-  width: 50%; /* Ensures each column takes up 50% of the space */
-}
-
-.adjustShots tbody {
-  display: block; /* This makes the tbody scrollable */
-  max-height: 400px; /* Adjust this value to set the height for scrolling */
-  overflow-y: auto; /* Enables vertical scrolling */
-}
-
-.adjustShots tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed; /* Ensures columns in tbody stay aligned */
 }
 
 .adjustShots tbody tr:nth-child(even) {

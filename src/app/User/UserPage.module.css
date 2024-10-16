@@ -21,7 +21,7 @@
 
 .userHeader h1 {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: 3rem; /* Increased from 2.5rem */
   font-weight: bold;
 }
 
@@ -47,17 +47,17 @@
 
 .userFooter p {
   margin: 0;
+  font-size: 1.2rem; /* Increased font size */
 }
 
 /* Button styling */
 .btn {
   background-color: #e76f51;
   color: white;
-  padding: 10px 20px;
+  padding: 12px 24px;
+  font-size: 1.2rem; /* Increased from 1rem */
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  margin-top: 20px;
   transition: background-color 0.3s ease;
 }
 
@@ -71,7 +71,7 @@
   flex-direction: column;
   align-items: center;
   background-color: white;
-  padding: 20px;
+  padding: 30px; /* Increased padding */
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
@@ -93,7 +93,7 @@
   flex: 1;
   min-width: 300px;
   border: 1px solid #ddd;
-  padding: 20px;
+  padding: 25px; /* Increased padding */
   border-radius: 10px;
   background-color: #fafafa;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -107,70 +107,74 @@
 /* Team title */
 .teamTitle {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 2rem; /* Increased from 1.5rem */
   font-weight: bold;
-  margin-bottom: 15px;
+  margin-bottom: 20px; /* Increased margin */
 }
 
 /* Header row for player stats */
 .headerRow {
   display: flex;
   justify-content: space-between;
+  font-size: 1.5rem; /* Increased font size */
   font-weight: bold;
   border-bottom: 2px solid #333;
-  padding: 10px 0;
+  padding: 12px 0; /* Increased padding */
 }
+
 /* Navbar styling */
 .navbar {
   width: 100%;
   display: flex;
-  justify-content: space-between; /* Spacing between the title and button */
+  justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background-color: #2a9d8f; /* Consistent background */
+  padding: 25px; /* Increased padding */
+  background-color: #2a9d8f;
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for navbar */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .navbarTitle {
-  font-size: 2rem;
+  font-size: 2.5rem; /* Increased from 2rem */
   font-weight: bold;
   margin: 0;
 }
 
 /* Updated Sign Out button styling */
 .signOutButton {
-  background-color: #ff6b6b; /* Modern red shade */
+  background-color: #ff6b6b;
   color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px; /* Rounded corners */
+  padding: 15px 30px; /* Increased padding */
+  font-size: 1.2rem; /* Increased font size */
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1rem;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .signOutButton:hover {
-  background-color: #d64545; /* Darker red shade on hover */
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+  background-color: #d64545;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
 .signOutButton:active {
-  background-color: #bf3333; /* Even darker shade when clicked */
-  box-shadow: none; /* No shadow when clicked */
+  background-color: #bf3333;
+  box-shadow: none;
 }
+
 /* Player row styling */
 .player {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
+  font-size: 1.5rem; /* Increased from default */
+  padding: 12px 0; /* Increased padding */
   border-bottom: 1px solid #ddd;
 }
 
 .teamStats {
   display: flex;
   justify-content: space-between;
-  padding-top: 10px;
+  font-size: 1.3rem; /* Increased font size */
+  padding-top: 15px;
   font-weight: bold;
 }

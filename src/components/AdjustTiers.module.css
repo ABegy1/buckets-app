@@ -1,4 +1,88 @@
 .adjustTiers {
-    padding: 1px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
 
+.adjustTiers h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.adjustTiers p {
+  text-align: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.adjustTiers table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adjustTiers thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adjustTiers th,
+.adjustTiers td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.adjustTiers tbody {
+  display: block;
+  max-height: 400px; /* Adjust this value as needed */
+  overflow-y: auto;
+}
+
+.adjustTiers tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.adjustTiers tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.adjustTiers select {
+  width: 100%;
+  padding: 6px 12px;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 1em;
+}
+
+.adjustTiers select:focus {
+  outline: none;
+  border-color: #6c757d;
+}
+
+@media (max-width: 600px) {
+  .adjustTiers {
+    padding: 10px;
   }
+
+  .adjustTiers th,
+  .adjustTiers td {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .adjustTiers select {
+    padding: 5px 10px;
+    font-size: 0.9em;
+  }
+}

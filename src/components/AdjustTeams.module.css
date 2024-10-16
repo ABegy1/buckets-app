@@ -1,4 +1,88 @@
 .adjustTeams {
-    padding: 1px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
 
+.adjustTeams h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.adjustTeams p {
+  text-align: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.adjustTeams table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adjustTeams thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adjustTeams th,
+.adjustTeams td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.adjustTeams tbody {
+  display: block;
+  max-height: 400px; /* Adjust this value as needed */
+  overflow-y: auto;
+}
+
+.adjustTeams tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.adjustTeams tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.adjustTeams select {
+  width: 100%;
+  padding: 6px 12px;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 1em;
+}
+
+.adjustTeams select:focus {
+  outline: none;
+  border-color: #007BFF;
+}
+
+@media (max-width: 600px) {
+  .adjustTeams {
+    padding: 10px;
   }
+
+  .adjustTeams th,
+  .adjustTeams td {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .adjustTeams select {
+    padding: 5px 10px;
+    font-size: 0.9em;
+  }
+}

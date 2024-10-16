@@ -1,3 +1,77 @@
 .adjustShots {
-    padding: 1px;
-  }
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.adjustShots h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.adjustShots p {
+  text-align: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.adjustShots table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adjustShots thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adjustShots th,
+.adjustShots td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.adjustShots tbody {
+  display: block;
+  max-height: 400px; /* Adjust this value as needed */
+  overflow-y: auto;
+}
+
+.adjustShots tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.adjustShots tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.adjustShots button {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  background-color: #007BFF;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.adjustShots button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.adjustShots button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+

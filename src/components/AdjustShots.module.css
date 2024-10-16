@@ -23,6 +23,7 @@
 .adjustShots table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Ensures that columns have a fixed width */
 }
 
 .adjustShots thead {
@@ -37,18 +38,12 @@
   padding: 12px 15px;
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
+  width: 50%; /* Ensures each column takes up 50% of the space */
 }
 
 .adjustShots tbody {
-  display: block;
   max-height: 400px; /* Adjust this value as needed */
   overflow-y: auto;
-}
-
-.adjustShots tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
 }
 
 .adjustShots tbody tr:nth-child(even) {
@@ -74,4 +69,3 @@
 .adjustShots button:hover:not(:disabled) {
   background-color: #0056b3;
 }
-

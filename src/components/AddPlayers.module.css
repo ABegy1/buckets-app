@@ -1,31 +1,48 @@
 .addPlayers {
   width: 100%;
   max-width: 600px;
+  height: 100vh; /* Set the component height to viewport height */
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
+  overflow: hidden; /* Hide overflow to prevent scrolling on the body */
+  display: flex;
+  flex-direction: column;
 }
 
 .addPlayers h2,
 .addPlayers h3 {
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 1.8em;
+  margin-bottom: 15px; /* Reduced margin */
+  font-size: 1.5em; /* Reduced font size */
   color: #333;
+}
+
+.addPlayers .formSection,
+.addPlayers .playersSection {
+  overflow-y: auto;
+}
+
+.addPlayers .formSection {
+  flex: 0 0 auto;
+}
+
+.addPlayers .playersSection {
+  flex: 1 1 auto;
 }
 
 .addPlayers label {
   display: block;
-  margin-bottom: 15px;
-  font-size: 1em;
+  margin-bottom: 10px; /* Reduced margin */
+  font-size: 0.95em; /* Reduced font size */
   color: #333;
 }
 
 .addPlayers label input[type="text"],
 .addPlayers label select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px; /* Reduced padding */
   margin-top: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -39,15 +56,13 @@
 .addPlayers ul {
   list-style-type: none;
   padding: 0;
-  margin: 20px 0;
-  max-height: 300px; /* Adjust as needed */
-  overflow-y: auto;
+  margin: 15px 0; /* Reduced margin */
   border: 1px solid #e0e0e0;
   border-radius: 4px;
 }
 
 .addPlayers ul li {
-  padding: 10px 15px;
+  padding: 8px 10px; /* Reduced padding */
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -58,13 +73,13 @@
 .addPlayers .globalButton {
   display: block;
   width: 100%;
-  padding: 12px 20px;
-  margin-top: 20px;
+  padding: 10px 15px; /* Reduced padding */
+  margin-top: 15px; /* Reduced margin */
   background-color: #007BFF;
   color: #fff;
   border: none;
   border-radius: 4px;
-  font-size: 1.1em;
+  font-size: 1em; /* Reduced font size */
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -73,3 +88,45 @@
   background-color: #0056b3;
 }
 
+@media (max-height: 700px) {
+  /* Adjustments for shorter viewports */
+  .addPlayers {
+    padding: 15px;
+  }
+
+  .addPlayers h2,
+  .addPlayers h3 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+
+  .addPlayers label {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+  }
+
+  .addPlayers .globalButton {
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 600px) {
+  .addPlayers {
+    padding: 10px;
+  }
+
+  .addPlayers label {
+    margin-bottom: 8px;
+  }
+
+  .addPlayers h2,
+  .addPlayers h3 {
+    font-size: 1.3em;
+  }
+
+  .addPlayers .globalButton {
+    font-size: 0.9em;
+    padding: 8px 12px;
+  }
+}

@@ -280,21 +280,21 @@ const UserPage: React.FC = () => {
 
   return (
     <div className={styles.userContainer}>
-     <header className={styles.navbar}>
-  <h1 className={styles.navbarTitle}>User Dashboard</h1>
-  <button className={styles.signOutButton} onClick={async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      router.push('/');
-    } else {
-      console.error('Sign out error:', error.message);
-    }
-  }}>Sign Out</button>
-</header>
+      <header className={styles.navbar}>
+        <h1 className={styles.navbarTitle}>Buckets</h1>
+        <button className={styles.signOutButton} onClick={async () => {
+          const { error } = await supabase.auth.signOut();
+          if (!error) {
+            router.push('/');
+          } else {
+            console.error('Sign out error:', error.message);
+          }
+        }}>Sign Out</button>
+      </header>
       <main className={styles.userContent}>
         {userView === 'Standings' ? (
           <div className={styles.container}>
-            <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
+            <h2 className={styles.seasonTitle}>{seasonName} Standings</h2> {/* Updated with seasonTitle class */}
             <div className={styles.teams}>
               {teams.map((team, index) => (
                 <div key={index} className={styles.team}>
@@ -304,13 +304,13 @@ const UserPage: React.FC = () => {
                     <span>Shots Left</span>
                     <span>Total Points</span>
                   </div>
-                 {team.players.map((player, playerIndex) => (
-  <div key={playerIndex} className={styles.player}>
-    <span style={{ color: player.tier_color }}>{player.name}</span>  {/* Apply tier color */}
-    <span>{player.shots_left}</span>
-    <span>{player.total_points}</span>
-  </div>
-))}
+                  {team.players.map((player, playerIndex) => (
+                    <div key={playerIndex} className={styles.playerRow}>
+                      <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
+                      <span className={styles.shotsLeft}>{player.shots_left}</span>
+                      <span className={styles.totalPoints}>{player.total_points}</span>
+                    </div>
+                  ))}
                   <div className={styles.teamStats}>
                     <span>Total Shots Remaining: {team.total_shots}</span>
                     <span>Total Score: {team.total_points}</span>
@@ -321,26 +321,26 @@ const UserPage: React.FC = () => {
           </div>
         ) : userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
-          <h2>{seasonName}Free Agents</h2>
-          <div className={styles.players}>
-            <div className={styles.headerRow}>
-              <span>Name</span>
-              <span>Shots Left</span>
-              <span>Total Points</span>
-            </div>
-            {teams[0]?.players.map((player, playerIndex) => (
-              <div key={playerIndex} className={styles.player}>
-                <span>{player.name}</span>
-                <span>{player.shots_left}</span>
-                <span>{player.total_points}</span>
+            <h2>{seasonName} Free Agents</h2>
+            <div className={styles.players}>
+              <div className={styles.headerRow}>
+                <span>Name</span>
+                <span>Shots Left</span>
+                <span>Total Points</span>
               </div>
-            ))}
+              {teams[0]?.players.map((player, playerIndex) => (
+                <div key={playerIndex} className={styles.playerRow}>
+                  <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
+                  <span className={styles.shotsLeft}>{player.shots_left}</span>
+                  <span className={styles.totalPoints}>{player.total_points}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
         ) : userView === 'Rules' ? (
           <div className={styles.rulesPage}>
-            <h2>{seasonName} Rules</h2> {/* Display the season name */}
-            <p>{seasonRules}</p> {/* Display the season rules */}
+            <h2>{seasonName} Rules</h2>
+            <p>{seasonRules}</p>
           </div>
         ) : null}
       </main>

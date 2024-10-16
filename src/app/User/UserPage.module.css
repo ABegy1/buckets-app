@@ -64,6 +64,23 @@
 .btn:hover {
   background-color: #d1495b;
 }
+.playerRow {
+  display: flex;
+  justify-content: space-between; /* Evenly distribute the columns */
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.5rem; /* Keep font size consistent */
+}
+
+.playerName {
+  flex: 2; /* Flexible width for longer player names */
+  text-align: left;
+}
+
+.shotsLeft, .totalPoints {
+  flex: 1; /* Fixed width for the shots left and points */
+  text-align: right; /* Align these values to the right */
+}
 
 /* Season standings section styling */
 .container {

@@ -4,10 +4,11 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh; /* Use full viewport height */
   padding: 20px;
   background-color: #f0f0f0;
   color: #333;
+  overflow: hidden; /* Prevent vertical scroll */
 }
 
 /* Header styling */
@@ -17,11 +18,12 @@
   text-align: center;
   background-color: #2a9d8f;
   color: #fff;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .userHeader h1 {
   margin: 0;
-  font-size: 3rem; /* Increased from 2.5rem */
+  font-size: 3rem; 
   font-weight: bold;
 }
 
@@ -33,6 +35,8 @@
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  flex-grow: 1; /* Allow content to grow and fill available space */
+  overflow-y: auto; /* Add scrollbar within the content area if needed */
 }
 
 /* Footer styling */
@@ -42,20 +46,21 @@
   text-align: center;
   background-color: #2a9d8f;
   color: #fff;
-  margin-top: auto;
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .userFooter p {
   margin: 0;
-  font-size: 1.2rem; /* Increased font size */
+  font-size: 1.2rem; 
 }
+
 
 /* Button styling */
 .btn {
   background-color: #e76f51;
   color: white;
   padding: 12px 24px;
-  font-size: 1.2rem; /* Increased from 1rem */
+  font-size: 1.2rem; 
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -64,6 +69,7 @@
 .btn:hover {
   background-color: #d1495b;
 }
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -116,10 +122,12 @@
 /* Teams container */
 .teams {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 columns grid */
-  gap: 20px; /* Space between team cards */
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 20px;
   width: 100%;
   max-width: 1200px;
+  flex-grow: 1; /* Ensure it grows and fits within available space */
+  overflow-y: auto; /* Add scroll if necessary within the grid */
 }
 
 /* Individual team card */
@@ -127,7 +135,7 @@
   flex: 1;
   min-width: 300px;
   border: 1px solid #ddd;
-  padding: 25px; /* Increased padding */
+  padding: 25px; 
   border-radius: 10px;
   background-color: #fafafa;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -162,10 +170,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 25px; /* Increased padding */
+  padding: 25px;
   background-color: #2a9d8f;
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .navbarTitle {

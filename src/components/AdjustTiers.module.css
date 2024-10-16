@@ -70,19 +70,3 @@
   border-color: #6c757d;
 }
 
-@media (max-width: 600px) {
-  .adjustTiers {
-    padding: 10px;
-  }
-
-  .adjustTiers th,
-  .adjustTiers td {
-    padding: 10px;
-    font-size: 0.9em;
-  }
-
-  .adjustTiers select {
-    padding: 5px 10px;
-    font-size: 0.9em;
-  }
-}

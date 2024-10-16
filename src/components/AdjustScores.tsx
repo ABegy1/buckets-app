@@ -78,7 +78,7 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
   };
 
   return (
-    <div className={styles.AdjustScores}>
+    <div className={styles.adjustScores}>
       <h2>Adjust Score</h2>
       {loading ? (
         <p>Loading players...</p>

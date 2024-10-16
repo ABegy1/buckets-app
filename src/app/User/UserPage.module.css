@@ -1,31 +1,26 @@
 /* General container styles for the entire user page */
 .userContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   height: 100vh;
   width: 100%;
-  padding: 0; /* Removed padding */
+  padding: 0;
   background-color: #f0f0f0;
   color: #333;
-  overflow: hidden;
 }
-
 
 /* Header styling */
 .userHeader {
   width: 100%;
-  padding: 8px 10px; /* Reduced padding */
+  padding: 8px 10px;
   text-align: center;
-  background-color: #2a9d8f;
+  background-color: #264653; /* Darker color for better contrast */
   color: #fff;
-  flex-shrink: 0;
 }
 
 .userHeader h1 {
   margin: 0;
-  font-size: 2.5rem; 
+  font-size: 2.5rem;
   font-weight: bold;
 }
 
@@ -35,19 +30,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px; /* Reduced padding */
-  flex-grow: 1;
-  overflow-y: auto;
+  padding: 10px;
 }
 
 /* Footer styling */
 .userFooter {
   width: 100%;
-  padding: 5px; /* Reduced padding */
+  padding: 5px;
   text-align: center;
-  background-color: #2a9d8f;
+  background-color: #264653; /* Darker color for better contrast */
   color: #fff;
-  flex-shrink: 0;
 }
 
 .userFooter p {
@@ -57,17 +49,17 @@
 
 /* Button styling */
 .btn {
-  background-color: #e76f51;
+  background-color: #c1121f; /* Darker color for better contrast */
   color: white;
   padding: 12px 24px;
-  font-size: 1.2rem; 
+  font-size: 1.2rem;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 .btn:hover {
-  background-color: #d1495b;
+  background-color: #a11a1a;
 }
 
 .row {
@@ -88,7 +80,7 @@
 /* Player columns share the same flex structure */
 .playerName, .shotsLeft, .totalPoints {
   flex-basis: 33%;
-  text-align: center; /* Center-align the content */
+  text-align: center;
 }
 
 /* Adjust team stats to match the layout */
@@ -96,7 +88,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 1.3rem;
-  padding-top: 15px;
+  padding-top: 10px;
   font-weight: bold;
 }
 
@@ -106,49 +98,46 @@
   flex-direction: column;
   align-items: center;
   background-color: white;
-  padding: 30px; /* Increased padding */
+  padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
   margin-top: 20px;
+  box-sizing: border-box;
 }
+
 .seasonTitle {
-  font-size: 3rem; /* Increased font size */
-  font-weight: bold; /* Make it bold */
-  color: #2a9d8f; /* Optionally, apply a standout color */
+  font-size: 3rem;
+  font-weight: bold;
+  color: #264653; /* Updated color for consistency */
   text-align: center;
-  margin-bottom: 20px; /* Add some spacing below */
+  margin-bottom: 20px;
 }
+
 /* Teams container */
 .teams {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Changed to 4 columns */
-  gap: 10px; /* Reduced space between cards */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
   width: 100%;
-  max-width: 1500px; /* Increased max width to fill space */
-  flex-grow: 1;
-  overflow-y: auto;
 }
 
 /* Individual team card */
 .team {
-  flex: 1;
-  min-width: 280px; /* Reduced min width */
+  display: flex;
+  flex-direction: column;
   border: 1px solid #ddd;
-  padding: 15px; /* Reduced padding */
+  padding: 15px;
   border-radius: 10px;
   background-color: #fafafa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
+  box-sizing: border-box;
 }
-
 
 /* Team title */
 .teamTitle {
   text-align: center;
-  font-size: 2rem; /* Increased from 1.5rem */
+  font-size: 2rem;
   font-weight: bold;
-  margin-bottom: 20px; /* Increased margin */
+  margin-bottom: 10px;
 }
 
 /* Header row for player stats */
@@ -158,7 +147,7 @@
   font-size: 1.5rem;
   font-weight: bold;
   border-bottom: 2px solid #333;
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 /* Navbar styling */
@@ -167,25 +156,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px; /* Reduced padding */
-  background-color: #2a9d8f;
+  padding: 8px 10px;
+  background-color: #264653; /* Darker color for better contrast */
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
 }
 
 .navbarTitle {
-  font-size: 2rem; /* Reduced font size */
+  font-size: 2rem;
   font-weight: bold;
   margin: 0;
 }
 
 /* Updated Sign Out button styling */
 .signOutButton {
-  background-color: #ff6b6b;
+  background-color: #c1121f; /* Darker color for better contrast */
   color: white;
-  padding: 10px 20px; /* Reduced padding */
-  font-size: 1.1rem; 
+  padding: 8px 16px;
+  font-size: 1.1rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -193,12 +181,12 @@
 }
 
 .signOutButton:hover {
-  background-color: #d64545;
+  background-color: #a11a1a;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
 .signOutButton:active {
-  background-color: #bf3333;
+  background-color: #8b0000;
   box-shadow: none;
 }
 
@@ -206,15 +194,29 @@
 .player {
   display: flex;
   justify-content: space-between;
-  font-size: 1.5rem; /* Increased from default */
-  padding: 12px 0; /* Increased padding */
+  font-size: 1.5rem;
+  padding: 10px 0;
   border-bottom: 1px solid #ddd;
 }
 
-.teamStats {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.3rem; /* Increased font size */
-  padding-top: 15px;
-  font-weight: bold;
+/* Responsive font sizes for accessibility */
+html {
+  font-size: 16px;
+}
+
+@media (min-width: 1200px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 800px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.5;
 }

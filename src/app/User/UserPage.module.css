@@ -77,7 +77,13 @@
   width: 100%;
   margin-top: 20px;
 }
-
+.seasonTitle {
+  font-size: 3rem; /* Increased font size */
+  font-weight: bold; /* Make it bold */
+  color: #2a9d8f; /* Optionally, apply a standout color */
+  text-align: center;
+  margin-bottom: 20px; /* Add some spacing below */
+}
 /* Teams container */
 .teams {
   display: grid;

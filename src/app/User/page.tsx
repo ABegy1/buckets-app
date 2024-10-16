@@ -294,7 +294,7 @@ const UserPage: React.FC = () => {
       <main className={styles.userContent}>
         {userView === 'Standings' ? (
           <div className={styles.container}>
-            <h2>{seasonName} Standings</h2> {/* Dynamically show the season name */}
+            <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
             <div className={styles.teams}>
               {teams.map((team, index) => (
                 <div key={index} className={styles.team}>

@@ -6,7 +6,6 @@
   padding: 20px;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
-  overflow: hidden; /* Hide overflow to prevent scrolling on the body */
   display: flex;
   flex-direction: column;
 }
@@ -14,8 +13,8 @@
 .addPlayers h2,
 .addPlayers h3 {
   text-align: center;
-  margin-bottom: 15px; /* Reduced margin */
-  font-size: 1.5em; /* Reduced font size */
+  margin-bottom: 15px;
+  font-size: 1.5em;
   color: #333;
 }
 
@@ -24,25 +23,24 @@
   overflow-y: auto;
 }
 
-.addPlayers .formSection {
-  flex: 0 0 auto;
-}
-
 .addPlayers .playersSection {
   flex: 1 1 auto;
+  max-height: 300px; /* Set a height limit for the players section */
+  overflow-y: auto;
+  margin-bottom: 10px; /* Add space between list and button */
 }
 
 .addPlayers label {
   display: block;
-  margin-bottom: 10px; /* Reduced margin */
-  font-size: 0.95em; /* Reduced font size */
+  margin-bottom: 10px;
+  font-size: 0.95em;
   color: #333;
 }
 
 .addPlayers label input[type="text"],
 .addPlayers label select {
   width: 100%;
-  padding: 6px 10px; /* Reduced padding */
+  padding: 6px 10px;
   margin-top: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -56,13 +54,13 @@
 .addPlayers ul {
   list-style-type: none;
   padding: 0;
-  margin: 15px 0; /* Reduced margin */
+  margin: 0;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
 }
 
 .addPlayers ul li {
-  padding: 8px 10px; /* Reduced padding */
+  padding: 8px 10px;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -73,13 +71,13 @@
 .addPlayers .globalButton {
   display: block;
   width: 100%;
-  padding: 10px 15px; /* Reduced padding */
-  margin-top: 15px; /* Reduced margin */
+  padding: 10px 15px;
+  margin-top: 15px;
   background-color: #007BFF;
   color: #fff;
   border: none;
   border-radius: 4px;
-  font-size: 1em; /* Reduced font size */
+  font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -89,7 +87,6 @@
 }
 
 @media (max-height: 700px) {
-  /* Adjustments for shorter viewports */
   .addPlayers {
     padding: 15px;
   }

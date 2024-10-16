@@ -20,9 +20,15 @@
   color: #666;
 }
 
+.adjustTiers .table-container {
+  max-height: 400px; /* Set the max height for the scroll area */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
 .adjustTiers table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Ensures consistent column widths */
 }
 
 .adjustTiers thead {
@@ -37,18 +43,6 @@
   padding: 12px 15px;
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
-}
-
-.adjustTiers tbody {
-  display: block;
-  max-height: 400px; /* Adjust this value as needed */
-  overflow-y: auto;
-}
-
-.adjustTiers tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
 }
 
 .adjustTiers tbody tr:nth-child(even) {
@@ -70,3 +64,19 @@
   border-color: #6c757d;
 }
 
+@media (max-width: 600px) {
+  .adjustTiers {
+    padding: 10px;
+  }
+
+  .adjustTiers th,
+  .adjustTiers td {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .adjustTiers select {
+    padding: 5px 10px;
+    font-size: 0.9em;
+  }
+}

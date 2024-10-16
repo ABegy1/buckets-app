@@ -20,9 +20,15 @@
   color: #666;
 }
 
+.adjustScores .table-container {
+  max-height: 400px; /* Set the max height for the scroll area */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
 .adjustScores table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Ensures consistent column widths */
 }
 
 .adjustScores thead {
@@ -37,18 +43,6 @@
   padding: 12px 15px;
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
-}
-
-.adjustScores tbody {
-  display: block;
-  max-height: 400px; /* Adjust this value as needed */
-  overflow-y: auto;
-}
-
-.adjustScores tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
 }
 
 .adjustScores tbody tr:nth-child(even) {
@@ -75,3 +69,19 @@
   background-color: #218838;
 }
 
+@media (max-width: 600px) {
+  .adjustScores {
+    padding: 10px;
+  }
+
+  .adjustScores th,
+  .adjustScores td {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .adjustScores button {
+    padding: 5px 10px;
+    font-size: 0.9em;
+  }
+}

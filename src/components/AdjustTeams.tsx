@@ -76,10 +76,11 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
 
   return (
     <div className={styles.adjustTeams}>
-      <h2>Adjust Teams</h2>
-      {loading ? (
-        <p>Loading teams and players...</p>
-      ) : (
+    <h2>Adjust Teams</h2>
+    {loading ? (
+      <p>Loading teams and players...</p>
+    ) : (
+      <div className={styles['table-container']}>
         <table>
           <thead>
             <tr>
@@ -118,8 +119,9 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
             )}
           </tbody>
         </table>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
   );
 };
 

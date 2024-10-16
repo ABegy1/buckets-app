@@ -115,59 +115,60 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
 
     return (
       <div className={styles.addPlayers}>
-        <h2>Add Players to Active Season</h2>
+      <h2>Add Players to Active Season</h2>
 
+      <label>
+        Player Name:
+        <input
+          type="text"
+          value={newPlayerName}
+          onChange={(e) => setNewPlayerName(e.target.value)}
+          placeholder="Enter player name"
+        />
+      </label>
+
+      <label>
+        Free Agent:
+        <input
+          type="checkbox"
+          checked={isFreeAgent}
+          onChange={(e) => {
+            setIsFreeAgent(e.target.checked);
+            if (e.target.checked) {
+              setSelectedTeam(null); // Reset team selection when free agent is checked
+            }
+          }}
+        />
+      </label>
+
+      {!isFreeAgent && (
         <label>
-          Player Name:
-          <input
-            type="text"
-            value={newPlayerName}
-            onChange={(e) => setNewPlayerName(e.target.value)}
-            placeholder="Enter player name"
-          />
-        </label>
-
-        <label>
-          Free Agent:
-          <input
-            type="checkbox"
-            checked={isFreeAgent}
-            onChange={(e) => {
-              setIsFreeAgent(e.target.checked);
-              if (e.target.checked) {
-                setSelectedTeam(null); // Reset team selection when free agent is checked
-              }
-            }}
-          />
-        </label>
-
-        {!isFreeAgent && (
-          <label>
-            Team:
-            <select 
-              value={selectedTeam || ''} 
-              onChange={(e) => setSelectedTeam(Number(e.target.value))}>
-              {teams.map((team) => (
-                <option key={team.team_id} value={team.team_id}>
-                  {team.team_name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        <label>
-          Tier:
-          <select value={selectedTier || ''} onChange={(e) => setSelectedTier(Number(e.target.value))}>
-            {tiers.map((tier) => (
-              <option key={tier.tier_id} value={tier.tier_id}>
-                {tier.tier_name}
+          Team:
+          <select 
+            value={selectedTeam || ''} 
+            onChange={(e) => setSelectedTeam(Number(e.target.value))}>
+            {teams.map((team) => (
+              <option key={team.team_id} value={team.team_id}>
+                {team.team_name}
               </option>
             ))}
           </select>
         </label>
+      )}
 
-        <h3>Current Players</h3>
+      <label>
+        Tier:
+        <select value={selectedTier || ''} onChange={(e) => setSelectedTier(Number(e.target.value))}>
+          {tiers.map((tier) => (
+            <option key={tier.tier_id} value={tier.tier_id}>
+              {tier.tier_name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <h3>Current Players</h3>
+      <div className={styles.playersSection}>
         <ul>
           {players.map((player) => (
             <li key={player.player_id}>
@@ -175,9 +176,10 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
             </li>
           ))}
         </ul>
-
-        <button className={styles.globalButton} onClick={handleAddPlayer}>Add Player</button>
       </div>
+
+      <button className={styles.globalButton} onClick={handleAddPlayer}>Add Player</button>
+    </div>
     );
 };
 

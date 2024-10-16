@@ -83,26 +83,28 @@ const AdjustScores: React.FC<AdjustScoresProps> = ({ isOpen }) => {
       {loading ? (
         <p>Loading players...</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Score</th>
-            </tr>
-          </thead>
-          <tbody>
-            {players.map(player => (
-              <tr key={player.player_id}>
-                <td>{player.players.name}</td>
-                <td>
-                  <button onClick={() => handleAdjustScores(player.player_id, -1)} disabled={player.score <= 0}>-</button>
-                  {player.score}
-                  <button onClick={() => handleAdjustScores(player.player_id, 1)}>+</button>
-                </td>
+        <div className={styles['table-container']}>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Score</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {players.map(player => (
+                <tr key={player.player_id}>
+                  <td>{player.players.name}</td>
+                  <td>
+                    <button onClick={() => handleAdjustScores(player.player_id, -1)} disabled={player.score <= 0}>-</button>
+                    {player.score}
+                    <button onClick={() => handleAdjustScores(player.player_id, 1)}>+</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

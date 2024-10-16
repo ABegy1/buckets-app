@@ -80,44 +80,46 @@ const AdjustTiers: React.FC<AdjustTiersProps> = ({ isOpen }) => {
       {loading ? (
         <p>Loading tiers and players...</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Tier</th>
-            </tr>
-          </thead>
-          <tbody>
-            {players.length > 0 ? (
-              players.map(player => (
-                <tr key={player?.player_id}>
-                  <td>{player?.name || 'Unknown Player'}</td>
-                  <td>
-                    <select
-                      value={player?.tier_id || ''}
-                      onChange={(e) => handleTierChange(player?.player_id, Number(e.target.value))}
-                    >
-                      <option value="">No Tier</option>
-                      {tiers.length > 0 ? (
-                        tiers.map(tier => (
-                          <option key={tier?.tier_id} value={tier?.tier_id}>
-                            {tier?.tier_name || 'Unknown Tier'}
-                          </option>
-                        ))
-                      ) : (
-                        <option disabled>No tiers available</option>
-                      )}
-                    </select>
-                  </td>
-                </tr>
-              ))
-            ) : (
+        <div className={styles['table-container']}>
+          <table>
+            <thead>
               <tr>
-                <td colSpan={2}>No players found</td>
+                <th>Player</th>
+                <th>Tier</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {players.length > 0 ? (
+                players.map(player => (
+                  <tr key={player?.player_id}>
+                    <td>{player?.name || 'Unknown Player'}</td>
+                    <td>
+                      <select
+                        value={player?.tier_id || ''}
+                        onChange={(e) => handleTierChange(player?.player_id, Number(e.target.value))}
+                      >
+                        <option value="">No Tier</option>
+                        {tiers.length > 0 ? (
+                          tiers.map(tier => (
+                            <option key={tier?.tier_id} value={tier?.tier_id}>
+                              {tier?.tier_name || 'Unknown Tier'}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>No tiers available</option>
+                        )}
+                      </select>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2}>No players found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

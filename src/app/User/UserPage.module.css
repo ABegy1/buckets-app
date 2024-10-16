@@ -5,6 +5,7 @@
   justify-content: flex-start;
   align-items: center;
   height: 100vh;
+  width: 100%;
   padding: 0; /* Removed padding */
   background-color: #f0f0f0;
   color: #333;
@@ -30,8 +31,7 @@
 
 /* Content area styling */
 .userContent {
-  width: 100%;
-  max-width: 1500px; /* Increased max width */
+  width: 100%; 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -122,7 +122,7 @@
 /* Teams container */
 .teams {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Changed to 4 columns */
+  grid-template-columns: repeat(2, 1fr); /* Changed to 4 columns */
   gap: 10px; /* Reduced space between cards */
   width: 100%;
   max-width: 1500px; /* Increased max width to fill space */
@@ -142,9 +142,6 @@
   transition: transform 0.2s ease-in-out;
 }
 
-.team:hover {
-  transform: scale(1.02);
-}
 
 /* Team title */
 .teamTitle {

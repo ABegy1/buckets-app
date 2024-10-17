@@ -14,8 +14,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [isMoneyball, setIsMoneyball] = useState<boolean>(false);
   const [isDouble, setIsDouble] = useState<boolean>(false);
   const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
-  const [currentScore, setCurrentScore] = useState<number>(0);  // Keep track of current score
-  const [tierId, setTierId] = useState<number | null>(null);  // Track tier_id
+  const [currentScore, setCurrentScore] = useState<number>(0);
+  const [tierId, setTierId] = useState<number | null>(null);
+  const [shotCount, setShotCount] = useState<number | null>(null); // Track shot count
 
   const resetForm = () => {
     setPoints(null);
@@ -23,6 +24,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setIsDouble(false);
     setPlayerInstanceId(null);
     setTierId(null);
+    setShotCount(null); // Reset shot count
   };
 
   const handleClose = () => {
@@ -33,7 +35,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   // Fetch player instance and tier information
   const fetchPlayerInstanceAndTier = useCallback(async () => {
     try {
-      // Get the player's instance and tier_id from the players table
+      // Fetch player instance
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
         .select('player_instance_id, score, player_id')
@@ -48,9 +50,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
       const instanceId = playerInstance[0].player_instance_id;
       setPlayerInstanceId(instanceId);
-      setCurrentScore(playerInstance[0].score);  // Set the current score for this instance
+      setCurrentScore(playerInstance[0].score); // Set the current score
 
-      // Fetch tier information from the players table using playerId
+      // Fetch player's tier_id
       const { data: player, error: playerError } = await supabase
         .from('players')
         .select('tier_id')
@@ -62,7 +64,19 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
-      setTierId(player.tier_id);  // Set the tier_id for this player
+      setTierId(player.tier_id); // Set tier_id
+
+      // Fetch shot count for the player instance
+      const { data: shots, error: shotsError } = await supabase
+        .from('shots')
+        .select('*')
+        .eq('instance_id', instanceId);
+
+      if (shotsError) {
+        console.error('Error fetching shots:', shotsError);
+      } else {
+        setShotCount(shots.length); // Update shot count
+      }
     } catch (error) {
       console.error('Unexpected error:', error);
     }
@@ -100,12 +114,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (isDouble) finalPoints *= 2;
 
     try {
-      // Insert the new shot, now including tier_id
+      // Insert new shot with tier_id
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
         result: finalPoints,
-        tier_id: tierId,  // Include the tier_id here
+        tier_id: tierId, // Include tier_id in shot record
       });
 
       if (shotError) {
@@ -113,7 +127,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         return;
       }
 
-      // Fetch the current shots_left value
+      // Update player instance with the new score and shots left
+      const newScore = currentScore + finalPoints;
       const { data: playerInstance, error: fetchError } = await supabase
         .from('player_instance')
         .select('shots_left')
@@ -127,15 +142,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
       const newShotsLeft = playerInstance.shots_left - 1;
 
-      // Update the player's score by adding the shot's result to the current score
-      const newScore = currentScore + finalPoints;
-
-      // Update player_instance with the new score and shots_left
       const { error: updateScoreError } = await supabase
         .from('player_instance')
         .update({ 
           score: newScore, 
-          shots_left: newShotsLeft  // Decrement shots_left by 1
+          shots_left: newShotsLeft 
         })
         .eq('player_instance_id', playerInstanceId);
 
@@ -157,9 +168,13 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={handleClose}>X</button>
-
+    
         <h2>{name}</h2>
         <div className="modal-body">
+          <div>
+            {/* Display shot count */}
+            <p>Shot#: <span>{shotCount !== null ? shotCount + 1 : 'Loading...'}</span></p>
+          </div>
           <div className="points">
             <button
               className={points === 0 ? 'selected' : ''}

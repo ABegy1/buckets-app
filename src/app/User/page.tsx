@@ -331,9 +331,9 @@ const UserPage: React.FC = () => {
               </div>
               {teams[0]?.players.map((player, playerIndex) => (
                 <div key={playerIndex} className={styles.playerRow}>
-                  <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
-                  <span className={styles.shotsLeft}>{player.shots_left}</span>
-                  <span className={styles.totalPoints}>{player.total_points}</span>
+                   <span className={styles.playerName} style={{ color: player.tier_color, marginRight: '20px' }}>{player.name}</span>
+  <span className={styles.shotsLeft} style={{ marginRight: '20px' }}>{player.shots_left}</span>
+  <span className={styles.totalPoints}>{player.total_points}</span>
                 </div>
               ))}
             </div>

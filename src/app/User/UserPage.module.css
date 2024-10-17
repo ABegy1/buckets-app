@@ -43,6 +43,9 @@
   background-color: #264653; /* Darker color for better contrast */
   color: #fff;
   flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .userFooter p {

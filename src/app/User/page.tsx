@@ -45,6 +45,15 @@ const UserPage: React.FC = () => {
   const [seasonRules, setSeasonRules] = useState<string>(''); // New state for the season rules
   const router = useRouter();
 
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      router.push('/');
+    } else {
+      console.error('Sign out error:', error.message);
+    }
+  };
   // Fetch teams and players (for Standings view)
   const fetchTeamsAndPlayers = async () => {
     try {
@@ -345,7 +354,10 @@ const UserPage: React.FC = () => {
         ) : null}
       </main>
       <footer className={styles.userFooter}>
-        <p>&copy; 2024 Buckets Game. User Panel. All rights reserved.</p>
+        <button className={styles.signOutButton} onClick={handleSignOut}>
+          Sign Out
+        </button>
+        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
       </footer>
     </div>
   );

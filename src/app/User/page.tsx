@@ -320,14 +320,14 @@ const UserPage: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : userView === 'FreeAgent' ? (
+        ) :userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
             <h2>{seasonName} Free Agents</h2>
             <div className={styles.players}>
               <div className={styles.headerRow}>
-                <span>Name</span>
-                <span>Shots Left</span>
-                <span>Total Points</span>
+                <span className={styles.columnHeader}>Name</span>
+                <span className={styles.columnHeader}>Shots Left</span>
+                <span className={styles.columnHeader}>Total Points</span>
               </div>
               {teams[0]?.players.map((player, playerIndex) => (
                 <div key={playerIndex} className={styles.playerRow}>

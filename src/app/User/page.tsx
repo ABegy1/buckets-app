@@ -330,11 +330,11 @@ const UserPage: React.FC = () => {
                 <span className={styles.columnHeader}>Total Points</span>
               </div>
               {teams[0]?.players.map((player, playerIndex) => (
-                <div key={playerIndex} className={styles.playerRow}>
-                   <span className={styles.playerName} style={{ color: player.tier_color, marginRight: '20px' }}>{player.name}</span>
-  <span className={styles.shotsLeft} style={{ marginRight: '20px' }}>{player.shots_left}</span>
-  <span className={styles.totalPoints}>{player.total_points}</span>
-                </div>
+                <div key={playerIndex} className={styles.playerRow} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className={styles.playerName} style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}>{player.name}</span>
+                <span className={styles.shotsLeft} style={{ flex: 1, textAlign: 'center' }}>{player.shots_left}</span>
+                <span className={styles.totalPoints} style={{ flex: 1, textAlign: 'center' }}>{player.total_points}</span>
+              </div>
               ))}
             </div>
           </div>

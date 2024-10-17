@@ -1,14 +1,15 @@
 .addPlayers {
   width: 100%;
   max-width: 600px;
-  height: 100vh; /* Set the component height to viewport height */
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
+  overflow-y: auto; 
 }
+
 
 .addPlayers h2,
 .addPlayers h3 {

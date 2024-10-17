@@ -291,14 +291,6 @@ const UserPage: React.FC = () => {
     <div className={styles.userContainer}>
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1>
-        <button className={styles.signOutButton} onClick={async () => {
-          const { error } = await supabase.auth.signOut();
-          if (!error) {
-            router.push('/');
-          } else {
-            console.error('Sign out error:', error.message);
-          }
-        }}>Sign Out</button>
       </header>
       <main className={styles.userContent}>
         {userView === 'Standings' ? (

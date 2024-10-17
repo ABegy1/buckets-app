@@ -5,6 +5,7 @@ import AdjustTeams from '../AdjustTeams';
 import AdjustScores from '../AdjustScores';
 import AdjustTiers from '../AdjustTier';
 import AddPlayers from '../AddPlayers';
+import AdjustRules from '../AdjustRules';
 
 interface CurrentSeasonModalProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
           {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
           {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
+          {activeTab === 'Adjust Rules' && <AdjustRules isOpen={isOpen} />} 
         </div>
         <div className={styles.bottomBar}>
           <button className={styles.closeBtn} onClick={onClose}>Close</button>

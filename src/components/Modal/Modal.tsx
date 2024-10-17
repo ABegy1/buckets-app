@@ -173,7 +173,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <div className="modal-body">
           <div>
             {/* Display shot count */}
-            <p>Shot#: <span>{shotCount !== null ? shotCount + 1 : 'Loading...'}</span></p>
+            <p>Shot #: <span>{shotCount !== null ? shotCount + 1 : ''}</span></p>
           </div>
           <div className="points">
             <button

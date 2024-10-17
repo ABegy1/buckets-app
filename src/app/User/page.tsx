@@ -346,10 +346,10 @@ const UserPage: React.FC = () => {
         ) : null}
       </main>
       <footer className={styles.userFooter}>
+        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
         <button className={styles.signOutButton} onClick={handleSignOut}>
           Sign Out
         </button>
-        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
       </footer>
     </div>
   );

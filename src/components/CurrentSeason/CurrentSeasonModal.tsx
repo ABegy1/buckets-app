@@ -21,22 +21,47 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
   return (
     <div className={`${styles.currentSeasonModal} ${isOpen ? styles.currentSeasonModalOpen : ''}`}>
       <div className={styles.modalContent}>
-        <button className={styles.closeBtn} onClick={onClose}>X</button>
         <div className={styles.tabs}>
-          <button className={`${styles.tab} ${activeTab === 'Adjust Shots' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Adjust Shots')}>Adjust Shots</button>
-          <button className={`${styles.tab} ${activeTab === 'Teams' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Teams')}>Teams</button>
-          <button className={`${styles.tab} ${activeTab === 'Adjust Scores' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Adjust Scores')}>Adjust Scores</button>
-          <button className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Tier Adjust')}>Tier Adjust</button>
-          <button className={`${styles.tab} ${activeTab === 'Add Player' ? styles.tabActive : ''}`} onClick={() => handleTabChange('Add Player')}>Add Player</button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Adjust Shots' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Adjust Shots')}
+          >
+            Adjust Shots
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Teams' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Teams')}
+          >
+            Teams
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Adjust Scores' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Adjust Scores')}
+          >
+            Adjust Scores
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Tier Adjust')}
+          >
+            Tier Adjust
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Add Player' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Add Player')}
+          >
+            Add Player
+          </button>
         </div>
         <div className={styles.content}>
-          {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />} 
+          {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
           {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
           {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
-          {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />} 
-          {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />} 
-
-          {/* Keep the other tabs the same */}
+          {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
+          {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
+        </div>
+        <div className={styles.bottomBar}>
+          <button className={styles.closeBtn} onClick={onClose}>Close</button>
         </div>
       </div>
     </div>

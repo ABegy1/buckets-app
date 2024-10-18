@@ -53,6 +53,12 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           >
             Add Player
           </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'Adjust Rules' ? styles.tabActive : ''}`}
+            onClick={() => handleTabChange('Adjust Rules')}
+          >
+           Adjust Rules
+          </button>
         </div>
         <div className={styles.content}>
           {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}

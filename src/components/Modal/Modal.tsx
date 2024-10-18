@@ -173,8 +173,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </button>
           </div>
           <div className="actions">
+            {/* Add a red border to the Moneyball button when isMoneyballShot is true */}
             <button
-              className={isMoneyball ? 'selected' : ''}
+              className={`moneyball-button ${isMoneyball ? 'selected' : ''} ${isMoneyballShot ? 'highlight-moneyball-button' : ''}`}
               onClick={() => setIsMoneyball(!isMoneyball)}
             >
               Moneyball

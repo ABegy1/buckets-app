@@ -285,6 +285,20 @@ const UserPage: React.FC = () => {
         supabase.removeChannel(shotChannel);
       };
     }
+    if (userView === 'Rules') {
+      fetchTeamsAndPlayers();
+
+      const seasonChannel = supabase
+      .channel('season-rules-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'seasons' }, fetchTeamsAndPlayers)
+        .subscribe();
+
+      
+      return () => {
+        supabase.removeChannel(seasonChannel);
+        
+      };
+    }
   }, [userView]);
 
   return (

@@ -16,7 +16,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [tierId, setTierId] = useState<number | null>(null);
-  const [shotCount, setShotCount] = useState<number | null>(null); // Track shot count
+  const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Track shots left
 
   const resetForm = () => {
     setPoints(null);
@@ -24,7 +24,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setIsDouble(false);
     setPlayerInstanceId(null);
     setTierId(null);
-    setShotCount(null); // Reset shot count
+    setShotsLeft(null); // Reset shots left
   };
 
   const handleClose = () => {
@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Fetch player instance
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score, player_id')
+        .select('player_instance_id, score, shots_left, player_id')
         .eq('player_id', playerId)
         .order('season_id', { ascending: false })
         .limit(1);
@@ -51,6 +51,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       const instanceId = playerInstance[0].player_instance_id;
       setPlayerInstanceId(instanceId);
       setCurrentScore(playerInstance[0].score); // Set the current score
+      setShotsLeft(playerInstance[0].shots_left); // Set shots left
 
       // Fetch player's tier_id
       const { data: player, error: playerError } = await supabase
@@ -65,18 +66,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       }
 
       setTierId(player.tier_id); // Set tier_id
-
-      // Fetch shot count for the player instance
-      const { data: shots, error: shotsError } = await supabase
-        .from('shots')
-        .select('*')
-        .eq('instance_id', instanceId);
-
-      if (shotsError) {
-        console.error('Error fetching shots:', shotsError);
-      } else {
-        setShotCount(shots.length); // Update shot count
-      }
     } catch (error) {
       console.error('Unexpected error:', error);
     }
@@ -88,21 +77,15 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     // Fetch initial data
     fetchPlayerInstanceAndTier();
 
-    // Subscribe to real-time changes in player_instance and shots
+    // Subscribe to real-time changes in player_instance
     const playerInstanceChannel = supabase
       .channel('player-instance-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerInstanceAndTier)
       .subscribe();
 
-    const shotChannel = supabase
-      .channel('shots-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchPlayerInstanceAndTier)
-      .subscribe();
-
     return () => {
       // Cleanup subscriptions
       supabase.removeChannel(playerInstanceChannel);
-      supabase.removeChannel(shotChannel);
     };
   }, [isOpen, fetchPlayerInstanceAndTier]);
 
@@ -129,18 +112,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
       // Update player instance with the new score and shots left
       const newScore = currentScore + finalPoints;
-      const { data: playerInstance, error: fetchError } = await supabase
-        .from('player_instance')
-        .select('shots_left')
-        .eq('player_instance_id', playerInstanceId)
-        .single();
-
-      if (fetchError || !playerInstance) {
-        console.error('Error fetching current shots_left:', fetchError);
-        return;
-      }
-
-      const newShotsLeft = playerInstance.shots_left - 1;
+      const newShotsLeft = shotsLeft !== null ? shotsLeft - 1 : 0;
 
       const { error: updateScoreError } = await supabase
         .from('player_instance')
@@ -172,8 +144,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <h2>{name}</h2>
         <div className="modal-body">
           <div>
-            {/* Display shot count */}
-            <p>Shot #: <span>{shotCount !== null ? shotCount + 1 : ''}</span></p>
+            {/* Display shots left instead of shot count */}
+            <p>Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span></p>
           </div>
           <div className="points">
             <button

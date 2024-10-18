@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styles from './AdjustRules.module.css'; // Import the CSS module
 import { supabase } from '@/supabaseClient';
+import styles from './AdjustRules.module.css'; // Use the CSS module for styling
 
 interface AdjustRulesProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
 
   const fetchSeasonData = useCallback(async () => {
     try {
+      // Fetch the active season's ID and rules
       const { data: activeSeason, error } = await supabase
         .from('seasons')
         .select('season_id, rules')
@@ -24,9 +25,9 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
         return;
       }
 
-      setSeasonId(activeSeason.season_id);  // Set the current season's ID
-      setRules(activeSeason.rules);  // Set the current season's rules
-      setUpdatedRules(activeSeason.rules);  // Prepopulate the rules for editing
+      setSeasonId(activeSeason.season_id);
+      setRules(activeSeason.rules);
+      setUpdatedRules(activeSeason.rules);
     } catch (error) {
       console.error('Unexpected error fetching season data:', error);
     }
@@ -35,17 +36,16 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Fetch the initial season data when the modal opens
     fetchSeasonData();
 
-    // Subscribe to real-time updates on the seasons table for rule changes
+    // Subscribe to real-time updates for rule changes
     const rulesChannel = supabase
       .channel('seasons-db-changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'seasons' }, fetchSeasonData)
       .subscribe();
 
     return () => {
-      // Cleanup subscription when modal is closed or component unmounts
+      // Clean up the subscription
       supabase.removeChannel(rulesChannel);
     };
   }, [isOpen, fetchSeasonData]);
@@ -70,20 +70,16 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className={styles.adjustRulesModalOverlay}>
-      <div className={styles.adjustRulesModalContent} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.header}>Edit Season Rules</h2> {/* Apply the header class */}
-        <textarea
-          className={styles.rulesTextarea}
-          value={updatedRules}
-          onChange={(e) => setUpdatedRules(e.target.value)}
-        />
-        <div className={styles.rulesActions}>
-          <button onClick={handleSubmit}>Save</button>
-        </div>
+    <div className={styles.adjustRules}>
+      <h2>Edit Season Rules</h2>
+      <textarea
+        className={styles.rulesTextarea}
+        value={updatedRules}
+        onChange={(e) => setUpdatedRules(e.target.value)}
+      />
+      <div className={styles.rulesActions}>
+        <button onClick={handleSubmit}>Save</button>
       </div>
     </div>
   );

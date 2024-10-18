@@ -141,7 +141,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* Add a conditional class to apply a red border if it's a moneyball shot */}
+      <div className={`modal-content ${isMoneyballShot ? 'highlight-modal-border' : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={handleClose}>X</button>
     
         <h2>{name}</h2>
@@ -173,9 +174,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </button>
           </div>
           <div className="actions">
-            {/* Add a red border to the Moneyball button when isMoneyballShot is true */}
             <button
-              className={`moneyball-button ${isMoneyball ? 'selected' : ''} ${isMoneyballShot ? 'highlight-moneyball-button' : ''}`}
+              className={isMoneyball ? 'selected' : ''}
               onClick={() => setIsMoneyball(!isMoneyball)}
             >
               Moneyball

@@ -17,7 +17,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [tierId, setTierId] = useState<number | null>(null);
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Track shots left
-  const [totalShotsTaken, setTotalShotsTaken] = useState<number>(0); // Track total shots taken
 
   const resetForm = () => {
     setPoints(null);
@@ -25,8 +24,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setIsDouble(false);
     setPlayerInstanceId(null);
     setTierId(null);
-    setShotsLeft(null);
-    setTotalShotsTaken(0); // Reset total shots taken
+    setShotsLeft(null); // Reset shots left
   };
 
   const handleClose = () => {
@@ -40,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Fetch player instance
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score, shots_left, total_shots, player_id')
+        .select('player_instance_id, score, shots_left, player_id')
         .eq('player_id', playerId)
         .order('season_id', { ascending: false })
         .limit(1);
@@ -54,7 +52,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       setPlayerInstanceId(instanceId);
       setCurrentScore(playerInstance[0].score); // Set the current score
       setShotsLeft(playerInstance[0].shots_left); // Set shots left
-      setTotalShotsTaken(playerInstance[0].total_shots); // Set total shots taken
 
       // Fetch player's tier_id
       const { data: player, error: playerError } = await supabase
@@ -116,14 +113,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Update player instance with the new score and shots left
       const newScore = currentScore + finalPoints;
       const newShotsLeft = shotsLeft !== null ? shotsLeft - 1 : 0;
-      const newTotalShots = totalShotsTaken + 1;
 
       const { error: updateScoreError } = await supabase
         .from('player_instance')
         .update({ 
           score: newScore, 
-          shots_left: newShotsLeft,
-          total_shots: newTotalShots 
+          shots_left: newShotsLeft 
         })
         .eq('player_instance_id', playerInstanceId);
 
@@ -139,11 +134,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     }
   };
 
-  const currentShotNumber = totalShotsTaken + 1;
-  
-  const isMoneyballShot = currentShotNumber % 10 === 0;
-
-  console.log(currentShotNumber, isMoneyballShot);
+  // Check if the current shots_left corresponds to 1, 11, 21, 31, or 41 (for Moneyball)
+  const isMoneyballShot = shotsLeft === 1 || shotsLeft === 11 || shotsLeft === 21 || shotsLeft === 31 || shotsLeft === 41;
 
   if (!isOpen) return null;
 
@@ -155,10 +147,10 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <h2>{name}</h2>
         <div className="modal-body">
           <div>
+            {/* Display shots left and highlight specific shots (1, 11, 21, 31, 41) */}
             <p className={isMoneyballShot ? 'highlight-moneyball' : ''}>
-              Shot Number: <span>{currentShotNumber}</span>
+              Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
             </p>
-            <p>Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span></p>
           </div>
           <div className="points">
             <button

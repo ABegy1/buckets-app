@@ -72,7 +72,7 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
 
   return (
     <div className={styles.adjustRules}>
-      <h2>Edit Season Rules</h2>
+      <h2 className={styles.header}>Edit Season Rules</h2> {/* Apply the header class */}
       <textarea
         className={styles.rulesTextarea}
         value={updatedRules}

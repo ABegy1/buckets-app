@@ -143,6 +143,8 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   
   const isMoneyballShot = currentShotNumber % 10 === 0;
 
+  console.log(currentShotNumber, isMoneyballShot);
+
   if (!isOpen) return null;
 
   return (

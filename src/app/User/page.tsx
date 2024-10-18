@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './UserPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 interface Team {
   team_id: number;
@@ -355,7 +356,7 @@ const UserPage: React.FC = () => {
         ) : userView === 'Rules' ? (
           <div className={styles.rulesPage}>
             <h2>{seasonName} Rules</h2>
-            <p>{seasonRules}</p>
+            <ReactMarkdown>{seasonRules}</ReactMarkdown>
           </div>
         ) : null}
       </main>

@@ -72,7 +72,10 @@ button.selected {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect for selected buttons */
   background-color: #d4edda; /* Optional: Slight color change for selected button */
 }
-
+.highlight-moneyball {
+  color: red;
+  font-weight: bold;
+}
 /* Slightly increase shadow on hover to enhance feedback */
 button.selected:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);

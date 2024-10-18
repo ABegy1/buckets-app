@@ -11,10 +11,8 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
   const [updatedRules, setUpdatedRules] = useState<string>('');
   const [seasonId, setSeasonId] = useState<number | null>(null);
 
-  // Fetch the current season's ID and rules
   const fetchSeasonData = useCallback(async () => {
     try {
-      // Fetch the current active season's ID and rules
       const { data: activeSeason, error } = await supabase
         .from('seasons')
         .select('season_id, rules')
@@ -75,9 +73,9 @@ const AdjustRules: React.FC<AdjustRulesProps> = ({ isOpen }) => {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.adjustRulesModalOverlay} onClick={() => {}}>
+    <div className={styles.adjustRulesModalOverlay}>
       <div className={styles.adjustRulesModalContent} onClick={(e) => e.stopPropagation()}>
-        <h2>Edit Season Rules</h2>
+        <h2 className={styles.header}>Edit Season Rules</h2> {/* Apply the header class */}
         <textarea
           className={styles.rulesTextarea}
           value={updatedRules}

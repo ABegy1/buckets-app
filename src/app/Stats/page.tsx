@@ -19,7 +19,7 @@ const StatsPage: React.FC = () => {
           <button
             onClick={() => handleNavigation('Standings')}
             className={`${styles.navItem} ${
-              pathname === '/standings' ? styles.active : ''
+              pathname === '/Standings' ? styles.active : ''
             }`}
           >
             Standings
@@ -27,7 +27,7 @@ const StatsPage: React.FC = () => {
           <button
             onClick={() => handleNavigation('FreeAgency')}
             className={`${styles.navItem} ${
-              pathname === '/freeagency' ? styles.active : ''
+              pathname === '/FreeAgency' ? styles.active : ''
             }`}
           >
             Free Agency
@@ -35,7 +35,7 @@ const StatsPage: React.FC = () => {
           <button
             onClick={() => handleNavigation('Rules')}
             className={`${styles.navItem} ${
-              pathname === '/rules' ? styles.active : ''
+              pathname === '/Rules' ? styles.active : ''
             }`}
           >
             Rules
@@ -43,7 +43,7 @@ const StatsPage: React.FC = () => {
           <button
             onClick={() => handleNavigation('Stats')}
             className={`${styles.navItem} ${
-              pathname === '/stats' ? styles.active : ''
+              pathname === '/Stats' ? styles.active : ''
             }`}
           >
             Stats

@@ -99,11 +99,16 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
-    playNotification();
+  
+    // Play notification only if the points are 1 or 2 and the Moneyball is selected
+    if ((points === 1 || points === 2) && isMoneyball) {
+      playNotification();
+    }
+  
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
-
+  
     try {
       // Insert new shot with tier_id
       const { error: shotError } = await supabase.from('shots').insert({
@@ -112,16 +117,16 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         result: finalPoints,
         tier_id: tierId, // Include tier_id in shot record
       });
-
+  
       if (shotError) {
         console.error('Error recording shot:', shotError);
         return;
       }
-
+  
       // Update player instance with the new score and shots left
       const newScore = currentScore + finalPoints;
       const newShotsLeft = shotsLeft !== null ? shotsLeft - 1 : 0;
-
+  
       const { error: updateScoreError } = await supabase
         .from('player_instance')
         .update({ 
@@ -129,18 +134,19 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           shots_left: newShotsLeft 
         })
         .eq('player_instance_id', playerInstanceId);
-
+  
       if (updateScoreError) {
         console.error('Error updating player score and shots_left:', updateScoreError);
         return;
       }
-
+  
       console.log('Score and shots_left updated successfully');
       handleClose();
     } catch (error) {
       console.error('Unexpected error:', error);
     }
   };
+  
 
   if (!isOpen) return null;
 

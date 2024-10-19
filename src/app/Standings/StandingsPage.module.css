@@ -72,7 +72,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
   align-items: center; /* Ensure vertical alignment */
-  padding: 12px 0;
+  padding: 12px 2px;
   font-size: 1.5rem;
   border-bottom: 1px solid #ddd;
 }

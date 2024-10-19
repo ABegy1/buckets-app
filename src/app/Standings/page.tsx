@@ -1,6 +1,6 @@
 'use client'; // Required in Next.js App Router
 import React, { useEffect, useState } from 'react';
-import styles from './UserPage.module.css'; // Updated path for combined styles
+import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -39,14 +39,16 @@ interface TeamWithPlayers {
   total_points: number;
 }
 
-const UserPage: React.FC = () => {
+const StandingsPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings'); // Default view
   const [seasonName, setSeasonName] = useState<string>(''); // New state for the season name
   const [seasonRules, setSeasonRules] = useState<string>(''); // New state for the season rules
   const router = useRouter();
 
-
+  const handleNavigation = (page: string) => {
+    router.push(`/${page}`);
+  };
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
@@ -306,6 +308,17 @@ const UserPage: React.FC = () => {
     <div className={styles.userContainer}>
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1>
+        <nav className={styles.navMenu}>
+          <button onClick={() => handleNavigation('FreeAgency')} className={styles.navItem}>
+            FreeAgency
+          </button>
+          <button onClick={() => handleNavigation('Rules')} className={styles.navItem}>
+            Rules
+          </button>
+          <button onClick={() => handleNavigation('Stats')} className={styles.navItem}>
+            Stats
+          </button>
+        </nav>
       </header>
       <main className={styles.userContent}>
         {userView === 'Standings' ? (
@@ -370,4 +383,4 @@ const UserPage: React.FC = () => {
   );
 };
 
-export default UserPage;
+export default StandingsPage;

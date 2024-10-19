@@ -205,7 +205,19 @@
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+.navMenu {
+  display: flex;
+  gap: 1rem;
+}
 
+.navItem {
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
 .signOutButton:hover {
   background-color: #a11a1a;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);

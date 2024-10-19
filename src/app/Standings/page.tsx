@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
-import { useRouter } from 'next/navigation';
+// @ts-ignore
+import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
 interface Team {
@@ -45,6 +46,7 @@ const StandingsPage: React.FC = () => {
   const [seasonName, setSeasonName] = useState<string>(''); // New state for the season name
   const [seasonRules, setSeasonRules] = useState<string>(''); // New state for the season rules
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleNavigation = (page: string) => {
     router.push(`/${page}`);

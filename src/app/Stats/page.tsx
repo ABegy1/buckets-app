@@ -1,6 +1,7 @@
 'use client'; // Required in Next.js App Router
 import React from 'react';
 import styles from './Stats.module.css'; // Updated path for combined styles
+// @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 
 const StatsPage: React.FC = () => {

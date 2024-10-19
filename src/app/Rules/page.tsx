@@ -82,7 +82,7 @@ const RulesPage: React.FC = () => {
 
       <main className={styles.userContent}>
         <div className={styles.rulesPage}>
-          <h2>{seasonName} Rules</h2>
+          <h2 className={styles.rulesTitle}>{seasonName} Rules</h2> {/* Updated to use the class */}
           <ReactMarkdown>{seasonRules}</ReactMarkdown>
         </div>
       </main>

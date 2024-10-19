@@ -86,7 +86,8 @@
     text-align: center;
 }
 
-ReactMarkdown {
+/* Add a local class for the ReactMarkdown content */
+.rulesContent {
     padding: 1rem;
     line-height: 1.5;
     color: #333;

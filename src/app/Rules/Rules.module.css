@@ -7,10 +7,9 @@
     padding: 0;
     background-color: #f0f0f0;
     color: #333;
-  }
+}
 
-
-  /* Navbar styling */
+/* Navbar styling */
 .navbar {
     width: 100%;
     display: flex;
@@ -21,81 +20,83 @@
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
-  }
+}
 
-
-  .navbarTitle {
+.navbarTitle {
     font-size: 2rem;
     font-weight: bold;
     margin: 0;
-  }
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 100%;
-    margin-top: 20px;
-    box-sizing: border-box;
-  }
+}
 
-  /* Footer styling */
-.userFooter {
-    width: 100%;
-    padding: 5px;
-    text-align: center;
-    background-color: #264653; /* Darker color for better contrast */
-    color: #fff;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .userContent {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 2rem;
-    background-color: #f9f9f9;
-  }
-  
-  /* Styles for the page title */
-  .pageTitle {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 1.5rem;
-    color: #333;
-    text-align: center;
-  }
-  
-  /* Styles for the content area */
-  .content {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  .navMenu {
+.navMenu {
     display: flex;
     gap: 1rem;
-  }
-  
-  .navItem {
+}
+
+.navItem {
     background-color: transparent;
     color: white;
     border: none;
     font-size: 1rem;
     cursor: pointer;
     padding: 0.5rem 1rem;
-  }
-  .active {
-    border-bottom: 2px solid #fff; /* Highlight active tab */
+}
+
+.active {
+    border-bottom: 2px solid #fff;
     font-weight: bold;
-  }
-  .signOutButton {
-    background-color: #c1121f; /* Darker color for better contrast */
+}
+
+/* Footer styling */
+.userFooter {
+    width: 100%;
+    padding: 5px;
+    text-align: center;
+    background-color: #264653;
+    color: #fff;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Content area styling */
+.userContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    background-color: #f9f9f9;
+}
+
+.rulesPage {
+    width: 100%;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+ReactMarkdown {
+    padding: 1rem;
+    line-height: 1.5;
+    color: #333;
+    border-radius: 8px;
+    background-color: #fafafa;
+    border: 1px solid #ddd;
+}
+
+/* Sign out button */
+.signOutButton {
+    background-color: #c1121f;
     color: white;
     padding: 8px 16px;
     font-size: 1.1rem;
@@ -103,4 +104,8 @@
     cursor: pointer;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
+}
+
+.signOutButton:hover {
+    background-color: #a60e1a;
+}

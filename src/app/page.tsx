@@ -118,7 +118,7 @@ const HomePage = () => {
       if (role === 'Admin') {
         router.push('/Admin'); // Redirect to admin page
       } else {
-        router.push('/User'); // Redirect to user page
+        router.push('/Standings'); // Redirect to user page
       }
     }
   }, [user, role, router, userAdded]);

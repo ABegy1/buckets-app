@@ -4,14 +4,6 @@ import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 
-interface Player {
-  player_id: number;
-  name: string;
-  shots_left: number;
-  total_points: number;
-  tier_color: string;
-}
-
 const FreeAgencyPage: React.FC = () => {
   const [seasonName, setSeasonName] = useState<string>(''); // State for the season name
   const [freeAgents, setFreeAgents] = useState<any[]>([]); // State for free agents and their stats
@@ -166,9 +158,16 @@ const FreeAgencyPage: React.FC = () => {
             </div>
             {freeAgents.map((player, playerIndex) => (
               <div key={playerIndex} className={styles.playerRow} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className={styles.playerName} style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}>{player.name}</span>
-                <span className={styles.shotsLeft} style={{ flex: 1, textAlign: 'center' }}>{player.shots_left}</span>
-                <span className={styles.totalPoints} style={{ flex: 1, textAlign: 'center' }}>{player.total_points}</span>
+                <div className={styles.playerName}>
+                  {/* Add colored circle */}
+                  <span 
+                    className={styles.colorCircle} 
+                    style={{ backgroundColor: player.tier_color }}>
+                  </span>
+                  <span>{player.name}</span>
+                </div>
+                <span className={styles.shotsLeft}>{player.shots_left}</span>
+                <span className={styles.totalPoints}>{player.total_points}</span>
               </div>
             ))}
           </div>

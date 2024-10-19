@@ -359,10 +359,19 @@ const StandingsPage: React.FC = () => {
                </div>
                {team.players.map((player, playerIndex) => (
                  <div key={playerIndex} className={styles.row}>
-                   <span className={styles.playerName} style={{ color: player.tier_color }}>{player.name}</span>
-                   <span className={styles.shotsLeft}>{player.shots_left}</span>
-                   <span className={styles.totalPoints}>{player.total_points}</span>
+                 <div className={styles.playerNameColumn}>
+                   {/* Name column with colored circle */}
+                   <div className={styles.playerName}>
+                     <span 
+                       className={styles.colorCircle} 
+                       style={{ backgroundColor: player.tier_color }}>
+                     </span>
+                     <span>{player.name}</span>
+                   </div>
                  </div>
+                 <span className={styles.shotsLeft}>{player.shots_left}</span>
+                 <span className={styles.totalPoints}>{player.total_points}</span>
+               </div>
                ))}
                <div className={styles.teamStats}>
                  <span>Total Shots Remaining: {team.total_shots}</span>

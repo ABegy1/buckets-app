@@ -86,7 +86,7 @@
 /* Header and player rows */
 .headerRow, .playerRow {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr; /* Three columns with different widths */
+    grid-template-columns: 1fr 1fr 1fr; /* Three columns with different widths */
     align-items: center;
     padding: 10px 0;
   }
@@ -112,13 +112,13 @@
   .shotsLeftColumn {
     display: flex;
     justify-content: center; /* Center align shots left */
-    text-align: center;
+    text-align: left;
   }
   
   .totalPointsColumn {
     display: flex;
     justify-content: flex-end; /* Right align total points */
-    text-align: right;
+    text-align: left;
   }
   
   /* Player name with colored circle */

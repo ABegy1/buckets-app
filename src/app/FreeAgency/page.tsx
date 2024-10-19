@@ -157,18 +157,26 @@ const FreeAgencyPage: React.FC = () => {
               <span className={styles.columnHeader}>Total Points</span>
             </div>
             {freeAgents.map((player, playerIndex) => (
-              <div key={playerIndex} className={styles.playerRow} style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div key={playerIndex} className={styles.playerRow}>
+              <div className={`${styles.playerNameColumn}`}>
+                {/* Name column - Right justified */}
                 <div className={styles.playerName}>
-                  {/* Add colored circle */}
-                  <span 
-                    className={styles.colorCircle} 
-                    style={{ backgroundColor: player.tier_color }}>
-                  </span>
+                  <span
+                    className={styles.colorCircle}
+                    style={{ backgroundColor: player.tier_color }}
+                  ></span>
                   <span>{player.name}</span>
                 </div>
-                <span className={styles.shotsLeft}>{player.shots_left}</span>
-                <span className={styles.totalPoints}>{player.total_points}</span>
               </div>
+              <div className={`${styles.centerColumn}`}>
+                {/* Shots Left column - Centered */}
+                <span>{player.shots_left}</span>
+              </div>
+              <div className={`${styles.rightColumn}`}>
+                {/* Total Points column - Right justified */}
+                <span>{player.total_points}</span>
+              </div>
+            </div>
             ))}
           </div>
         </div>

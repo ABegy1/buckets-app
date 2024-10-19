@@ -83,12 +83,12 @@
     width: 100%;
 }
 
+/* Header and player rows */
 .headerRow, .playerRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    align-items: center;
-    justify-items: center;
+    display: flex;
+    justify-content: space-between;
     padding: 10px 0;
+    align-items: center;
 }
 
 .headerRow {
@@ -98,25 +98,44 @@
 }
 
 .playerRow {
-    padding: 10px 0;
     border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
 }
 
+/* Column styling for alignment */
+.playerNameColumn {
+    flex: 2;
+    display: flex;
+    justify-content: flex-end; /* Right justify the name */
+    align-items: center;
+}
+
+.centerColumn {
+    flex: 1;
+    display: flex;
+    justify-content: center; /* Center align shots left */
+    text-align: center;
+}
+
+.rightColumn {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end; /* Right justify total points */
+    text-align: right;
+}
+
+/* Player name with colored circle */
 .playerName {
     display: flex;
     align-items: center;
     font-weight: bold;
-  }
-  
-  .colorCircle {
+}
+
+.colorCircle {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     margin-right: 8px;
-  }
-
-.shotsLeft, .totalPoints {
-    text-align: center;
 }
 
 /* Sign out button */

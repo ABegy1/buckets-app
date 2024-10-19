@@ -76,6 +76,13 @@
   border-bottom: 1px solid #ddd;
 }
 
+.playerName,
+.shotsLeft,
+.totalPoints {
+  flex-basis: 33%; /* Ensure each column gets 33% of the width */
+  text-align: center;
+}
+
 /* Ensure that the columns are evenly spaced and aligned */
 .columnHeader {
   flex-basis: 33%;
@@ -85,13 +92,7 @@
 .players {
   margin-top: 15px;
 }
-/* Player columns share the same flex structure */
-.playerName,
-.shotsLeft,
-.totalPoints {
-  flex-basis: 33%;
-  text-align: center;
-}
+
 
 /* Adjust team stats to match the layout */
 .teamStats {
@@ -226,10 +227,11 @@
 }
 
 .colorCircle {
-  width: 10px;
-  height: 10px;
+  width: 10px !important; /* Ensure width is enforced */
+  height: 10px !important; /* Ensure height is enforced */
   border-radius: 50%;
   margin-right: 8px;
+  display: inline-block; 
 }
 .signOutButton:hover {
   background-color: #a11a1a;
@@ -253,3 +255,16 @@
   border-bottom: 1px solid #ddd;
 }
 
+@media (max-width: 600px) {
+  .navbarTitle {
+    font-size: 1.5rem;
+  }
+
+  .seasonTitle {
+    font-size: 2rem;
+  }
+
+  .teamStats {
+    font-size: 1.2rem;
+  }
+}

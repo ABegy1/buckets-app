@@ -106,7 +106,8 @@ const StandingsPage: React.FC = () => {
           );
   
           // Sort players by total_points in ascending order
-          playersWithStats.sort((a, b) => a.total_points - b.total_points);
+          playersWithStats.sort((a, b) => b.total_points - a.total_points);
+
   
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
           const totalPoints = playersWithStats.reduce((acc, player) => acc + player.total_points, 0);

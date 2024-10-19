@@ -1,8 +1,7 @@
-'use client'; // Required in Next.js App Router
-import React, { useEffect, useState } from 'react';
-import styles from './FreeAgency.module.css'; // Updated path for combined styles
+'use client'
+import React, { useEffect, useState, useCallback } from 'react';
+import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
-// @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 
 interface Player {
@@ -31,7 +30,7 @@ const FreeAgencyPage: React.FC = () => {
         .select('season_id, season_name')
         .is('end_date', null)
         .single();
-  
+
       if (seasonError || !activeSeason) throw seasonError;
 
       const activeSeasonId = activeSeason.season_id;
@@ -71,7 +70,7 @@ const FreeAgencyPage: React.FC = () => {
   };
 
   // Real-time subscription for free agents
-  const subscribeToRealTimeUpdates = async () => {
+  const subscribeToRealTimeUpdates = useCallback(async () => {
     const { data: activeSeason } = await supabase
       .from('seasons')
       .select('season_id')
@@ -117,12 +116,12 @@ const FreeAgencyPage: React.FC = () => {
       supabase.removeChannel(playerChannel);
       supabase.removeChannel(shotChannel);
     };
-  };
+  }, []); // Use empty dependency array to memoize the function
 
   useEffect(() => {
     fetchFreeAgents();
     subscribeToRealTimeUpdates();
-  }, []);
+  }, [subscribeToRealTimeUpdates]); // Add the memoized function as a dependency
 
   return (
     <div className={styles.userContainer}>

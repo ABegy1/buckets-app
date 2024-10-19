@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import './modal.css';
 import { supabase } from '@/supabaseClient';
-
+import { Howl } from 'howler';
 interface ModalProps {
   name: string;
   isOpen: boolean;
@@ -17,7 +17,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [tierId, setTierId] = useState<number | null>(null);
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Track shots left
-
+  const sound = new Howl({ src: ['/sounds/shot.mp3'] });
   const resetForm = () => {
     setPoints(null);
     setIsMoneyball(false);
@@ -26,7 +26,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setTierId(null);
     setShotsLeft(null); // Reset shots left
   };
-
+  const playNotification = () => {
+    sound.play();
+  };
   const handleClose = () => {
     resetForm();
     onClose();
@@ -97,7 +99,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
-
+    playNotification();
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;

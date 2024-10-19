@@ -76,7 +76,11 @@
   border-bottom: 1px solid #ddd;
 }
 
-.playerName,
+.playerName{
+  display: inline-flex; /* Ensures the circle and name stay on the same line */
+  align-items: center;  /* Vertically aligns the circle and name */
+  flex-basis: 33%;
+}
 .shotsLeft,
 .totalPoints {
   flex-basis: 33%; /* Ensure each column gets 33% of the width */
@@ -231,7 +235,6 @@
   height: 10px !important; /* Ensure height is enforced */
   border-radius: 50%;
   margin-right: 8px;
-  display: inline-block; 
 }
 .signOutButton:hover {
   background-color: #a11a1a;

@@ -89,6 +89,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     };
   }, [isOpen, fetchPlayerInstanceAndTier]);
 
+  useEffect(() => {
+    // Automatically toggle Moneyball if shotsLeft is 1, 11, 21, 31, or 41
+    const isMoneyballShot = shotsLeft === 1 || shotsLeft === 11 || shotsLeft === 21 || shotsLeft === 31 || shotsLeft === 41;
+    setIsMoneyball(isMoneyballShot);
+  }, [shotsLeft]);  // Trigger this effect whenever shotsLeft changes
+
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
 
@@ -134,22 +140,19 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     }
   };
 
-  // Check if the current shots_left corresponds to 1, 11, 21, 31, or 41 (for Moneyball)
-  const isMoneyballShot = shotsLeft === 1 || shotsLeft === 11 || shotsLeft === 21 || shotsLeft === 31 || shotsLeft === 41;
-
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
       {/* Add a conditional class to apply a red border if it's a moneyball shot */}
-      <div className={`modal-content ${isMoneyballShot ? 'highlight-modal-border' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content ${isMoneyball ? 'highlight-modal-border' : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={handleClose}>X</button>
     
         <h2>{name}</h2>
         <div className="modal-body">
           <div>
             {/* Display shots left and highlight specific shots (1, 11, 21, 31, 41) */}
-            <p className={isMoneyballShot ? 'highlight-moneyball' : ''}>
+            <p className={isMoneyball ? 'highlight-moneyball' : ''}>
               Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
             </p>
           </div>

@@ -111,14 +111,13 @@
 
   .shotsLeftColumn {
     display: flex;
-    justify-content: center; /* Center align shots left */
-    text-align: left;
+    
+    
   }
   
   .totalPointsColumn {
     display: flex;
-    justify-content: flex-end; /* Right align total points */
-    text-align: left;
+    
   }
   
   /* Player name with colored circle */

@@ -62,40 +62,36 @@ const StandingsPage: React.FC = () => {
   // Fetch teams and players (for Standings view)
   const fetchTeamsAndPlayers = async () => {
     try {
-      // Step 1: Fetch the active season where end_date is null
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, season_name, rules') // Fetch rules as well
+        .select('season_id, season_name, rules')
         .is('end_date', null)
         .single();
   
       if (seasonError || !activeSeason) throw seasonError;
   
-      const activeSeasonId = activeSeason.season_id;  // Store the active season_id
-      setSeasonName(activeSeason.season_name); // Set the season name
-      setSeasonRules(activeSeason.rules); // Set the season rules
+      const activeSeasonId = activeSeason.season_id;
+      setSeasonName(activeSeason.season_name);
+      setSeasonRules(activeSeason.rules);
   
-      // Step 2: Fetch all teams
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
       if (teamsError) throw teamsError;
   
       const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
         teamsData.map(async (team: Team) => {
-          // Step 3: Fetch players for the current team using the team_id from players table
           const { data: players, error: playersError } = await supabase
             .from('players')
-            .select('*, tiers(color)') // Include tier color
+            .select('*, tiers(color)')
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
   
           const playersWithStats = await Promise.all(
             players.map(async (player: Player) => {
-              // Step 4: Fetch player instance details for the active season
               const { data: playerInstance, error: playerInstanceError } = await supabase
                 .from('player_instance')
-                .select('shots_left, score') // Select score directly
+                .select('shots_left, score')
                 .eq('player_id', player.player_id)
-                .eq('season_id', activeSeasonId) // Filter by the active season
+                .eq('season_id', activeSeasonId)
                 .single();
   
               if (playerInstanceError || !playerInstance) throw playerInstanceError;
@@ -104,14 +100,16 @@ const StandingsPage: React.FC = () => {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
                 total_points: playerInstance.score,
-                tier_color: player.tiers?.color || '#000',  
+                tier_color: player.tiers?.color || '#000',
               };
             })
           );
   
-          // Calculate total shots left and total points for the entire team
-          const totalShots = playersWithStats.reduce((acc: number, player) => acc + player.shots_left, 0);
-          const totalPoints = playersWithStats.reduce((acc: number, player) => acc + player.total_points, 0);
+          // Sort players by total_points in ascending order
+          playersWithStats.sort((a, b) => a.total_points - b.total_points);
+  
+          const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
+          const totalPoints = playersWithStats.reduce((acc, player) => acc + player.total_points, 0);
   
           return {
             team_name: team.team_name,

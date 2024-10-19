@@ -222,7 +222,10 @@
   background-color: #a11a1a;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
-
+.active {
+  border-bottom: 2px solid #fff; /* Highlight active tab */
+  font-weight: bold;
+}
 .signOutButton:active {
   background-color: #8b0000;
   box-shadow: none;

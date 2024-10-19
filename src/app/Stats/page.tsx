@@ -1,10 +1,12 @@
 'use client'; // Required in Next.js App Router
 import React from 'react';
 import styles from './Stats.module.css'; // Updated path for combined styles
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const StatsPage: React.FC = () => {
     const router = useRouter();
+    const pathname = usePathname();
+
     const handleNavigation = (page: string) => {
         router.push(`/${page}`);
       };
@@ -13,16 +15,38 @@ const StatsPage: React.FC = () => {
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1> {/* Adjust title as needed */}
         <nav className={styles.navMenu}>
-          <button onClick={() => handleNavigation('Standings')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('Standings')}
+            className={`${styles.navItem} ${
+              pathname === '/standings' ? styles.active : ''
+            }`}
+          >
             Standings
           </button>
-          <button onClick={() => handleNavigation('FreeAgency')} className={styles.navItem}>
-            FreeAgency
+          <button
+            onClick={() => handleNavigation('FreeAgency')}
+            className={`${styles.navItem} ${
+              pathname === '/freeagency' ? styles.active : ''
+            }`}
+          >
+            Free Agency
           </button>
-          <button onClick={() => handleNavigation('Rules')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('Rules')}
+            className={`${styles.navItem} ${
+              pathname === '/rules' ? styles.active : ''
+            }`}
+          >
             Rules
           </button>
-          
+          <button
+            onClick={() => handleNavigation('Stats')}
+            className={`${styles.navItem} ${
+              pathname === '/stats' ? styles.active : ''
+            }`}
+          >
+            Stats
+          </button>
         </nav>
       </header>
 

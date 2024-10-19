@@ -2,9 +2,11 @@
 import React from 'react';
 import styles from './FreeAgency.module.css'; // Updated path for combined styles
 import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 const FreeAgencyPage: React.FC = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const handleNavigation = (page: string) => {
         router.push(`/${page}`);
       };
@@ -13,13 +15,36 @@ const FreeAgencyPage: React.FC = () => {
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1> {/* Adjust title as needed */}
         <nav className={styles.navMenu}>
-          <button onClick={() => handleNavigation('Standings')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('Standings')}
+            className={`${styles.navItem} ${
+              pathname === '/standings' ? styles.active : ''
+            }`}
+          >
             Standings
           </button>
-          <button onClick={() => handleNavigation('Rules')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('FreeAgency')}
+            className={`${styles.navItem} ${
+              pathname === '/freeagency' ? styles.active : ''
+            }`}
+          >
+            Free Agency
+          </button>
+          <button
+            onClick={() => handleNavigation('Rules')}
+            className={`${styles.navItem} ${
+              pathname === '/rules' ? styles.active : ''
+            }`}
+          >
             Rules
           </button>
-          <button onClick={() => handleNavigation('Stats')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('Stats')}
+            className={`${styles.navItem} ${
+              pathname === '/stats' ? styles.active : ''
+            }`}
+          >
             Stats
           </button>
         </nav>

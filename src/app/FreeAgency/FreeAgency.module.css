@@ -81,7 +81,10 @@
     display: flex;
     gap: 1rem;
   }
-  
+  .active {
+    border-bottom: 2px solid #fff; /* Highlight active tab */
+    font-weight: bold;
+  }
   .navItem {
     background-color: transparent;
     color: white;

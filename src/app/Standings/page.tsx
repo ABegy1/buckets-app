@@ -309,15 +309,40 @@ const StandingsPage: React.FC = () => {
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1>
         <nav className={styles.navMenu}>
-          <button onClick={() => handleNavigation('FreeAgency')} className={styles.navItem}>
-            FreeAgency
+        <nav className={styles.navMenu}>
+          <button
+            onClick={() => handleNavigation('Standings')}
+            className={`${styles.navItem} ${
+              pathname === '/standings' ? styles.active : ''
+            }`}
+          >
+            Standings
           </button>
-          <button onClick={() => handleNavigation('Rules')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('FreeAgency')}
+            className={`${styles.navItem} ${
+              pathname === '/freeagency' ? styles.active : ''
+            }`}
+          >
+            Free Agency
+          </button>
+          <button
+            onClick={() => handleNavigation('Rules')}
+            className={`${styles.navItem} ${
+              pathname === '/rules' ? styles.active : ''
+            }`}
+          >
             Rules
           </button>
-          <button onClick={() => handleNavigation('Stats')} className={styles.navItem}>
+          <button
+            onClick={() => handleNavigation('Stats')}
+            className={`${styles.navItem} ${
+              pathname === '/stats' ? styles.active : ''
+            }`}
+          >
             Stats
           </button>
+        </nav>
         </nav>
       </header>
       <main className={styles.userContent}>

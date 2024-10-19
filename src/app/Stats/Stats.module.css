@@ -34,7 +34,10 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
   }
-
+  .active {
+    border-bottom: 2px solid #fff; /* Highlight active tab */
+    font-weight: bold;
+  }
 
   .navbarTitle {
     font-size: 2rem;

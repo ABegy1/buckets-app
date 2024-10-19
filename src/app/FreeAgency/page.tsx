@@ -151,34 +151,34 @@ const FreeAgencyPage: React.FC = () => {
         <div className={styles.freeAgencyPage}>
           <h2>{seasonName} Free Agents</h2>
           <div className={styles.players}>
-            <div className={styles.headerRow}>
-              <span className={styles.columnHeader}>Name</span>
-              <span className={styles.columnHeader}>Shots Left</span>
-              <span className={styles.columnHeader}>Total Points</span>
-            </div>
-            {freeAgents.map((player, playerIndex) => (
-              <div key={playerIndex} className={styles.playerRow}>
-              <div className={`${styles.playerNameColumn}`}>
-                {/* Name column - Right justified */}
-                <div className={styles.playerName}>
-                  <span
-                    className={styles.colorCircle}
-                    style={{ backgroundColor: player.tier_color }}
-                  ></span>
-                  <span>{player.name}</span>
-                </div>
-              </div>
-              <div className={`${styles.centerColumn}`}>
-                {/* Shots Left column - Centered */}
-                <span>{player.shots_left}</span>
-              </div>
-              <div className={`${styles.rightColumn}`}>
-                {/* Total Points column - Right justified */}
-                <span>{player.total_points}</span>
-              </div>
-            </div>
-            ))}
-          </div>
+  <div className={styles.headerRow}>
+    <span className={styles.columnHeader}>Name</span>
+    <span className={styles.columnHeader}>Shots Left</span>
+    <span className={styles.columnHeader}>Total Points</span>
+  </div>
+  {freeAgents.map((player, playerIndex) => (
+    <div key={playerIndex} className={styles.playerRow}>
+      <div className={styles.playerNameColumn}>
+        {/* Name column with colored circle */}
+        <div className={styles.playerName}>
+          <span
+            className={styles.colorCircle}
+            style={{ backgroundColor: player.tier_color }}
+          ></span>
+          <span>{player.name}</span>
+        </div>
+      </div>
+      <div className={styles.shotsLeftColumn}>
+        {/* Centered shots left */}
+        <span>{player.shots_left}</span>
+      </div>
+      <div className={styles.totalPointsColumn}>
+        {/* Right aligned total points */}
+        <span>{player.total_points}</span>
+      </div>
+    </div>
+  ))}
+</div>
         </div>
       </main>
 

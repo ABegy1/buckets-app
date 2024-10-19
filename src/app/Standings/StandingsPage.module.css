@@ -70,7 +70,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
+  grid-template-columns: 1fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
   align-items: center; /* Ensure vertical alignment */
   padding: 12px 0;
   font-size: 1.5rem;

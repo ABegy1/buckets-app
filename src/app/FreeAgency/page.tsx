@@ -2,6 +2,7 @@
 import React from 'react';
 import styles from './FreeAgency.module.css'; // Updated path for combined styles
 import { useRouter } from 'next/navigation';
+// @ts-ignore
 import { usePathname } from 'next/navigation';
 
 const FreeAgencyPage: React.FC = () => {

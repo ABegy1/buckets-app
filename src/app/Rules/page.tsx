@@ -1,7 +1,8 @@
 'use client'; // Required in Next.js App Router
 import React from 'react';
 import styles from './Rules.module.css'; // Updated path for combined styles
-import { useRouter } from 'next/navigation';
+// @ts-ignore
+import { usePathname, useRouter } from 'next/navigation';
 
 const RulesPage: React.FC = () => {
 

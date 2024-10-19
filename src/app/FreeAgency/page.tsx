@@ -5,26 +5,17 @@ import { supabase } from '@/supabaseClient';
 // @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 
-interface PlayerInstance {
-  player_instance_id: number;
-  player_id: number;
-  season_id: number;
-  shots_left: number;
-  score: number;
-}
-
 interface Player {
   player_id: number;
   name: string;
-  tier_id?: number;
-  team_id?: number;
-  is_free_agent: boolean;
-  tiers: any;
+  shots_left: number;
+  total_points: number;
+  tier_color: string;
 }
 
 const FreeAgencyPage: React.FC = () => {
   const [seasonName, setSeasonName] = useState<string>(''); // State for the season name
-  const [teams, setTeams] = useState<any[]>([]); // State for the free agents
+  const [freeAgents, setFreeAgents] = useState<any[]>([]); // State for free agents and their stats
   const router = useRouter();
   const pathname = usePathname();
 
@@ -42,49 +33,95 @@ const FreeAgencyPage: React.FC = () => {
         .single();
   
       if (seasonError || !activeSeason) throw seasonError;
+
       const activeSeasonId = activeSeason.season_id;
-      setSeasonName(activeSeason.season_name); // Set the season name
-  
-      const { data: freeAgents, error: freeAgentsError } = await supabase
+      setSeasonName(activeSeason.season_name); // Set season name
+
+      const { data: freeAgentsData, error: freeAgentsError } = await supabase
         .from('players')
         .select('*, tiers(color)')
         .eq('is_free_agent', true);
-  
+
       if (freeAgentsError) throw freeAgentsError;
-  
+
       const freeAgentsWithStats = await Promise.all(
-        freeAgents.map(async (player: Player) => {
+        freeAgentsData.map(async (player: any) => {
           const { data: playerInstance, error: playerInstanceError } = await supabase
             .from('player_instance')
             .select('shots_left, score')
             .eq('player_id', player.player_id)
             .eq('season_id', activeSeasonId)
             .single();
-  
+
           if (playerInstanceError || !playerInstance) throw playerInstanceError;
-  
+
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
-            tier_color: player.tiers?.color || '#000',  // Use player tier color or fallback to black
+            tier_color: player.tiers?.color || '#000', // Default color if no tier color is found
           };
         })
       );
-  
-      setTeams([{ 
-        team_name: 'Free Agents', 
-        players: freeAgentsWithStats,
-        total_shots: 0, 
-        total_points: 0 
-      }]);
+
+      setFreeAgents(freeAgentsWithStats);
     } catch (error) {
       console.error('Error fetching free agents and stats:', error);
     }
   };
 
+  // Real-time subscription for free agents
+  const subscribeToRealTimeUpdates = async () => {
+    const { data: activeSeason } = await supabase
+      .from('seasons')
+      .select('season_id')
+      .is('end_date', null)
+      .single();
+
+    const activeSeasonId = activeSeason?.season_id;
+
+    if (!activeSeasonId) return;
+
+    // Player instance real-time updates
+    const playerInstanceChannel = supabase
+      .channel('player-instance-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'player_instance' },
+        fetchFreeAgents // Re-fetch the free agents to reflect the changes
+      )
+      .subscribe();
+
+    // Players real-time updates
+    const playerChannel = supabase
+      .channel('player-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players' },
+        fetchFreeAgents // Re-fetch the free agents to reflect changes
+      )
+      .subscribe();
+
+    // Shots real-time updates (if shots data affects free agents)
+    const shotChannel = supabase
+      .channel('shots-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shots' },
+        fetchFreeAgents
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playerInstanceChannel);
+      supabase.removeChannel(playerChannel);
+      supabase.removeChannel(shotChannel);
+    };
+  };
+
   useEffect(() => {
     fetchFreeAgents();
+    subscribeToRealTimeUpdates();
   }, []);
 
   return (
@@ -128,7 +165,7 @@ const FreeAgencyPage: React.FC = () => {
               <span className={styles.columnHeader}>Shots Left</span>
               <span className={styles.columnHeader}>Total Points</span>
             </div>
-            {teams[0]?.players.map((player : any, playerIndex : any) => (
+            {freeAgents.map((player, playerIndex) => (
               <div key={playerIndex} className={styles.playerRow} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className={styles.playerName} style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}>{player.name}</span>
                 <span className={styles.shotsLeft} style={{ flex: 1, textAlign: 'center' }}>{player.shots_left}</span>

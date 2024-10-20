@@ -136,6 +136,11 @@
   gap: 10px;
   width: 100%;
 }
+.fireIcon {
+  margin-left: 5px;
+  font-size: 18px;
+  color: red;
+}
 .freeAgencyPage {
   padding: 20px;
   background-color: #fff; /* White background for clean contrast */

@@ -101,6 +101,11 @@
     border-bottom: 1px solid #e0e0e0;
     padding: 10px 0;
 }
+.fireIcon {
+    margin-left: 5px;
+    font-size: 18px;
+    color: red;
+  }
 .seasonTitle {
     font-size: 3rem;
     font-weight: bold;

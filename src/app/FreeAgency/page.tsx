@@ -3,10 +3,41 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
+import { FaFireFlameCurved } from "react-icons/fa6";
+
+
+// Reuse the calculateShotsMadeInRow function from Standings
+const calculateShotsMadeInRow = async (playerInstanceId: number) => {
+  try {
+    const { data: shots, error: shotsError } = await supabase
+      .from('shots')
+      .select('is_made')
+      .eq('instance_id', playerInstanceId);
+
+    if (shotsError || !shots) throw shotsError;
+
+    let shotsMadeInRow = 0;
+    let maxShotsInRow = 0;
+
+    shots.forEach((shot: any) => {
+      if (shot.is_made) {
+        shotsMadeInRow++;
+        maxShotsInRow = Math.max(maxShotsInRow, shotsMadeInRow);
+      } else {
+        shotsMadeInRow = 0;
+      }
+    });
+
+    return maxShotsInRow;
+  } catch (error) {
+    console.error('Error calculating shots made in a row:', error);
+    return 0;
+  }
+};
 
 const FreeAgencyPage: React.FC = () => {
-  const [seasonName, setSeasonName] = useState<string>(''); // State for the season name
-  const [freeAgents, setFreeAgents] = useState<any[]>([]); // State for free agents and their stats
+  const [seasonName, setSeasonName] = useState<string>(''); 
+  const [freeAgents, setFreeAgents] = useState<any[]>([]); 
   const router = useRouter();
   const pathname = usePathname();
 
@@ -14,7 +45,7 @@ const FreeAgencyPage: React.FC = () => {
     router.push(`/${page}`);
   };
 
-  // Fetch free agents
+  // Fetch free agents and calculate shots in a row
   const fetchFreeAgents = async () => {
     try {
       const { data: activeSeason, error: seasonError } = await supabase
@@ -26,7 +57,7 @@ const FreeAgencyPage: React.FC = () => {
       if (seasonError || !activeSeason) throw seasonError;
 
       const activeSeasonId = activeSeason.season_id;
-      setSeasonName(activeSeason.season_name); // Set season name
+      setSeasonName(activeSeason.season_name);
 
       const { data: freeAgentsData, error: freeAgentsError } = await supabase
         .from('players')
@@ -39,18 +70,22 @@ const FreeAgencyPage: React.FC = () => {
         freeAgentsData.map(async (player: any) => {
           const { data: playerInstance, error: playerInstanceError } = await supabase
             .from('player_instance')
-            .select('shots_left, score')
+            .select('player_instance_id, shots_left, score')
             .eq('player_id', player.player_id)
             .eq('season_id', activeSeasonId)
             .single();
 
           if (playerInstanceError || !playerInstance) throw playerInstanceError;
 
+          // Calculate shots made in a row
+          const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
+
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
-            tier_color: player.tiers?.color || '#000', // Default color if no tier color is found
+            tier_color: player.tiers?.color || '#000',
+            shots_made_in_row: shotsMadeInRow,  // Store shots in a row for display
           };
         })
       );
@@ -61,7 +96,6 @@ const FreeAgencyPage: React.FC = () => {
     }
   };
 
-  // Real-time subscription for free agents
   const subscribeToRealTimeUpdates = useCallback(async () => {
     const { data: activeSeason } = await supabase
       .from('seasons')
@@ -73,27 +107,24 @@ const FreeAgencyPage: React.FC = () => {
 
     if (!activeSeasonId) return;
 
-    // Player instance real-time updates
     const playerInstanceChannel = supabase
       .channel('player-instance-db-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'player_instance' },
-        fetchFreeAgents // Re-fetch the free agents to reflect the changes
+        fetchFreeAgents
       )
       .subscribe();
 
-    // Players real-time updates
     const playerChannel = supabase
       .channel('player-db-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'players' },
-        fetchFreeAgents // Re-fetch the free agents to reflect changes
+        fetchFreeAgents
       )
       .subscribe();
 
-    // Shots real-time updates (if shots data affects free agents)
     const shotChannel = supabase
       .channel('shots-db-changes')
       .on(
@@ -108,12 +139,12 @@ const FreeAgencyPage: React.FC = () => {
       supabase.removeChannel(playerChannel);
       supabase.removeChannel(shotChannel);
     };
-  }, []); // Use empty dependency array to memoize the function
+  }, []);
 
   useEffect(() => {
     fetchFreeAgents();
     subscribeToRealTimeUpdates();
-  }, [subscribeToRealTimeUpdates]); // Add the memoized function as a dependency
+  }, [subscribeToRealTimeUpdates]);
 
   return (
     <div className={styles.userContainer}>
@@ -151,34 +182,36 @@ const FreeAgencyPage: React.FC = () => {
         <div className={styles.freeAgencyPage}>
           <h2 className={styles.seasonTitle}>{seasonName} Free Agents</h2>
           <div className={styles.players}>
-  <div className={styles.headerRow}>
-    <span className={styles.columnHeader}>Name</span>
-    <span className={styles.columnHeader}>Shots Left</span>
-    <span className={styles.columnHeader}>Total Points</span>
-  </div>
-  {freeAgents.map((player, playerIndex) => (
-    <div key={playerIndex} className={styles.playerRow}>
-      <div className={styles.playerNameColumn}>
-        {/* Name column with colored circle */}
-        <div className={styles.playerName}>
-          <span
-            className={styles.colorCircle}
-            style={{ backgroundColor: player.tier_color }}
-          ></span>
-          <span>{player.name}</span>
-        </div>
-      </div>
-      <div className={styles.shotsLeftColumn}>
-        {/* Centered shots left */}
-        <span>{player.shots_left}</span>
-      </div>
-      <div className={styles.totalPointsColumn}>
-        {/* Right aligned total points */}
-        <span>{player.total_points}</span>
-      </div>
-    </div>
-  ))}
-</div>
+            <div className={styles.headerRow}>
+              <span className={styles.columnHeader}>Name</span>
+              <span className={styles.columnHeader}>Shots Left</span>
+              <span className={styles.columnHeader}>Total Points</span>
+            </div>
+            {freeAgents.map((player, playerIndex) => (
+              <div key={playerIndex} className={styles.playerRow}>
+                <div className={styles.playerNameColumn}>
+                  <div className={styles.playerName}>
+                    <span
+                      className={styles.colorCircle}
+                      style={{ backgroundColor: player.tier_color }}
+                    ></span>
+                    <span>{player.name}</span>
+                    
+                    {/* Display the fire icon if player has 3 or more shots in a row */}
+                    {player.shots_made_in_row >= 3 && (
+                      <span className={styles.fireIcon}><FaFireFlameCurved/></span>  // Placeholder icon, replace with your imported icon
+                    )}
+                  </div>
+                </div>
+                <div className={styles.shotsLeftColumn}>
+                  <span>{player.shots_left}</span>
+                </div>
+                <div className={styles.totalPointsColumn}>
+                  <span>{player.total_points}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
 

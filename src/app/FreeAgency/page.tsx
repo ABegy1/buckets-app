@@ -50,6 +50,7 @@ const calculateCurrentMissStreak = async (playerInstanceId: number) => {
     if (shotsError || !shots) throw shotsError;
 
     let currentMissStreak = 0;
+    console.log(currentMissStreak)
 
     // Loop through the shots in order and count current consecutive missed shots
     for (const shot of shots) {

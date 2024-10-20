@@ -200,7 +200,7 @@ const FreeAgencyPage: React.FC = () => {
                     <span>{player.name}</span>
                     
                     {/* Display the fire icon if player has 3 or more shots in a row */}
-                    {player.shots_made_in_row >= 3 && (
+                    {player.current_streak >= 3 && (
                       <span className={styles.fireIcon}><FaFireFlameCurved/></span>  // Placeholder icon, replace with your imported icon
                     )}
                   </div>

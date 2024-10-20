@@ -101,10 +101,21 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
 
 const updateTeamScores = async () => {
   try {
+    // Fetch the active season (where end_date is null)
+    const { data: activeSeason, error: seasonError } = await supabase
+      .from('seasons')
+      .select('season_id')
+      .is('end_date', null)
+      .single();
+
+    if (seasonError || !activeSeason) throw seasonError;
+    
+    const activeSeasonId = activeSeason.season_id; // Store the active season_id
+
     // Fetch all teams
     const { data: teamsData, error: teamsError } = await supabase
       .from('teams')
-      .select('team_id, team_score');
+      .select('team_id, team_score'); // Fetch the team_id and team_score
 
     if (teamsError) throw teamsError;
 
@@ -114,19 +125,20 @@ const updateTeamScores = async () => {
         const { data: players, error: playersError } = await supabase
           .from('players')
           .select('player_id')
-          .eq('team_id', team.team_id); // Use the team_id from the players table
+          .eq('team_id', team.team_id);
 
         if (playersError) throw playersError;
 
         let teamScore = 0;
 
-        // For each player, fetch their player_instance for the current season and sum their scores
+        // For each player, fetch their player_instance for the active season and sum their scores
         await Promise.all(
           players.map(async (player: any) => {
             const { data: playerInstances, error: playerInstanceError } = await supabase
               .from('player_instance')
               .select('score')
-              .eq('player_id', player.player_id);
+              .eq('player_id', player.player_id)
+              .eq('season_id', activeSeasonId); // Ensure only instances for the active season
 
             if (playerInstanceError) throw playerInstanceError;
 
@@ -154,6 +166,8 @@ const updateTeamScores = async () => {
     console.error('Error updating team scores:', error);
   }
 };
+
+
 const StandingsPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings');

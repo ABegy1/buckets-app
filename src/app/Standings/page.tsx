@@ -97,6 +97,44 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
   }
 };
 
+
+const updateTeamScores = async () => {
+  try {
+    // Fetch all teams
+    const { data: teamsData, error: teamsError } = await supabase
+      .from('teams')
+      .select('team_id, team_score');
+
+    if (teamsError) throw teamsError;
+
+    await Promise.all(
+      teamsData.map(async (team: any) => {
+        // Fetch the players for this team
+        const { data: players, error: playersError } = await supabase
+          .from('player_instance')
+          .select('score')
+          .eq('team_id', team.team_id);
+
+        if (playersError) throw playersError;
+
+        // Calculate the total score for this team
+        const totalScore = players.reduce((acc: number, player: any) => acc + player.score, 0);
+
+        // Update the team's score in the database
+        const { error: updateError } = await supabase
+          .from('teams')
+          .update({ team_score: totalScore })
+          .eq('team_id', team.team_id);
+
+        if (updateError) throw updateError;
+
+        console.log(`Team ${team.team_id} score updated to ${totalScore}`);
+      })
+    );
+  } catch (error) {
+    console.error('Error updating team scores:', error);
+  }
+};
 const StandingsPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings');
@@ -118,7 +156,6 @@ const StandingsPage: React.FC = () => {
     }
   };
 
-  // Fetch teams and players (for Standings view)
   // Fetch teams and players (for Standings view)
 const fetchTeamsAndPlayers = async () => {
   try {
@@ -331,10 +368,14 @@ const fetchTeamsAndPlayers = async () => {
     }
     if (userView === 'Standings') {
       fetchTeamsAndPlayers();
+      updateTeamScores();
 
       const playerInstanceChannel = supabase
         .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchTeamsAndPlayers)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, () => {
+          fetchTeamsAndPlayers();
+          updateTeamScores(); // Update team scores on player_instance changes
+        })
         .subscribe();
 
       const teamChannel = supabase

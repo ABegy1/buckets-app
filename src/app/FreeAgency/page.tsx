@@ -4,7 +4,7 @@ import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
-import { MdSevereCold } from "react-icons/md";
+import { FaSnowflake } from "react-icons/fa6"; 
 
 
 
@@ -240,7 +240,7 @@ const FreeAgencyPage: React.FC = () => {
                     )}
 
                     {player.current_miss_streak >= 3 && (
-                    <span className={styles.coldIcon}><MdSevereCold /></span>  // Cold icon for missed shot streaks
+                    <span className={styles.coldIcon}><FaSnowflake /></span>  // Cold icon for missed shot streaks
                     )}
                   </div>
                 </div>

@@ -141,6 +141,12 @@
   font-size: 18px;
   color: red;
 }
+
+.coldIcon {
+  margin-left: 5px;
+  font-size: 18px;
+  color: blue;  /* Blue for the cold icon */
+}
 .freeAgencyPage {
   padding: 20px;
   background-color: #fff; /* White background for clean contrast */

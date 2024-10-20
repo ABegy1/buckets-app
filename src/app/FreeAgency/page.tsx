@@ -4,7 +4,7 @@ import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
-import { GiIceCube } from "react-icons/gi";
+import { MdSevereCold } from "react-icons/md";
 
 
 
@@ -235,14 +235,12 @@ const FreeAgencyPage: React.FC = () => {
                     ></span>
                     <span>{player.name}</span>
                     
-                    {/* Display the fire icon if player has 3 or more shots in a row */}
                     {player.current_streak >= 3 && (
                       <span className={styles.fireIcon}><FaFireFlameCurved/></span>  // Placeholder icon, replace with your imported icon
                     )}
 
-                    {/* Display the cold icon if player has 3 or more consecutive missed shots */}
                     {player.current_miss_streak >= 3 && (
-                    <span className={styles.coldIcon}><GiIceCube /></span>  // Cold icon for missed shot streaks
+                    <span className={styles.coldIcon}><MdSevereCold /></span>  // Cold icon for missed shot streaks
                     )}
                   </div>
                 </div>

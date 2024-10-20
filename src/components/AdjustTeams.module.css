@@ -21,13 +21,13 @@
 }
 .adjustTeams .team-edit-container {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap; /* Allows the items to wrap onto the next line if necessary */
+  gap: 20px; /* Adds spacing between items */
   margin-top: 20px;
-  max-height: 200px; /* Adjust the height as needed */
-  overflow-y: auto;  /* Enables vertical scrolling */
-  border: 1px solid #ccc; /* Optional: Add a border for a clean container look */
-  padding: 10px; /* Optional: Add padding inside the scrollable area */
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
 }
 
 .adjustTeams .table-container {
@@ -36,20 +36,31 @@
 }
 .adjustTeams .teamRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  margin-right: 20px; /* Adds space between each team row */
 }
 
 .adjustTeams .teamRow label {
   margin-right: 10px;
+  white-space: nowrap; /* Prevents the label from breaking into multiple lines */
 }
 
 .adjustTeams .teamRow input {
-  width: 100%;
-  max-width: 300px;
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  width: 200px; /* Fixes the width for better alignment */
+}
+
+@media (max-width: 768px) {
+  .adjustTeams .teamRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .adjustTeams .teamRow input {
+    width: 100%;
+  }
 }
 .adjustTeams table {
   width: 100%;

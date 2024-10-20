@@ -7,6 +7,7 @@ import { FaFireFlameCurved } from "react-icons/fa6";
 
 
 // Reuse the calculateShotsMadeInRow function from Standings
+// Function to calculate shots made in a row using 'result' field
 const calculateShotsMadeInRow = async (playerInstanceId: number) => {
   try {
     // Fetch the shots for the given player_instance_id
@@ -26,7 +27,7 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
         shotsMadeInRow++;
         maxShotsInRow = Math.max(maxShotsInRow, shotsMadeInRow);
       } else {
-        shotsMadeInRow = 0;  // Reset counter if the shot was missed
+        shotsMadeInRow = 0;  // Reset streak if the shot was missed
       }
     });
 

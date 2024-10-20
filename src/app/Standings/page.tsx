@@ -207,6 +207,7 @@ const StandingsPage: React.FC = () => {
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('team_name, team_score, team_id'); // Fetch the team_score as well
+  
       if (teamsError) throw teamsError;
   
       const teamsWithPlayers: any[] = await Promise.all(
@@ -242,7 +243,7 @@ const StandingsPage: React.FC = () => {
             })
           );
   
-          playersWithStats.sort((a, b) => b.player_score - a.player_score); // Sort by player_score
+          playersWithStats.sort((a, b) => b.player_score - a.player_score); // Sort players by player_score
   
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
   
@@ -255,12 +256,15 @@ const StandingsPage: React.FC = () => {
         })
       );
   
+      // Sort the teams by team_score in descending order before setting the state
+      teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
+  
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error('Error fetching teams, players, and season info:', error);
     }
   };
-
+  
   const fetchFreeAgents = async () => {
     try {
       const { data: activeSeason, error: seasonError } = await supabase

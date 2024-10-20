@@ -9,9 +9,10 @@ import { FaFireFlameCurved } from "react-icons/fa6";
 // Reuse the calculateShotsMadeInRow function from Standings
 const calculateShotsMadeInRow = async (playerInstanceId: number) => {
   try {
+    // Fetch the shots for the given player_instance_id
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('is_made')
+      .select('result')  // Use 'result' field from the shots table
       .eq('instance_id', playerInstanceId);
 
     if (shotsError || !shots) throw shotsError;
@@ -19,19 +20,20 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
     let shotsMadeInRow = 0;
     let maxShotsInRow = 0;
 
-    shots.forEach((shot: any) => {
-      if (shot.is_made) {
+    // Loop through shots and count consecutive successful ones based on the result field
+    shots.forEach((shot: { result: number }) => {
+      if (shot.result !== 0) {  // A non-zero result indicates a made shot
         shotsMadeInRow++;
         maxShotsInRow = Math.max(maxShotsInRow, shotsMadeInRow);
       } else {
-        shotsMadeInRow = 0;
+        shotsMadeInRow = 0;  // Reset counter if the shot was missed
       }
     });
 
-    return maxShotsInRow;
+    return maxShotsInRow;  // Return the maximum number of shots made in a row
   } catch (error) {
     console.error('Error calculating shots made in a row:', error);
-    return 0;
+    return 0;  // Return 0 if an error occurs
   }
 };
 

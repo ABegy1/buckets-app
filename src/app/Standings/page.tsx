@@ -119,78 +119,79 @@ const StandingsPage: React.FC = () => {
   };
 
   // Fetch teams and players (for Standings view)
-  const fetchTeamsAndPlayers = async () => {
-    try {
-      const { data: activeSeason, error: seasonError } = await supabase
-        .from('seasons')
-        .select('season_id, season_name, rules')
-        .is('end_date', null)
-        .single();
+  // Fetch teams and players (for Standings view)
+const fetchTeamsAndPlayers = async () => {
+  try {
+    const { data: activeSeason, error: seasonError } = await supabase
+      .from('seasons')
+      .select('season_id, season_name, rules')
+      .is('end_date', null)
+      .single();
 
-      if (seasonError || !activeSeason) throw seasonError;
+    if (seasonError || !activeSeason) throw seasonError;
 
-      const activeSeasonId = activeSeason.season_id;
-      setSeasonName(activeSeason.season_name);
-      setSeasonRules(activeSeason.rules);
+    const activeSeasonId = activeSeason.season_id;
+    setSeasonName(activeSeason.season_name);
+    setSeasonRules(activeSeason.rules);
 
-      const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
-      if (teamsError) throw teamsError;
+    const { data: teamsData, error: teamsError } = await supabase
+      .from('teams')
+      .select('team_name, team_score, team_id'); // Fetch the team_score as well
+    if (teamsError) throw teamsError;
 
-      const teamsWithPlayers: any[] = await Promise.all(
-        teamsData.map(async (team: any) => {
-          const { data: players, error: playersError } = await supabase
-            .from('players')
-            .select('*, tiers(color)')
-            .eq('team_id', team.team_id);
-          if (playersError) throw playersError;
+    const teamsWithPlayers: any[] = await Promise.all(
+      teamsData.map(async (team: any) => {
+        const { data: players, error: playersError } = await supabase
+          .from('players')
+          .select('*, tiers(color)')
+          .eq('team_id', team.team_id);
+        if (playersError) throw playersError;
 
-          const playersWithStats: any[] = await Promise.all(
-            players.map(async (player: any) => {
-              const { data: playerInstance, error: playerInstanceError } = await supabase
-                .from('player_instance')
-                .select('player_instance_id, shots_left, score')  // Fetch player_instance_id
-                .eq('player_id', player.player_id)
-                .eq('season_id', activeSeasonId)
-                .single();
+        const playersWithStats: any[] = await Promise.all(
+          players.map(async (player: any) => {
+            const { data: playerInstance, error: playerInstanceError } = await supabase
+              .from('player_instance')
+              .select('player_instance_id, shots_left, score')
+              .eq('player_id', player.player_id)
+              .eq('season_id', activeSeasonId)
+              .single();
 
-              if (playerInstanceError || !playerInstance) throw playerInstanceError;
+            if (playerInstanceError || !playerInstance) throw playerInstanceError;
 
-              // Calculate current shot streak
-              const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
+            const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
+            const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
 
-              // Calculate current miss streak
-              const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
+            return {
+              name: player.name,
+              shots_left: playerInstance.shots_left,
+              total_points: playerInstance.score,
+              tier_color: player.tiers?.color || '#000',
+              shots_made_in_row: shotsMadeInRow,
+              shots_missed_in_row: shotsMissedInRow,
+            };
+          })
+        );
 
-              return {
-                name: player.name,
-                shots_left: playerInstance.shots_left,
-                total_points: playerInstance.score,
-                tier_color: player.tiers?.color || '#000',
-                shots_made_in_row: shotsMadeInRow,  // Track made shots streak
-                shots_missed_in_row: shotsMissedInRow, // Track missed shots streak
-              };
-            })
-          );
+        playersWithStats.sort((a, b) => b.total_points - a.total_points);
 
-          playersWithStats.sort((a, b) => b.total_points - a.total_points);
+        const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
 
-          const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
-          const totalPoints = playersWithStats.reduce((acc, player) => acc + player.total_points, 0);
+        // Use team_score fetched from the database instead of manually calculating total_points
+        return {
+          team_name: team.team_name,
+          players: playersWithStats,
+          total_shots: totalShots,
+          total_points: team.team_score, // Use team_score here
+        };
+      })
+    );
 
-          return {
-            team_name: team.team_name,
-            players: playersWithStats,
-            total_shots: totalShots,
-            total_points: totalPoints,
-          };
-        })
-      );
+    setTeams(teamsWithPlayers);
+  } catch (error) {
+    console.error('Error fetching teams, players, and season info:', error);
+  }
+};
 
-      setTeams(teamsWithPlayers);
-    } catch (error) {
-      console.error('Error fetching teams, players, and season info:', error);
-    }
-  };
   const fetchFreeAgents = async () => {
     try {
       const { data: activeSeason, error: seasonError } = await supabase

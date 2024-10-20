@@ -6,35 +6,34 @@ import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
 
 
-// Reuse the calculateShotsMadeInRow function from Standings
-// Function to calculate shots made in a row using 'result' field
-const calculateShotsMadeInRow = async (playerInstanceId: number) => {
+const calculateCurrentShotStreak = async (playerInstanceId: number) => {
   try {
-    // Fetch the shots for the given player_instance_id
+    // Fetch all shots for the given player_instance_id, ordered by shot_date to maintain sequence
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('result')  // Use 'result' field from the shots table
-      .eq('instance_id', playerInstanceId);
+      .select('result')
+      .eq('instance_id', playerInstanceId)
+      .order('shot_date', { ascending: true });  // Make sure shots are in chronological order
 
     if (shotsError || !shots) throw shotsError;
 
-    let shotsMadeInRow = 0;
-    let maxShotsInRow = 0;
+    let currentStreak = 0;
 
-    // Loop through shots and count consecutive successful ones based on the result field
-    shots.forEach((shot: { result: number }) => {
-      if (shot.result !== 0) {  // A non-zero result indicates a made shot
-        shotsMadeInRow++;
-        maxShotsInRow = Math.max(maxShotsInRow, shotsMadeInRow);
+    // Loop through the shots in order and count current consecutive made shots
+    for (const shot of shots) {
+      if (shot.result !== 0) {
+        // Increment the streak if the shot was made
+        currentStreak++;
       } else {
-        shotsMadeInRow = 0;  // Reset streak if the shot was missed
+        // Reset the streak if a shot was missed
+        currentStreak = 0;
       }
-    });
+    }
 
-    return maxShotsInRow;  // Return the maximum number of shots made in a row
+    return currentStreak;  // Return the current streak of consecutive made shots
   } catch (error) {
-    console.error('Error calculating shots made in a row:', error);
-    return 0;  // Return 0 if an error occurs
+    console.error('Error calculating current shot streak:', error);
+    return 0;  // Return 0 if an error occurs or streak is broken
   }
 };
 
@@ -56,19 +55,19 @@ const FreeAgencyPage: React.FC = () => {
         .select('season_id, season_name')
         .is('end_date', null)
         .single();
-
+  
       if (seasonError || !activeSeason) throw seasonError;
-
+  
       const activeSeasonId = activeSeason.season_id;
       setSeasonName(activeSeason.season_name);
-
+  
       const { data: freeAgentsData, error: freeAgentsError } = await supabase
         .from('players')
         .select('*, tiers(color)')
         .eq('is_free_agent', true);
-
+  
       if (freeAgentsError) throw freeAgentsError;
-
+  
       const freeAgentsWithStats = await Promise.all(
         freeAgentsData.map(async (player: any) => {
           const { data: playerInstance, error: playerInstanceError } = await supabase
@@ -77,22 +76,22 @@ const FreeAgencyPage: React.FC = () => {
             .eq('player_id', player.player_id)
             .eq('season_id', activeSeasonId)
             .single();
-
+  
           if (playerInstanceError || !playerInstance) throw playerInstanceError;
-
-          // Calculate shots made in a row
-          const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
-
+  
+          // Calculate current shot streak
+          const currentStreak = await calculateCurrentShotStreak(playerInstance.player_instance_id);
+  
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
             tier_color: player.tiers?.color || '#000',
-            shots_made_in_row: shotsMadeInRow,  // Store shots in a row for display
+            current_streak: currentStreak,  // Track the current streak of made shots
           };
         })
       );
-
+  
       setFreeAgents(freeAgentsWithStats);
     } catch (error) {
       console.error('Error fetching free agents and stats:', error);

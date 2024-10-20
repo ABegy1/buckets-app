@@ -64,6 +64,23 @@
   border-color: #007BFF;
 }
 
+/* Styling for input fields for player name and team name */
+.adjustTeams input[type="text"] {
+  width: 100%;
+  padding: 6px 12px;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 1em;
+  box-sizing: border-box; /* Ensure the input fields maintain their size */
+}
+
+.adjustTeams input[type="text"]:focus {
+  outline: none;
+  border-color: #007BFF;
+}
+
 @media (max-width: 600px) {
   .adjustTeams {
     padding: 10px;
@@ -75,7 +92,8 @@
     font-size: 0.9em;
   }
 
-  .adjustTeams select {
+  .adjustTeams select,
+  .adjustTeams input[type="text"] {
     padding: 5px 10px;
     font-size: 0.9em;
   }

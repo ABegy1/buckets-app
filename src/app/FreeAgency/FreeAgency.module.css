@@ -106,6 +106,12 @@
     font-size: 18px;
     color: red;
   }
+
+  .coldIcon {
+    margin-left: 5px;
+    font-size: 18px;
+    color: blue;  /* Blue for the cold icon */
+  }
 .seasonTitle {
     font-size: 3rem;
     font-weight: bold;

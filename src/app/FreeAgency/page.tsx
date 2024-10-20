@@ -4,6 +4,8 @@ import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
+import { GiIceCube } from "react-icons/gi";
+
 
 
 const calculateCurrentShotStreak = async (playerInstanceId: number) => {
@@ -33,6 +35,36 @@ const calculateCurrentShotStreak = async (playerInstanceId: number) => {
     return currentStreak;  // Return the current streak of consecutive made shots
   } catch (error) {
     console.error('Error calculating current shot streak:', error);
+    return 0;  // Return 0 if an error occurs or streak is broken
+  }
+};
+const calculateCurrentMissStreak = async (playerInstanceId: number) => {
+  try {
+    // Fetch all shots for the given player_instance_id, ordered by shot_date to maintain sequence
+    const { data: shots, error: shotsError } = await supabase
+      .from('shots')
+      .select('result')
+      .eq('instance_id', playerInstanceId)
+      .order('shot_date', { ascending: true });  // Ensure shots are ordered by date
+
+    if (shotsError || !shots) throw shotsError;
+
+    let currentMissStreak = 0;
+
+    // Loop through the shots in order and count current consecutive missed shots
+    for (const shot of shots) {
+      if (shot.result === 0) {
+        // Increment the miss streak if the shot was missed
+        currentMissStreak++;
+      } else {
+        // Reset the miss streak if a shot was made
+        currentMissStreak = 0;
+      }
+    }
+
+    return currentMissStreak;  // Return the current streak of consecutive missed shots
+  } catch (error) {
+    console.error('Error calculating current miss streak:', error);
     return 0;  // Return 0 if an error occurs or streak is broken
   }
 };
@@ -79,15 +111,19 @@ const FreeAgencyPage: React.FC = () => {
   
           if (playerInstanceError || !playerInstance) throw playerInstanceError;
   
-          // Calculate current shot streak
+          // Calculate current shot streak (successful shots)
           const currentStreak = await calculateCurrentShotStreak(playerInstance.player_instance_id);
+  
+          // Calculate current miss streak (missed shots)
+          const currentMissStreak = await calculateCurrentMissStreak(playerInstance.player_instance_id);
   
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
             tier_color: player.tiers?.color || '#000',
-            current_streak: currentStreak,  // Track the current streak of made shots
+            current_streak: currentStreak,        // Track the current streak of made shots
+            current_miss_streak: currentMissStreak  // Track the current streak of missed shots
           };
         })
       );
@@ -97,7 +133,6 @@ const FreeAgencyPage: React.FC = () => {
       console.error('Error fetching free agents and stats:', error);
     }
   };
-
   const subscribeToRealTimeUpdates = useCallback(async () => {
     const { data: activeSeason } = await supabase
       .from('seasons')
@@ -202,6 +237,11 @@ const FreeAgencyPage: React.FC = () => {
                     {/* Display the fire icon if player has 3 or more shots in a row */}
                     {player.current_streak >= 3 && (
                       <span className={styles.fireIcon}><FaFireFlameCurved/></span>  // Placeholder icon, replace with your imported icon
+                    )}
+
+                    {/* Display the cold icon if player has 3 or more consecutive missed shots */}
+                    {player.current_miss_streak >= 3 && (
+                    <span className={styles.coldIcon}><GiIceCube /></span>  // Cold icon for missed shot streaks
                     )}
                   </div>
                 </div>

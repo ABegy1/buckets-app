@@ -110,16 +110,34 @@ const updateTeamScores = async () => {
 
     await Promise.all(
       teamsData.map(async (team: any) => {
-        // Fetch the players for this team
+        // Fetch players for the current team
         const { data: players, error: playersError } = await supabase
-          .from('player_instance')
-          .select('score')
-          .eq('team_id', team.team_id);
+          .from('players')
+          .select('player_id')
+          .eq('team_id', team.team_id); // Use the team_id from the players table
 
         if (playersError) throw playersError;
 
-        // Calculate the total score for this team
-        const teamScore = players.reduce((acc: number, player: any) => acc + player.score, 0);
+        let teamScore = 0;
+
+        // For each player, fetch their player_instance for the current season and sum their scores
+        await Promise.all(
+          players.map(async (player: any) => {
+            const { data: playerInstances, error: playerInstanceError } = await supabase
+              .from('player_instance')
+              .select('score')
+              .eq('player_id', player.player_id);
+
+            if (playerInstanceError) throw playerInstanceError;
+
+            // Sum player instance scores
+            const playerTotalScore = playerInstances.reduce(
+              (acc: number, instance: any) => acc + instance.score,
+              0
+            );
+            teamScore += playerTotalScore;
+          })
+        );
 
         // Update the team's score in the database
         const { error: updateError } = await supabase
@@ -139,8 +157,8 @@ const updateTeamScores = async () => {
 const StandingsPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings');
-  const [seasonName, setSeasonName] = useState<string>(''); // New state for the season name
-  const [seasonRules, setSeasonRules] = useState<string>(''); // New state for the season rules
+  const [seasonName, setSeasonName] = useState<string>(''); 
+  const [seasonRules, setSeasonRules] = useState<string>(''); 
   const router = useRouter();
   const pathname = usePathname();
 

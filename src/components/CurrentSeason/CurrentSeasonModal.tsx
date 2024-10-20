@@ -33,7 +33,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
             className={`${styles.tab} ${activeTab === 'Teams' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Teams')}
           >
-            Teams
+            Team/Player Edit
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'Adjust Scores' ? styles.tabActive : ''}`}

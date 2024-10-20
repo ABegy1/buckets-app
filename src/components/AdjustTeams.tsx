@@ -117,11 +117,12 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
 
   return (
     <div className={styles.adjustTeams}>
-      <h2>Adjust Teams</h2>
+      <h2>Team/Player Edit</h2>
       {loading ? (
         <p>Loading teams and players...</p>
       ) : (
         <>
+          {/* Table for Player -> Team Adjustments */}
           <div className={styles['table-container']}>
             <table>
               <thead>
@@ -169,18 +170,24 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
             </table>
           </div>
 
-          {/* Edit team names once, outside of the player loop */}
+          {/* Edit team names once, outside of the player table */}
           <h3>Edit Team Names</h3>
           <div className={styles['team-edit-container']}>
-            {teams.map(team => (
-              <div key={team.team_id}>
-                <input
-                  type="text"
-                  value={team?.team_name || 'Unknown Team'}
-                  onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
-                />
-              </div>
-            ))}
+            {teams.length > 0 ? (
+              teams.map(team => (
+                <div key={team.team_id} className={styles.teamRow}>
+                  <label htmlFor={`team-${team.team_id}`}>{team?.team_name}</label>
+                  <input
+                    id={`team-${team.team_id}`}
+                    type="text"
+                    value={team?.team_name || 'Unknown Team'}
+                    onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
+                  />
+                </div>
+              ))
+            ) : (
+              <p>No teams available to edit.</p>
+            )}
           </div>
         </>
       )}

@@ -29,11 +29,28 @@
   border: 1px solid #ccc; /* Optional: Add a border for a clean container look */
   padding: 10px; /* Optional: Add padding inside the scrollable area */
 }
+
 .adjustTeams .table-container {
   max-height: 400px; /* Set the max height for the scroll area */
   overflow-y: auto; /* Enable vertical scrolling */
 }
+.adjustTeams .teamRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+.adjustTeams .teamRow label {
+  margin-right: 10px;
+}
+
+.adjustTeams .teamRow input {
+  width: 100%;
+  max-width: 300px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 .adjustTeams table {
   width: 100%;
   border-collapse: collapse;

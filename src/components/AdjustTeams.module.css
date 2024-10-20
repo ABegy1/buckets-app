@@ -19,7 +19,16 @@
   font-size: 1em;
   color: #666;
 }
-
+.adjustTeams .team-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  max-height: 200px; /* Adjust the height as needed */
+  overflow-y: auto;  /* Enables vertical scrolling */
+  border: 1px solid #ccc; /* Optional: Add a border for a clean container look */
+  padding: 10px; /* Optional: Add padding inside the scrollable area */
+}
 .adjustTeams .table-container {
   max-height: 400px; /* Set the max height for the scroll area */
   overflow-y: auto; /* Enable vertical scrolling */

@@ -121,64 +121,68 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
       {loading ? (
         <p>Loading teams and players...</p>
       ) : (
-        <div className={styles['table-container']}>
-          <table>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Team</th>
-                <th>Edit Team Name</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.length > 0 ? (
-                players.map(player => (
-                  <tr key={player?.player_id}>
-                    <td>
-                      <input
-                        type="text"
-                        value={player?.name || 'Unknown Player'}
-                        onChange={(e) => handlePlayerNameChange(player?.player_id, e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        value={player?.team_id || ''}
-                        onChange={(e) => handleTeamChange(player?.player_id, Number(e.target.value))}
-                      >
-                        <option value="">No Team</option>
-                        {teams.length > 0 ? (
-                          teams.map(team => (
-                            <option key={team?.team_id} value={team?.team_id}>
-                              {team?.team_name || 'Unknown Team'}
-                            </option>
-                          ))
-                        ) : (
-                          <option disabled>No teams available</option>
-                        )}
-                      </select>
-                    </td>
-                    <td>
-                      {teams.map((team) => (
-                        <div key={team.team_id}>
-                          <input
-                            type="text"
-                            value={team?.team_name || 'Unknown Team'}
-                            onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
-                          />
-                        </div>
-                      ))}
-                    </td>
-                  </tr>
-                ))
-              ) : (
+        <>
+          <div className={styles['table-container']}>
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={3}>No players found</td>
+                  <th>Player</th>
+                  <th>Team</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {players.length > 0 ? (
+                  players.map(player => (
+                    <tr key={player?.player_id}>
+                      <td>
+                        <input
+                          type="text"
+                          value={player?.name || 'Unknown Player'}
+                          onChange={(e) => handlePlayerNameChange(player?.player_id, e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <select
+                          value={player?.team_id || ''}
+                          onChange={(e) => handleTeamChange(player?.player_id, Number(e.target.value))}
+                        >
+                          <option value="">No Team</option>
+                          {teams.length > 0 ? (
+                            teams.map(team => (
+                              <option key={team?.team_id} value={team?.team_id}>
+                                {team?.team_name || 'Unknown Team'}
+                              </option>
+                            ))
+                          ) : (
+                            <option disabled>No teams available</option>
+                          )}
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2}>No players found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Edit team names once, outside of the player loop */}
+          <h3>Edit Team Names</h3>
+          <div className={styles['team-edit-container']}>
+            {teams.map(team => (
+              <div key={team.team_id}>
+                <input
+                  type="text"
+                  value={team?.team_name || 'Unknown Team'}
+                  onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

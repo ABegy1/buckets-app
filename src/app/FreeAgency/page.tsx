@@ -149,7 +149,7 @@ const FreeAgencyPage: React.FC = () => {
 
       <main className={styles.userContent}>
         <div className={styles.freeAgencyPage}>
-          <h2>{seasonName} Free Agents</h2>
+          <h2 className={styles.seasonTitle}>{seasonName} Free Agents</h2>
           <div className={styles.players}>
   <div className={styles.headerRow}>
     <span className={styles.columnHeader}>Name</span>

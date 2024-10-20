@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
+import { FaFireFlameCurved } from "react-icons/fa6";
+
 // @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -31,6 +33,7 @@ interface Player {
 interface TeamWithPlayers {
   team_name: string;
   players: {
+    shots_made_in_row: number;
     tier_color: string | undefined;
     name: string;
     shots_left: number;
@@ -59,6 +62,39 @@ const StandingsPage: React.FC = () => {
       console.error('Sign out error:', error.message);
     }
   };
+
+
+  // Function to calculate shots made in a row
+const calculateShotsMadeInRow = async (playerInstanceId: number) => {
+  try {
+    // Fetch the shots for the given player_instance_id
+    const { data: shots, error: shotsError } = await supabase
+      .from('shots')
+      .select('is_made')
+      .eq('instance_id', playerInstanceId);
+
+    if (shotsError || !shots) throw shotsError;
+
+    // Calculate shots made in a row
+    let shotsMadeInRow = 0;
+    let maxShotsInRow = 0;
+
+    shots.forEach((shot: any) => {
+      if (shot.is_made) {
+        shotsMadeInRow++;
+        maxShotsInRow = Math.max(maxShotsInRow, shotsMadeInRow);
+      } else {
+        shotsMadeInRow = 0;
+      }
+    });
+
+    return maxShotsInRow; // Return the maximum shots made in a row
+  } catch (error) {
+    console.error('Error calculating shots made in a row:', error);
+    return 0; // Return 0 if there's an error
+  }
+};
+
   // Fetch teams and players (for Standings view)
   const fetchTeamsAndPlayers = async () => {
     try {
@@ -77,37 +113,39 @@ const StandingsPage: React.FC = () => {
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('*');
       if (teamsError) throw teamsError;
   
-      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        teamsData.map(async (team: Team) => {
+      const teamsWithPlayers: any[] = await Promise.all(
+        teamsData.map(async (team: any) => {
           const { data: players, error: playersError } = await supabase
             .from('players')
             .select('*, tiers(color)')
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
   
-          const playersWithStats = await Promise.all(
-            players.map(async (player: Player) => {
+          const playersWithStats: any[] = await Promise.all(
+            players.map(async (player: any) => {
               const { data: playerInstance, error: playerInstanceError } = await supabase
                 .from('player_instance')
-                .select('shots_left, score')
+                .select('player_instance_id, shots_left, score')  // Fetch player_instance_id
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
   
               if (playerInstanceError || !playerInstance) throw playerInstanceError;
   
+              // Calculate shots made in a row using the new function
+              const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
+  
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
                 total_points: playerInstance.score,
                 tier_color: player.tiers?.color || '#000',
+                shots_made_in_row: shotsMadeInRow,  // Use calculated value
               };
             })
           );
   
-          // Sort players by total_points in ascending order
           playersWithStats.sort((a, b) => b.total_points - a.total_points);
-
   
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
           const totalPoints = playersWithStats.reduce((acc, player) => acc + player.total_points, 0);
@@ -126,6 +164,7 @@ const StandingsPage: React.FC = () => {
       console.error('Error fetching teams, players, and season info:', error);
     }
   };
+  
   const fetchFreeAgents = async () => {
     try {
       const { data: activeSeason, error: seasonError } = await supabase
@@ -160,6 +199,7 @@ const StandingsPage: React.FC = () => {
             shots_left: playerInstance.shots_left,
             total_points: playerInstance.score,
             tier_color: player.tiers?.color || '#000',  // Use player tier color or fallback to black
+            shots_made_in_row: 0,  // Default value for shots_made_in_row
           };
         })
       );
@@ -367,6 +407,11 @@ const StandingsPage: React.FC = () => {
                        style={{ backgroundColor: player.tier_color }}>
                      </span>
                      <span>{player.name}</span>
+                     {player.shots_made_in_row >= 3 && (
+              <span className={styles.fireIcon}>
+               <FaFireFlameCurved />
+              </span>
+            )}
                    </div>
                  </div>
                  <span className={styles.shotsLeft}>{player.shots_left}</span>

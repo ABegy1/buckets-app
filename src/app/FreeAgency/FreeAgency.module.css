@@ -101,7 +101,13 @@
     border-bottom: 1px solid #e0e0e0;
     padding: 10px 0;
 }
-
+.seasonTitle {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #264653; /* Updated color for consistency */
+    text-align: center;
+    margin-bottom: 20px;
+  }
 /* Column styling for alignment */
 .playerNameColumn {
     display: flex;

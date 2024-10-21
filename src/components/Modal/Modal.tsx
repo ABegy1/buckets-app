@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import './modal.css';
 import { supabase } from '@/supabaseClient';
 import { Howl } from 'howler';
+import { MdAttachMoney } from "react-icons/md";
+
+
 interface ModalProps {
   name: string;
   isOpen: boolean;
@@ -185,20 +188,20 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </button>
           </div>
           <div className="actions">
-          <button
-  className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
-  onClick={() => setIsMoneyball(!isMoneyball)}
->
-  Moneyball
-</button>
+  <button
+    className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
+    onClick={() => setIsMoneyball(!isMoneyball)}
+  >
+    Moneyball {isMoneyball && <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />} 
+  </button>
 
-            <button
-              className={isDouble ? 'selected' : ''}
-              onClick={() => setIsDouble(!isDouble)}
-            >
-              Double
-            </button>
-          </div>
+  <button
+    className={isDouble ? 'selected' : ''}
+    onClick={() => setIsDouble(!isDouble)}
+  >
+    Double
+  </button>
+</div>
           <button onClick={handleSubmit}>Submit</button>
         </div>
       </div>

@@ -185,9 +185,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </button>
           </div>
           <div className="actions">
-            <button
-              className={isMoneyball ? 'selected' : ''}
-              onClick={() => setIsMoneyball(!isMoneyball)}
+          <button
+            className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
+            onClick={() => setIsMoneyball(!isMoneyball)}
             >
               Moneyball
             </button>

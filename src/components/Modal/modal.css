@@ -1,4 +1,4 @@
-/* Modal.css */
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -11,13 +11,14 @@
   align-items: center;
 }
 
+/* Modal Content */
 .modal-content {
-  position: relative; /* Add relative positioning to position the X button */
+  position: relative; /* To position the X button */
   background: white;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
-  color: black; /* Ensure text is black */
+  color: black;
 }
 
 .highlight-modal-border {
@@ -30,17 +31,64 @@
   align-items: center;
 }
 
-.points button, .actions button {
-  margin: 10px;
+/* General button styles */
+button {
   background-color: #f0f0f0;
   border: 1px solid #ccc;
   padding: 10px 20px;
   cursor: pointer;
-  transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out; /* Add transition for shadow and background color */
+  transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-h2, p, span, button {
-  color: black; /* Ensure text is black */
+/* Hover for all buttons */
+button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Selected state for buttons */
+button.selected {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #d4edda;
+}
+
+button.selected:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Moneyball button - base styling */
+.moneyball {
+  background-color: green;
+  border: 2px solid gold;
+  color: gold;
+  position: relative;
+  font-weight: bold;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Moneyball button when selected */
+.selected.moneyball {
+  background-color: darkgreen;
+  border: 2px solid darkgoldenrod;
+  color: yellow;
+}
+
+/* Add Louis Vuitton-like money sign pattern to selected Moneyball button */
+.selected.moneyball::before {
+  content: "$$$";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 215, 0, 0.2),
+    rgba(255, 215, 0, 0.2) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  opacity: 0.3;
+  z-index: -1;
 }
 
 /* X Close Button Styles */
@@ -56,71 +104,25 @@ h2, p, span, button {
 }
 
 .close-button:hover {
-  color: red; /* Optional: Change color on hover */
+  color: red;
 }
 
-/* Default button styles */
-button {
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #e0e0e0;
-}
-
-/* Add shadow to show a button is clicked/toggled */
-button.selected {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect for selected buttons */
-  background-color: #d4edda; /* Optional: Slight color change for selected button */
-}
+/* Highlight Moneyball Text */
 .highlight-moneyball {
   color: red;
   font-weight: bold;
 }
-/* Highlight the moneyball button with a red border */
+
+/* Red border for Moneyball button when highlighted */
 .highlight-moneyball-button {
   border: 2px solid red;
 }
-/* Slightly increase shadow on hover to enhance feedback */
-button.selected:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+
+/* Points buttons */
+.points button {
+  margin: 10px;
 }
 
-/* Base Moneyball button styling */
-.moneyball {
-  background-color: green; /* Green fill */
-  border: 2px solid gold;  /* Gold border */
-  color: gold;  /* Gold text */
-  position: relative;
-  font-weight: bold;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Highlight when selected */
-.selected.moneyball {
-  background-color: darkgreen; /* Darker green when selected */
-  border: 2px solid darkgoldenrod; /* Darker gold border when selected */
-  color: yellow;  /* Yellow text when selected */
-}
-
-/* Adding a Louis Vuitton-like money sign pattern */
-.selected.moneyball::before {
-  content: "$$$";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 215, 0, 0.2), /* Faint gold color */
-    rgba(255, 215, 0, 0.2) 10px,
-    transparent 10px,
-    transparent 20px
-  );
-  opacity: 0.3;
-  z-index: -1;
+.actions button {
+  margin: 10px;
 }

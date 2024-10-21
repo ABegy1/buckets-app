@@ -53,7 +53,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   }, [isOpen]);
 
   const handleTeamChange = async (playerId: number, newTeamId: number) => {
-    // Optimistically update the team in the UI
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
         return { ...player, team_id: newTeamId };
@@ -62,7 +61,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Update the player's team in the database
     const { error } = await supabase
       .from('players')
       .update({ team_id: newTeamId })
@@ -74,7 +72,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   };
 
   const handlePlayerNameChange = async (playerId: number, newName: string) => {
-    // Optimistically update the player name in the UI
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
         return { ...player, name: newName };
@@ -83,7 +80,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     });
     setPlayers(updatedPlayers);
 
-    // Update the player's name in the database
     const { error } = await supabase
       .from('players')
       .update({ name: newName })
@@ -95,7 +91,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   };
 
   const handleTeamNameChange = async (teamId: number, newName: string) => {
-    // Optimistically update the team name in the UI
     const updatedTeams = teams.map(team => {
       if (team.team_id === teamId) {
         return { ...team, team_name: newName };
@@ -104,7 +99,6 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     });
     setTeams(updatedTeams);
 
-    // Update the team name in the database
     const { error } = await supabase
       .from('teams')
       .update({ team_name: newName })
@@ -121,8 +115,8 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
       {loading ? (
         <p>Loading teams and players...</p>
       ) : (
-        <>
-          {/* Table for Player -> Team Adjustments */}
+        <div className={styles['sections-container']}>
+          {/* Player/Team Edit Section */}
           <div className={styles['table-container']}>
             <table>
               <thead>
@@ -170,9 +164,9 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
             </table>
           </div>
 
-          {/* Edit team names once, outside of the player table */}
-          <h3>Edit Team Names</h3>
+          {/* Edit Team Names Section */}
           <div className={styles['team-edit-container']}>
+            <h3>Edit Team Names</h3>
             {teams.length > 0 ? (
               teams.map(team => (
                 <div key={team.team_id} className={styles.teamRow}>
@@ -189,7 +183,7 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
               <p>No teams available to edit.</p>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

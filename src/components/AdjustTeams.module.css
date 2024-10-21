@@ -1,6 +1,6 @@
 .adjustTeams {
   width: 100%;
-  max-width: 600px;
+  max-width: 900px; /* Adjust the width to fit both sections side by side */
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
@@ -12,6 +12,12 @@
   margin-bottom: 20px;
   font-size: 1.8em;
   color: #333;
+}
+
+.adjustTeams .sections-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px; /* Space between Player/Team Edit and Edit Team Names */
 }
 
 .adjustTeams p {
@@ -33,6 +39,7 @@
 .adjustTeams .table-container {
   max-height: 400px; /* Set the max height for the scroll area */
   overflow-y: auto; /* Enable vertical scrolling */
+  flex: 1; /* Ensures it takes up the appropriate space */
 }
 .adjustTeams .teamRow {
   display: flex;

@@ -100,19 +100,13 @@ button.selected:hover {
 
 /* Adding a Louis Vuitton-like money sign pattern */
 .selected.moneyball::before {
-  content: "$$$";
+  content: "LV Pattern"; /* Check if this text appears */
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 215, 0, 0.2), /* Faint gold color */
-    rgba(255, 215, 0, 0.2) 10px,
-    transparent 10px,
-    transparent 20px
-  );
-  opacity: 0.3;
+  background-color: rgba(255, 215, 0, 0.5); /* Replace with a solid color for testing */
+  opacity: 0.5;
   z-index: -1;
 }

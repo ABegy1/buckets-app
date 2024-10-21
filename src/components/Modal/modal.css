@@ -59,6 +59,9 @@ button.selected:hover {
 .moneyball {
   background-color: green;
   border: 2px solid gold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   color: gold;
   position: relative;
   font-weight: bold;
@@ -71,8 +74,9 @@ button.selected:hover {
 }
 /* To make the icons stack horizontally */
 .money-icons {
-  display: inline-flex;  /* Ensures the icons are aligned in a row */
-  gap: 5px;  /* Adjust spacing between icons as needed */
+  display: flex;
+  justify-content: center;
+  margin-top: 5px; /* Add some space between the text and icons */
 }
 
 

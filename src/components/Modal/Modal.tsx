@@ -211,7 +211,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     </button>
   </div>
   
-  <button onClick={handleSubmit}>Submit</button>
 </div>
           <button onClick={handleSubmit}>Submit</button>
         </div>

@@ -192,7 +192,14 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
     onClick={() => setIsMoneyball(!isMoneyball)}
   >
-    Moneyball {isMoneyball && <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />} 
+    Moneyball 
+    {isMoneyball && (
+      <>
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+      </>
+    )}
   </button>
 
   <button

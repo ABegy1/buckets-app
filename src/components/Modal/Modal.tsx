@@ -194,13 +194,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       onClick={() => setIsMoneyball(!isMoneyball)}
     >
       Moneyball 
-      {isMoneyball && (
-        <span className="money-icons">
-          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-        </span>
-      )}
+      <span className="money-icons">
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+      </span>
     </button>
 
     <button

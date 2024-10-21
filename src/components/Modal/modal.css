@@ -89,24 +89,38 @@ button.selected:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Highlight the Moneyball button */
-.selected.moneyball {
+/* Base Moneyball button styling */
+.moneyball {
   background-color: green; /* Green fill */
   border: 2px solid gold;  /* Gold border */
-  color: gold;  /* Gold word */
+  color: gold;  /* Gold text */
   position: relative;
   font-weight: bold;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Highlight when selected */
+.selected.moneyball {
+  background-color: darkgreen; /* Darker green when selected */
+  border: 2px solid darkgoldenrod; /* Darker gold border when selected */
+  color: yellow;  /* Yellow text when selected */
 }
 
 /* Adding a Louis Vuitton-like money sign pattern */
 .selected.moneyball::before {
-  content: "LV Pattern"; /* Check if this text appears */
+  content: "$$$";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 215, 0, 0.5); /* Replace with a solid color for testing */
-  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 215, 0, 0.2), /* Faint gold color */
+    rgba(255, 215, 0, 0.2) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  opacity: 0.3;
   z-index: -1;
 }

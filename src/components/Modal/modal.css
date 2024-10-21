@@ -69,6 +69,12 @@ button.selected:hover {
   background-color: rgb(174, 255, 174);
  
 }
+/* To make the icons stack horizontally */
+.money-icons {
+  display: inline-flex;  /* Ensures the icons are aligned in a row */
+  gap: 5px;  /* Adjust spacing between icons as needed */
+}
+
 
 /* Moneyball button when selected */
 .selected.moneyball {

@@ -10,7 +10,23 @@
   justify-content: center;
   align-items: center;
 }
+.button-row {
+  display: flex;
+  justify-content: space-between; /* Space between Moneyball and Double */
+  gap: 10px; /* Adjust the gap between the buttons */
+  width: 100%; /* Ensure buttons take up full width */
+}
 
+/* Moneyball and Double buttons */
+.moneyball, .actions button {
+  flex: 1; /* Ensure both buttons take up equal space */
+}
+
+/* Submit button */
+.actions > button:last-child {
+  margin-top: 15px; /* Add some space between the button row and Submit */
+  width: 100%; /* Make Submit button take the full width */
+}
 /* Modal Content */
 .modal-content {
   position: relative; /* To position the X button */

@@ -188,26 +188,30 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </button>
           </div>
           <div className="actions">
-  <button
-    className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
-    onClick={() => setIsMoneyball(!isMoneyball)}
-  >
-    Moneyball 
-    {isMoneyball && (
-      <div className="money-icons">
-        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
-      </div>
-    )}
-  </button>
+  <div className="button-row">
+    <button
+      className={`moneyball ${isMoneyball ? 'selected moneyball' : ''}`}
+      onClick={() => setIsMoneyball(!isMoneyball)}
+    >
+      Moneyball 
+      {isMoneyball && (
+        <span className="money-icons">
+          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+          <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        </span>
+      )}
+    </button>
 
-  <button
-    className={isDouble ? 'selected' : ''}
-    onClick={() => setIsDouble(!isDouble)}
-  >
-    Double
-  </button>
+    <button
+      className={isDouble ? 'selected' : ''}
+      onClick={() => setIsDouble(!isDouble)}
+    >
+      Double
+    </button>
+  </div>
+  
+  <button onClick={handleSubmit}>Submit</button>
 </div>
           <button onClick={handleSubmit}>Submit</button>
         </div>

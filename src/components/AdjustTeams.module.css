@@ -81,7 +81,14 @@
   top: 0;
   z-index: 1;
 }
-
+.adjustTeams .team-edit-container {
+  max-height: 400px; /* Adjust the height as needed */
+  overflow-y: auto;  /* Enables vertical scrolling */
+  flex: 1; /* Ensures it takes up the appropriate space */
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Adds spacing between each team row */
+}
 .adjustTeams th,
 .adjustTeams td {
   padding: 12px 15px;

@@ -38,7 +38,23 @@
     border-bottom: 2px solid #fff; /* Highlight active tab */
     font-weight: bold;
   }
-
+  .statsContainer {
+    padding: 20px;
+  }
+  
+  .statsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .playerStat {
+    border: 1px solid #ccc;
+    padding: 15px;
+    width: 250px;
+    background-color: #f9f9f9;
+  }
+  
   .navbarTitle {
     font-size: 2rem;
     font-weight: bold;

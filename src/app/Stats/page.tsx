@@ -24,109 +24,104 @@ const StatsPage: React.FC = () => {
             .is('end_date', null)
             .single();
 
-        const activeSeasonId = activeSeason?.season_id;
-
-        if (!activeSeasonId || seasonError) {
+        if (seasonError || !activeSeason) {
             console.error('No active season found or error occurred:', seasonError);
             return;
         }
+
+        const activeSeasonId = activeSeason?.season_id;
 
         // Fetch unique players
         const { data: players, error: playerError } = await supabase
             .from('players')
             .select('player_id, name');
 
-        if (playerError) {
+        if (playerError || !players) {
             console.error('Error fetching players:', playerError);
             return;
         }
 
         setPlayers(players);
 
-        // Now, we fetch additional stats for each player (team wins, MVPs, seasons played, total points, total shots)
-        const newPlayerStats: { [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number; totalPoints: number; totalShots: number } } = {};
+        // Fetch stats concurrently for all players
+        const playerStatsPromises = players.map(async (player) => {
+            const [teamWinsResponse, mvpResponse, seasonsPlayedResponse, totalPointsResponse, totalShotsResponse] = await Promise.all([
+                // Fetch total team wins
+                supabase.from('seasons').select('team_id').order('team_score', { ascending: false }),
+                // Fetch MVP awards
+                supabase.from('player_instance').select('player_id, score').order('score', { ascending: false }).limit(1),
+                // Fetch seasons played
+                supabase.from('player_instance').select('season_id').eq('player_id', player.player_id),
+                // Fetch total points
+                supabase.from('player_instance').select('score').eq('player_id', player.player_id),
+                // Fetch total shots
+                supabase.from('shots').select('shot_id').in(
+                    'instance_id',
+                    (await supabase.from('player_instance').select('player_instance_id').eq('player_id', player.player_id)).data?.map(pi => pi.player_instance_id) || []
+                ),
+            ]);
 
-        for (const player of players) {
-            // Fetch total team wins by querying all seasons and counting wins for teams the player was part of
-            const { data: teamWins } = await supabase
-                .from('seasons')
-                .select('team_id')
-                .order('team_score', { ascending: false });
+            const teamWinsData = teamWinsResponse.data || [];
+            const mvpData = mvpResponse.data || [];
+            const seasonsPlayedData = seasonsPlayedResponse.data || [];
+            const totalPointsData = totalPointsResponse.data || [];
+            const totalShotsData = totalShotsResponse.data || [];
 
             let wins = 0;
-            if (teamWins && teamWins.length > 0) {
-                for (const win of teamWins) {
-                    const { data: teamPlayers } = await supabase
-                        .from('player_instance')
-                        .select('player_id')
-                        .eq('team_id', win.team_id);
-
+            if (teamWinsData.length > 0) {
+                for (const win of teamWinsData) {
+                    const { data: teamPlayers } = await supabase.from('player_instance').select('player_id').eq('team_id', win.team_id);
                     if (teamPlayers?.some(tp => tp.player_id === player.player_id)) {
                         wins++;
                     }
                 }
             }
 
-            // Fetch MVP awards by looking for the player with the highest score each season
-            const { data: mvp } = await supabase
-                .from('player_instance')
-                .select('player_id, score')
-                .order('score', { ascending: false })
-                .limit(1);
+            const mvpAwards = mvpData.filter(m => m.player_id === player.player_id).length || 0;
+            const uniqueSeasonsPlayed = Array.from(new Set(seasonsPlayedData?.map(s => s.season_id))) || [];
+            const totalPoints = totalPointsData.reduce((sum, instance) => sum + instance.score, 0) || 0;
+            const totalShots = totalShotsData.length || 0;
 
-            const mvpAwards = mvp?.filter(m => m.player_id === player.player_id).length || 0;
-
-            // Fetch the number of seasons played by querying player_instance
-            const { data: seasonsPlayed } = await supabase
-                .from('player_instance')
-                .select('season_id')
-                .eq('player_id', player.player_id);
-
-            const uniqueSeasonsPlayed = Array.from(new Set(seasonsPlayed?.map(s => s.season_id)));
-
-            // Fetch total points for the player
-            const { data: totalPointsData } = await supabase
-                .from('player_instance')
-                .select('score')
-                .eq('player_id', player.player_id);
-
-            const totalPoints = totalPointsData?.reduce((sum, instance) => sum + instance.score, 0) || 0;
-
-            const { data: totalShotsData } = await supabase
-            .from('shots')
-            .select('shot_id')
-            .in(
-              'instance_id',
-              (await supabase.from('player_instance').select('player_instance_id').eq('player_id', player.player_id)).data?.map(pi => pi.player_instance_id) || []
-            );
-          
-          const totalShots = totalShotsData?.length || 0;
-
-            newPlayerStats[player.player_id] = {
+            return {
+                player_id: player.player_id,
                 wins,
                 mvpAwards,
-                seasonsPlayed: uniqueSeasonsPlayed.length ?? 0,
+                seasonsPlayed: uniqueSeasonsPlayed.length,
                 totalPoints,
                 totalShots,
             };
-        }
+        });
+
+        // Wait for all player stats to be fetched
+        const newPlayerStatsArray = await Promise.all(playerStatsPromises);
+
+        // Convert array to an object with player_id as the key
+        const newPlayerStats = newPlayerStatsArray.reduce(
+          (acc: { [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number; totalPoints: number; totalShots: number } }, stats) => {
+            acc[stats.player_id] = stats;
+            return acc;
+          }, {}
+        );
 
         setPlayerStats(newPlayerStats);
     }, []);
-    const subscribeToRealTimeUpdates = useCallback(async () => {
-      const playerInstanceChannel = supabase
-          .channel('player-instance-db-changes')
-          .on(
-              'postgres_changes',
-              { event: '*', schema: 'public', table: 'player_instance' },
-              fetchPlayerStats
-          )
-          .subscribe();
 
-      return () => {
-          supabase.removeChannel(playerInstanceChannel);
-      };
-  }, [fetchPlayerStats]);
+    // Subscribe to real-time updates
+    const subscribeToRealTimeUpdates = useCallback(async () => {
+        const playerInstanceChannel = supabase
+            .channel('player-instance-db-changes')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'player_instance' },
+                fetchPlayerStats
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(playerInstanceChannel);
+        };
+    }, [fetchPlayerStats]);
+
     useEffect(() => {
         fetchPlayerStats();
         subscribeToRealTimeUpdates();
@@ -134,8 +129,6 @@ const StatsPage: React.FC = () => {
             supabase.removeAllChannels();
         };
     }, [fetchPlayerStats, subscribeToRealTimeUpdates]);
-
-    
 
     return (
         <div className={styles.userContainer}>

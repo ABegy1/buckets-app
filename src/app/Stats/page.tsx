@@ -170,7 +170,7 @@ const StatsPage: React.FC = () => {
                             {players.map(player => (
                                 <div key={player.player_id} className={styles.playerStat}>
                                     <h2>{player.name}</h2>
-                                    <p>Total Wins: {playerStats[player.player_id]?.wins || 0}</p>
+                                    <p>Total Team Wins: {playerStats[player.player_id]?.wins || 0}</p>
                                     <p>MVP Awards: {playerStats[player.player_id]?.mvpAwards || 0}</p>
                                     <p>Seasons Played: {playerStats[player.player_id]?.seasonsPlayed || 0}</p>
                                     <p>Total Points: {playerStats[player.player_id]?.totalPoints || 0}</p>

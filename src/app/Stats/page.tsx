@@ -111,30 +111,29 @@ const StatsPage: React.FC = () => {
 
         setPlayerStats(newPlayerStats);
     }, []);
+    const subscribeToRealTimeUpdates = useCallback(async () => {
+      const playerInstanceChannel = supabase
+          .channel('player-instance-db-changes')
+          .on(
+              'postgres_changes',
+              { event: '*', schema: 'public', table: 'player_instance' },
+              fetchPlayerStats
+          )
+          .subscribe();
 
+      return () => {
+          supabase.removeChannel(playerInstanceChannel);
+      };
+  }, [fetchPlayerStats]);
     useEffect(() => {
         fetchPlayerStats();
-
+        subscribeToRealTimeUpdates();
         return () => {
             supabase.removeAllChannels();
         };
-    }, [fetchPlayerStats]);
+    }, [fetchPlayerStats, subscribeToRealTimeUpdates]);
 
-    // Subscribe to real-time updates
-    const subscribeToRealTimeUpdates = useCallback(async () => {
-        const playerInstanceChannel = supabase
-            .channel('player-instance-db-changes')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'player_instance' },
-                fetchPlayerStats
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(playerInstanceChannel);
-        };
-    }, [fetchPlayerStats]);
+    
 
     return (
         <div className={styles.userContainer}>

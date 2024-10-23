@@ -92,13 +92,15 @@ const StatsPage: React.FC = () => {
 
             const totalPoints = totalPointsData?.reduce((sum, instance) => sum + instance.score, 0) || 0;
 
-            // Fetch total shots for the player
             const { data: totalShotsData } = await supabase
-                .from('shots')
-                .select('shot_id')
-                .eq('instance_id', player.player_id); // assuming instance_id is linked to player
-
-            const totalShots = totalShotsData?.length || 0;
+            .from('shots')
+            .select('shot_id')
+            .in(
+              'instance_id',
+              (await supabase.from('player_instance').select('player_instance_id').eq('player_id', player.player_id)).data?.map(pi => pi.player_instance_id) || []
+            );
+          
+          const totalShots = totalShotsData?.length || 0;
 
             newPlayerStats[player.player_id] = {
                 wins,

@@ -9,7 +9,7 @@ const StatsPage: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
     const [players, setPlayers] = useState<{ player_id: number; name: string }[]>([]);
-    const [playerStats, setPlayerStats] = useState<{ [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number } }>({});
+    const [playerStats, setPlayerStats] = useState<{ [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number; totalPoints: number; totalShots: number } }>({});
 
     const handleNavigation = (page: string) => {
         router.push(`/${page}`);
@@ -43,8 +43,8 @@ const StatsPage: React.FC = () => {
 
         setPlayers(players);
 
-        // Now, we fetch additional stats for each player (team wins, MVPs, seasons played)
-        const newPlayerStats: { [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number } } = {};
+        // Now, we fetch additional stats for each player (team wins, MVPs, seasons played, total points, total shots)
+        const newPlayerStats: { [key: number]: { wins: number; mvpAwards: number; seasonsPlayed: number; totalPoints: number; totalShots: number } } = {};
 
         for (const player of players) {
             // Fetch total team wins by querying all seasons and counting wins for teams the player was part of
@@ -84,10 +84,28 @@ const StatsPage: React.FC = () => {
 
             const uniqueSeasonsPlayed = Array.from(new Set(seasonsPlayed?.map(s => s.season_id)));
 
+            // Fetch total points for the player
+            const { data: totalPointsData } = await supabase
+                .from('player_instance')
+                .select('score')
+                .eq('player_id', player.player_id);
+
+            const totalPoints = totalPointsData?.reduce((sum, instance) => sum + instance.score, 0) || 0;
+
+            // Fetch total shots for the player
+            const { data: totalShotsData } = await supabase
+                .from('shots')
+                .select('shot_id')
+                .eq('instance_id', player.player_id); // assuming instance_id is linked to player
+
+            const totalShots = totalShotsData?.length || 0;
+
             newPlayerStats[player.player_id] = {
                 wins,
                 mvpAwards,
                 seasonsPlayed: uniqueSeasonsPlayed.length ?? 0,
+                totalPoints,
+                totalShots,
             };
         }
 
@@ -161,6 +179,8 @@ const StatsPage: React.FC = () => {
                                     <p>Total Wins: {playerStats[player.player_id]?.wins || 0}</p>
                                     <p>MVP Awards: {playerStats[player.player_id]?.mvpAwards || 0}</p>
                                     <p>Seasons Played: {playerStats[player.player_id]?.seasonsPlayed || 0}</p>
+                                    <p>Total Points: {playerStats[player.player_id]?.totalPoints || 0}</p>
+                                    <p>Total Shots: {playerStats[player.player_id]?.totalShots || 0}</p>
                                 </div>
                             ))}
                         </div>

@@ -73,12 +73,11 @@ button.selected:hover {
 
 /* Moneyball button - base styling */
 .moneyball {
-  background-color: green;
-  border: 2px solid gold;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: gold;
   position: relative;
   font-weight: bold;
   transition: background-color 0.3s ease, border-color 0.3s ease;

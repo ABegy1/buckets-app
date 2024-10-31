@@ -160,6 +160,14 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <button className="close-button" onClick={handleClose}>X</button>
     
         <h2>{name}</h2>
+         {/* Moneyball Indicator */}
+    {isMoneyball && (
+      <div className="moneyball-indicator">
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+        <span>This is a Moneyball Shot!</span>
+        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
+      </div>
+    )}
         <div className="modal-body">
           <div>
             {/* Display shots left and highlight specific shots (1, 11, 21, 31, 41) */}

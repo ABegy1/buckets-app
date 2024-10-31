@@ -163,9 +163,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
          {/* Moneyball Indicator */}
     {isMoneyball && (
       <div className="moneyball-indicator">
-        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
         <span>This is a Moneyball Shot!</span>
-        <MdAttachMoney style={{ color: 'gold', fontSize: '24px' }} />
       </div>
     )}
         <div className="modal-body">

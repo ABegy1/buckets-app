@@ -55,7 +55,20 @@ button {
   cursor: pointer;
   transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
-
+.moneyball-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: gold;
+  color: white;
+  font-weight: bold;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.moneyball-indicator span {
+  margin: 0 8px;
+}
 /* Hover for all buttons */
 button:hover {
   background-color: #e0e0e0;

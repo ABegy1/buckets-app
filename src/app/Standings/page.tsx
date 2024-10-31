@@ -515,7 +515,7 @@ const StandingsPage: React.FC = () => {
                         )}
 
                         {/* Display cold icon if player has 3 or more consecutive missed shots */}
-                        {player.shots_missed_in_row >= 3 && (
+                        {player.shots_missed_in_row >= 4 && (
                           <span className={styles.coldIcon}>
                             <FaSnowflake />
                           </span>

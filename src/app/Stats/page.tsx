@@ -41,10 +41,11 @@ const StatsPage: React.FC = () => {
 
         // Transform stats data into an object with player_id as the key
         const newPlayerStats = statsData.reduce(
-          (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
-            acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
-            return acc;
-          }, {}
+            (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
+                console.log(`Player ID: ${stat.player_id}, Seasons Played: ${stat.seasons_played}`);
+                acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
+                return acc;
+            }, {}
         );
 
         setPlayerStats(newPlayerStats);

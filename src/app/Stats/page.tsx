@@ -16,47 +16,70 @@ const StatsPage: React.FC = () => {
 
     // Fetch player stats focusing only on seasons_played
     const fetchPlayerStats = useCallback(async () => {
+        console.log('fetchPlayerStats: Start fetching players');
         const { data: players, error: playerError } = await supabase
             .from('players')
             .select('player_id, name');
 
-        if (playerError || !players) {
+        if (playerError) {
             console.error('Error fetching players:', playerError);
             return;
         }
+        
+        if (!players) {
+            console.warn('No players fetched');
+            return;
+        }
 
+        console.log('fetchPlayerStats: Players fetched successfully:', players);
         setPlayers(players);
 
+        console.log('fetchPlayerStats: Start fetching stats');
         const { data: statsData, error: statsError } = await supabase
             .from('stats')
             .select('player_id, seasons_played');
 
-        if (statsError || !statsData) {
+        if (statsError) {
             console.error('Error fetching player stats:', statsError);
             return;
         }
+        
+        if (!statsData) {
+            console.warn('No stats data fetched');
+            return;
+        }
 
+        console.log('fetchPlayerStats: Stats data fetched successfully:', statsData);
+        
         const newPlayerStats = statsData.reduce(
             (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
+                console.log(`Mapping stat for player_id ${stat.player_id} with seasonsPlayed ${stat.seasons_played}`);
                 acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
                 return acc;
             }, {}
         );
 
+        console.log('fetchPlayerStats: Setting player stats:', newPlayerStats);
         setPlayerStats(newPlayerStats);
     }, []);
 
     useEffect(() => {
+        console.log('useEffect: Initial fetch of player stats');
         fetchPlayerStats();
 
+        console.log('useEffect: Subscribing to stats table changes');
         // Subscribe to changes in the stats table for real-time updates
         const statsChannel = supabase
             .channel('stats-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, fetchPlayerStats)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, (payload) => {
+                console.log('Real-time update received from stats table:', payload);
+                fetchPlayerStats();
+            })
             .subscribe();
 
         // Clean up subscription on component unmount
         return () => {
+            console.log('useEffect: Cleaning up subscription');
             supabase.removeChannel(statsChannel);
         };
     }, [fetchPlayerStats]);

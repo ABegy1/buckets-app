@@ -36,7 +36,7 @@ const StatsPage: React.FC = () => {
             const { data: currentSeasonData, error: seasonError } = await supabase
                 .from('player_instance')
                 .select('player_id, score')
-                .is('season_id', null); // Assuming null `season_id` represents the current season
+                .is('end_date', null); // Assuming null `season_id` represents the current season
 
             if (seasonError) throw seasonError;
 

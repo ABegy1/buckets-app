@@ -18,27 +18,18 @@ const StatsPage: React.FC = () => {
     // Fetch players and their stats, then combine the data
     const fetchPlayerStats = useCallback(async () => {
         try {
-            console.log('Fetching players and their stats');
-
-            // Step 1: Fetch player names from the players table
             const { data: playersData, error: playersError } = await supabase
                 .from('players')
                 .select('player_id, name');
             
             if (playersError) throw playersError;
-            
-            console.log('Fetched players:', playersData);
 
-            // Step 2: Fetch stats data from the stats table
             const { data: statsData, error: statsError } = await supabase
                 .from('stats')
                 .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score');
             
             if (statsError) throw statsError;
 
-            console.log('Fetched stats:', statsData);
-
-            // Step 3: Combine data by matching player_id
             const combinedData = playersData.map(player => {
                 const playerStats = statsData.find(stat => stat.player_id === player.player_id);
                 return {
@@ -52,7 +43,6 @@ const StatsPage: React.FC = () => {
                 };
             });
 
-            console.log('Combined player stats data:', combinedData);
             setPlayers(combinedData);
         } catch (error) {
             console.error('Error fetching player stats:', error);
@@ -72,28 +62,27 @@ const StatsPage: React.FC = () => {
                     const scoreDifference = newScore - previousScore;
 
                     if (scoreDifference !== 0) {
-                        const { data: statsData, error: statsError } = await supabase
-                            .from('stats')
-                            .select('total_score')
-                            .eq('player_id', payload.new.player_id)
-                            .single();
+                        try {
+                            const { data: statsData, error: statsFetchError } = await supabase
+                                .from('stats')
+                                .select('total_score')
+                                .eq('player_id', payload.new.player_id)
+                                .single();
 
-                        if (statsError || !statsData) {
-                            console.error('Error fetching current total_score:', statsError);
-                            return;
-                        }
+                            if (statsFetchError || !statsData) throw statsFetchError;
 
-                        const newTotalScore = statsData.total_score + scoreDifference;
+                            const updatedTotalScore = statsData.total_score + scoreDifference;
 
-                        const { error: updateError } = await supabase
-                            .from('stats')
-                            .update({ total_score: newTotalScore })
-                            .eq('player_id', payload.new.player_id);
-                        
-                        if (updateError) {
-                            console.error('Error updating total_score:', updateError);
-                        } else {
-                            console.log('Updated total_score for player_id:', payload.new.player_id);
+                            const { error: updateError } = await supabase
+                                .from('stats')
+                                .update({ total_score: updatedTotalScore })
+                                .eq('player_id', payload.new.player_id);
+
+                            if (updateError) {
+                                console.error('Error updating total_score:', updateError);
+                            }
+                        } catch (error) {
+                            console.error('Unexpected error updating total_score:', error);
                         }
                     }
                 }
@@ -106,28 +95,27 @@ const StatsPage: React.FC = () => {
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'shots' },
                 async (payload) => {
-                    const { data: statsData, error: statsError } = await supabase
-                        .from('stats')
-                        .select('total_shots')
-                        .eq('player_id', payload.new.player_id)
-                        .single();
+                    try {
+                        const { data: statsData, error: statsFetchError } = await supabase
+                            .from('stats')
+                            .select('total_shots')
+                            .eq('player_id', payload.new.player_id)
+                            .single();
 
-                    if (statsError || !statsData) {
-                        console.error('Error fetching current total_shots:', statsError);
-                        return;
-                    }
+                        if (statsFetchError || !statsData) throw statsFetchError;
 
-                    const newTotalShots = statsData.total_shots + 1;
+                        const updatedTotalShots = statsData.total_shots + 1;
 
-                    const { error: updateError } = await supabase
-                        .from('stats')
-                        .update({ total_shots: newTotalShots })
-                        .eq('player_id', payload.new.player_id);
-                    
-                    if (updateError) {
-                        console.error('Error updating total_shots:', updateError);
-                    } else {
-                        console.log('Updated total_shots for player_id:', payload.new.player_id);
+                        const { error: updateError } = await supabase
+                            .from('stats')
+                            .update({ total_shots: updatedTotalShots })
+                            .eq('player_id', payload.new.player_id);
+
+                        if (updateError) {
+                            console.error('Error updating total_shots:', updateError);
+                        }
+                    } catch (error) {
+                        console.error('Unexpected error updating total_shots:', error);
                     }
                 }
             )

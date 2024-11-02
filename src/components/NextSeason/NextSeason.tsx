@@ -149,115 +149,114 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   };
 
   // Separate function to close out the current season and calculate stats
-const closeOutCurrentSeason = async (seasonId: number) => {
-  // Step 1: Calculate team and player stats for the current season
-
-  // Find the team with the highest score
-  const { data: highestScoringTeam, error: highestTeamError } = await supabase
-    .from('teams')
-    .select('team_id, team_score')
-    .order('team_score', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (highestTeamError) throw highestTeamError;
-
-  if (highestScoringTeam) {
-    // Update team_wins for each player on the winning team
-    const { data: teamPlayers, error: teamPlayersError } = await supabase
-      .from('players')
-      .select('player_id')
-      .eq('team_id', highestScoringTeam.team_id);
-
-    if (teamPlayersError) throw teamPlayersError;
-
-    for (const player of teamPlayers) {
-      const { data: playerStats, error: playerStatsError } = await supabase
+  const closeOutCurrentSeason = async (seasonId: number) => {
+    console.log("Closing out season ID:", seasonId);
+  
+    // Step 1: Calculate team and player stats for the current season
+    // Find the team with the highest score
+    const { data: highestScoringTeam, error: highestTeamError } = await supabase
+      .from('teams')
+      .select('team_id, team_score')
+      .order('team_score', { ascending: false })
+      .limit(1)
+      .single();
+  
+    if (highestTeamError) throw highestTeamError;
+  
+    if (highestScoringTeam) {
+      // Update team_wins for each player on the winning team
+      const { data: teamPlayers, error: teamPlayersError } = await supabase
+        .from('players')
+        .select('player_id')
+        .eq('team_id', highestScoringTeam.team_id);
+  
+      if (teamPlayersError) throw teamPlayersError;
+  
+      for (const player of teamPlayers) {
+        const { data: playerStats, error: playerStatsError } = await supabase
+          .from('stats')
+          .select('team_wins')
+          .eq('player_id', player.player_id)
+          .single();
+  
+        if (playerStatsError) throw playerStatsError;
+  
+        const newTeamWins = (playerStats?.team_wins || 0) + 1;
+        await supabase
+          .from('stats')
+          .update({ team_wins: newTeamWins })
+          .eq('player_id', player.player_id);
+      }
+    }
+  
+    // Find the player with the highest score and increment their MVP awards
+    const { data: topScoringPlayer, error: topPlayerError } = await supabase
+      .from('player_instance')
+      .select('player_id, score')
+      .eq('season_id', seasonId)
+      .order('score', { ascending: false })
+      .limit(1);
+  
+    if (topPlayerError) throw topPlayerError;
+  
+    if (topScoringPlayer && topScoringPlayer.length > 0) {
+      const topPlayer = topScoringPlayer[0];
+      const { data: mvpStats, error: mvpStatsError } = await supabase
         .from('stats')
-        .select('team_wins')
-        .eq('player_id', player.player_id)
+        .select('mvp_awards')
+        .eq('player_id', topPlayer.player_id)
         .single();
-
-      if (playerStatsError) throw playerStatsError;
-
-      const newTeamWins = (playerStats?.team_wins || 0) + 1;
+  
+      if (mvpStatsError) throw mvpStatsError;
+  
+      const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
       await supabase
         .from('stats')
-        .update({ team_wins: newTeamWins })
+        .update({ mvp_awards: newMvpAwards })
+        .eq('player_id', topPlayer.player_id);
+    } else {
+      console.warn('No top scoring player found for this season.');
+    }
+  
+    // Update seasons_played, high, low, total_score, and total_shots for each player
+    for (const player of players) {
+      const playerScore = player.score || 0;
+  
+      const { data: playerStats, error: playerStatsError } = await supabase
+        .from('stats')
+        .select('seasons_played, high, low, total_score, total_shots')
+        .eq('player_id', player.player_id)
+        .single();
+  
+      if (playerStatsError) throw playerStatsError;
+  
+      const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
+      const newHigh = playerStats?.high === 0 ? playerScore : Math.max(playerStats?.high || 0, playerScore);
+      const newLow = playerStats?.low === 0 ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
+      const newTotalScore = (playerStats?.total_score || 0) + playerScore;
+      const newTotalShots = (playerStats?.total_shots || 0) + shotCount;
+  
+      await supabase
+        .from('stats')
+        .update({
+          seasons_played: newSeasonsPlayed,
+          high: newHigh,
+          low: newLow,
+          total_score: newTotalScore,
+          total_shots: newTotalShots,
+        })
         .eq('player_id', player.player_id);
     }
-  }
-
- // Find the player with the highest score and increment their MVP awards
-const { data: topScoringPlayer, error: topPlayerError } = await supabase
-.from('player_instance')
-.select('player_id, score')
-.eq('season_id', seasonId)
-.order('score', { ascending: false })
-.limit(1);
-
-if (topPlayerError) throw topPlayerError;
-
-// Check if there is a top scoring player, as the result could be empty
-if (topScoringPlayer && topScoringPlayer.length > 0) {
-const topPlayer = topScoringPlayer[0];
-const { data: mvpStats, error: mvpStatsError } = await supabase
-  .from('stats')
-  .select('mvp_awards')
-  .eq('player_id', topPlayer.player_id)
-  .single();
-
-if (mvpStatsError) throw mvpStatsError;
-
-const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
-await supabase
-  .from('stats')
-  .update({ mvp_awards: newMvpAwards })
-  .eq('player_id', topPlayer.player_id);
-} else {
-console.warn('No top scoring player found for this season.');
-}
-
-  // Update seasons_played, high, low, total_score, and total_shots for each player
-  for (const player of players) {
-    const playerScore = player.score || 0;
-
-    const { data: playerStats, error: playerStatsError } = await supabase
-      .from('stats')
-      .select('seasons_played, high, low, total_score, total_shots')
-      .eq('player_id', player.player_id)
-      .single();
-
-    if (playerStatsError) throw playerStatsError;
-
-    const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
-    const newHigh = Math.max(playerStats?.high || 0, playerScore);
-    const newLow = playerStats?.low === null ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
-    const newTotalScore = (playerStats?.total_score || 0) + playerScore;
-    const newTotalShots = (playerStats?.total_shots || 0) + shotCount;
-
-    await supabase
-      .from('stats')
-      .update({
-        seasons_played: newSeasonsPlayed,
-        high: newHigh,
-        low: newLow,
-        total_score: newTotalScore,
-        total_shots: newTotalShots,
-      })
-      .eq('player_id', player.player_id);
-  }
-
-  // Step 2: Set the end date for the current season
-  const currentDate = new Date().toISOString();
-  const { error: closeSeasonError } = await supabase
-    .from('seasons')
-    .update({ end_date: currentDate })
-    .eq('season_id', seasonId);
-
-  if (closeSeasonError) throw closeSeasonError;
-};
-
+  
+    // Step 2: Set the end date for the current season
+    const currentDate = new Date().toISOString();
+    const { error: closeSeasonError } = await supabase
+      .from('seasons')
+      .update({ end_date: currentDate })
+      .eq('season_id', seasonId);
+  
+    if (closeSeasonError) throw closeSeasonError;
+  };
 // Separate function to create a new season
 const createNewSeason = async (): Promise<number | null> => {
   const currentDate = new Date();

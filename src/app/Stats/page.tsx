@@ -32,15 +32,26 @@ const StatsPage: React.FC = () => {
             
             if (statsError) throw statsError;
 
-            // Step 3: Fetch current season scores from `player_instance`
-            const { data: currentSeasonData, error: seasonError } = await supabase
+            // Step 3: Get the current season ID (where `end_date` is NULL)
+            const { data: currentSeason, error: seasonError } = await supabase
+                .from('seasons')
+                .select('season_id')
+                .is('end_date', null)
+                .single();
+
+            if (seasonError || !currentSeason) throw seasonError;
+
+            const currentSeasonId = currentSeason.season_id;
+
+            // Step 4: Fetch current season scores from `player_instance`
+            const { data: currentSeasonData, error: instanceError } = await supabase
                 .from('player_instance')
                 .select('player_id, score')
-                .is('end_date', null); // Assuming null `season_id` represents the current season
+                .eq('season_id', currentSeasonId);
 
-            if (seasonError) throw seasonError;
+            if (instanceError) throw instanceError;
 
-            // Step 4: Combine data by adding `total_score` from `stats` with `score` from the current season
+            // Step 5: Combine data by adding `total_score` from `stats` with `score` from the current season
             const combinedData = playersData.map(player => {
                 const playerStats = statsData.find(stat => stat.player_id === player.player_id);
                 const currentSeasonScore = currentSeasonData.find(instance => instance.player_id === player.player_id)?.score || 0;

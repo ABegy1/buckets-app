@@ -166,7 +166,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     const { data: highestScoringTeam, error: highestTeamError } = await supabase
       .from('teams')
       .select('team_id, team_score')
-      .order('team_score', { ascending: false })
+      .order('team_score', { ascending: false })  // Corrected order for descending
       .limit(1)
       .single();
   
@@ -203,7 +203,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .from('player_instance')
       .select('player_id, score')
       .eq('season_id', seasonId)
-      .order('score', { ascending: false })
+      .order('score', { ascending: false })  // Corrected order for descending
       .limit(1);
   
     if (topPlayerError) throw topPlayerError;
@@ -229,18 +229,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     // Update seasons_played, high, low, total_score, and total_shots for each player
     for (const player of players) {
-      // Retrieve the player’s score for this season
-      const { data: playerInstance, error: playerInstanceError } = await supabase
+      // Retrieve all instances of the player for this season
+      const { data: playerInstances, error: playerInstancesError } = await supabase
         .from('player_instance')
         .select('score, shots_left')
         .eq('player_id', player.player_id)
-        .eq('season_id', seasonId)
-        .single();
+        .eq('season_id', seasonId);
   
-      if (playerInstanceError) throw playerInstanceError;
+      if (playerInstancesError) throw playerInstancesError;
   
-      const playerScore = playerInstance?.score || 0;
-      const shotsLeft = playerInstance?.shots_left || 0;
+      // Calculate the total score for this season by summing all player_instance scores
+      const seasonScore = playerInstances.reduce((acc, instance) => acc + (instance.score || 0), 0);
+  
+      // Calculate the minimum shots_left across all instances
+      const shotsLeft = Math.min(...playerInstances.map(instance => instance.shots_left || seasonShotTotal));
       const shotsTaken = seasonShotTotal - shotsLeft;
   
       // Retrieve current stats and update them
@@ -253,15 +255,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       if (playerStatsError) throw playerStatsError;
   
       // Initialize high and low scores if they are 0
-      let newHigh = playerStats?.high === 0 ? playerScore : playerStats?.high;
-      let newLow = playerStats?.low === 0 ? playerScore : playerStats?.low;
+      let newHigh = playerStats?.high === 0 ? seasonScore : playerStats?.high;
+      let newLow = playerStats?.low === 0 ? seasonScore : playerStats?.low;
   
       // Update high and low based on current season score
-      if (playerScore > newHigh) newHigh = playerScore;
-      if (playerScore < newLow) newLow = playerScore;
+      if (seasonScore > newHigh) newHigh = seasonScore;
+      if (seasonScore < newLow) newLow = seasonScore;
   
       const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
-      const newTotalScore = (playerStats?.total_score || 0) + playerScore;
+      const newTotalScore = (playerStats?.total_score || 0) + seasonScore;
       const newTotalShots = (playerStats?.total_shots || 0) + shotsTaken;
   
       await supabase
@@ -285,6 +287,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     if (closeSeasonError) throw closeSeasonError;
   };
+  
   
 // Separate function to create a new season
 const createNewSeason = async (): Promise<number | null> => {

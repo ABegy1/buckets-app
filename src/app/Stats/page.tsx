@@ -49,83 +49,23 @@ const StatsPage: React.FC = () => {
         }
     }, []);
     
-    // Real-time subscription to update total_score and total_shots
+    // Subscribe to real-time updates and call fetchPlayerStats on change
     const subscribeToRealTimeUpdates = useCallback(() => {
         const playerInstanceChannel = supabase
-            .channel('player-instance-updates')
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'player_instance' },
-                async (payload) => {
-                    const newScore = payload.new.score;
-                    const previousScore = payload.old.score;
-                    const scoreDifference = newScore - previousScore;
-
-                    if (scoreDifference !== 0) {
-                        try {
-                            const { data: statsData, error: statsFetchError } = await supabase
-                                .from('stats')
-                                .select('total_score')
-                                .eq('player_id', payload.new.player_id)
-                                .single();
-
-                            if (statsFetchError || !statsData) throw statsFetchError;
-
-                            const updatedTotalScore = statsData.total_score + scoreDifference;
-
-                            const { error: updateError } = await supabase
-                                .from('stats')
-                                .update({ total_score: updatedTotalScore })
-                                .eq('player_id', payload.new.player_id);
-
-                            if (updateError) {
-                                console.error('Error updating total_score:', updateError);
-                            }
-                        } catch (error) {
-                            console.error('Unexpected error updating total_score:', error);
-                        }
-                    }
-                }
-            )
+            .channel('player-instance-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerStats)
             .subscribe();
 
         const shotChannel = supabase
-            .channel('shots-inserts')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'shots' },
-                async (payload) => {
-                    try {
-                        const { data: statsData, error: statsFetchError } = await supabase
-                            .from('stats')
-                            .select('total_shots')
-                            .eq('player_id', payload.new.player_id)
-                            .single();
-
-                        if (statsFetchError || !statsData) throw statsFetchError;
-
-                        const updatedTotalShots = statsData.total_shots + 1;
-
-                        const { error: updateError } = await supabase
-                            .from('stats')
-                            .update({ total_shots: updatedTotalShots })
-                            .eq('player_id', payload.new.player_id);
-
-                        if (updateError) {
-                            console.error('Error updating total_shots:', updateError);
-                        }
-                    } catch (error) {
-                        console.error('Unexpected error updating total_shots:', error);
-                    }
-                }
-            )
+            .channel('shots-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchPlayerStats)
             .subscribe();
 
         return () => {
             supabase.removeChannel(playerInstanceChannel);
             supabase.removeChannel(shotChannel);
         };
-    }, []);
+    }, [fetchPlayerStats]);
 
     useEffect(() => {
         fetchPlayerStats();

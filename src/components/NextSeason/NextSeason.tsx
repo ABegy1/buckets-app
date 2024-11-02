@@ -148,7 +148,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     setShotCount(shotCount + change);
   };
 
-  // Separate function to close out the current season and calculate stats
   const closeOutCurrentSeason = async (seasonId: number) => {
     console.log("Closing out season ID:", seasonId);
   
@@ -230,8 +229,21 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     // Update seasons_played, high, low, total_score, and total_shots for each player
     for (const player of players) {
-      const playerScore = player.score || 0;
+      // Retrieve the player’s score for this season
+      const { data: playerInstance, error: playerInstanceError } = await supabase
+        .from('player_instance')
+        .select('score, shots_left')
+        .eq('player_id', player.player_id)
+        .eq('season_id', seasonId)
+        .single();
   
+      if (playerInstanceError) throw playerInstanceError;
+  
+      const playerScore = playerInstance?.score || 0;
+      const shotsLeft = playerInstance?.shots_left || 0;
+      const shotsTaken = seasonShotTotal - shotsLeft;
+  
+      // Retrieve current stats and update them
       const { data: playerStats, error: playerStatsError } = await supabase
         .from('stats')
         .select('seasons_played, high, low, total_score, total_shots')
@@ -240,23 +252,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
       if (playerStatsError) throw playerStatsError;
   
-      // Calculate shots taken for the season
-      const { data: currentInstance, error: instanceError } = await supabase
-        .from('player_instance')
-        .select('shots_left')
-        .eq('player_id', player.player_id)
-        .eq('season_id', seasonId)
-        .single();
+      // Initialize high and low scores if they are 0
+      let newHigh = playerStats?.high === 0 ? playerScore : playerStats?.high;
+      let newLow = playerStats?.low === 0 ? playerScore : playerStats?.low;
   
-      if (instanceError) throw instanceError;
+      // Update high and low based on current season score
+      if (playerScore > newHigh) newHigh = playerScore;
+      if (playerScore < newLow) newLow = playerScore;
   
-      const shotsLeft = currentInstance?.shots_left || 0;
-      const shotsTaken = seasonShotTotal - shotsLeft;
-  
-      // Calculate updated values for stats
       const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
-      const newHigh = playerStats?.high === 0 ? playerScore : Math.max(playerStats?.high || 0, playerScore);
-      const newLow = playerStats?.low === 0 ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
       const newTotalScore = (playerStats?.total_score || 0) + playerScore;
       const newTotalShots = (playerStats?.total_shots || 0) + shotsTaken;
   

@@ -62,25 +62,73 @@ const StatsPage: React.FC = () => {
     // Real-time subscription to update total_score and total_shots
     const subscribeToRealTimeUpdates = useCallback(() => {
         const playerInstanceChannel = supabase
-            .channel('player-instance-db-changes')
+            .channel('player-instance-updates')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'player_instance' },
-                async () => {
-                    // Re-fetch the stats data whenever there's a score update
-                    fetchPlayerStats();
+                { event: 'UPDATE', schema: 'public', table: 'player_instance' },
+                async (payload) => {
+                    const newScore = payload.new.score;
+                    const previousScore = payload.old.score;
+                    const scoreDifference = newScore - previousScore;
+
+                    if (scoreDifference !== 0) {
+                        const { data: statsData, error: statsError } = await supabase
+                            .from('stats')
+                            .select('total_score')
+                            .eq('player_id', payload.new.player_id)
+                            .single();
+
+                        if (statsError || !statsData) {
+                            console.error('Error fetching current total_score:', statsError);
+                            return;
+                        }
+
+                        const newTotalScore = statsData.total_score + scoreDifference;
+
+                        const { error: updateError } = await supabase
+                            .from('stats')
+                            .update({ total_score: newTotalScore })
+                            .eq('player_id', payload.new.player_id);
+                        
+                        if (updateError) {
+                            console.error('Error updating total_score:', updateError);
+                        } else {
+                            console.log('Updated total_score for player_id:', payload.new.player_id);
+                        }
+                    }
                 }
             )
             .subscribe();
 
         const shotChannel = supabase
-            .channel('shots-db-changes')
+            .channel('shots-inserts')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'shots' },
-                async () => {
-                    // Re-fetch the stats data whenever a new shot is added
-                    fetchPlayerStats();
+                { event: 'INSERT', schema: 'public', table: 'shots' },
+                async (payload) => {
+                    const { data: statsData, error: statsError } = await supabase
+                        .from('stats')
+                        .select('total_shots')
+                        .eq('player_id', payload.new.player_id)
+                        .single();
+
+                    if (statsError || !statsData) {
+                        console.error('Error fetching current total_shots:', statsError);
+                        return;
+                    }
+
+                    const newTotalShots = statsData.total_shots + 1;
+
+                    const { error: updateError } = await supabase
+                        .from('stats')
+                        .update({ total_shots: newTotalShots })
+                        .eq('player_id', payload.new.player_id);
+                    
+                    if (updateError) {
+                        console.error('Error updating total_shots:', updateError);
+                    } else {
+                        console.log('Updated total_shots for player_id:', payload.new.player_id);
+                    }
                 }
             )
             .subscribe();
@@ -89,7 +137,7 @@ const StatsPage: React.FC = () => {
             supabase.removeChannel(playerInstanceChannel);
             supabase.removeChannel(shotChannel);
         };
-    }, [fetchPlayerStats]);
+    }, []);
 
     useEffect(() => {
         fetchPlayerStats();

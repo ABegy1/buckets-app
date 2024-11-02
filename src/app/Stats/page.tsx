@@ -16,37 +16,34 @@ const StatsPage: React.FC = () => {
     // Fetch players with seasons_played using LEFT JOIN query
     const fetchPlayerStats = useCallback(async () => {
         console.log('Fetching players with seasons_played');
-
+    
         const { data, error } = await supabase
-            .rpc('custom_query', { // Replace with your own function if needed
-                sql: `
-                SELECT
-                    p.player_id,
-                    p.name,
-                    s.seasons_played
-                FROM
-                    public.players p
-                LEFT JOIN
-                    public.stats s 
-                ON
-                    p.player_id = s.player_id;
-                `
-            });
-
+            .from('players')
+            .select(`
+                player_id,
+                name,
+                stats:seasons_played
+            `);
+    
         if (error) {
             console.error('Error fetching player stats:', error);
             return;
         }
-
+    
         if (!data || data.length === 0) {
             console.warn('No players or stats data found');
             return;
         }
-
+    
         console.log('Players with seasons_played:', data);
-        setPlayers(data);
+        const formattedData = data.map(player => ({
+            player_id: player.player_id,
+            name: player.name,
+            seasons_played: player.stats
+        }));
+        setPlayers(formattedData);
     }, []);
-
+    
     useEffect(() => {
         fetchPlayerStats();
     }, [fetchPlayerStats]);

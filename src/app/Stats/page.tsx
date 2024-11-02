@@ -16,46 +16,39 @@ const StatsPage: React.FC = () => {
 
     // Enhanced fetch with debug logs
     const fetchPlayerStats = useCallback(async () => {
-        console.log('fetchPlayerStats: Start fetching players');
-
-        // Fetch players
-        const { data: players, error: playerError } = await supabase
+        console.log('fetchPlayerStats: Start fetching players with seasons_played');
+        
+        // Fetch players and their seasons_played in one query
+        const { data, error } = await supabase
             .from('players')
-            .select('player_id, name');
-
-        if (playerError) {
-            console.error('Error fetching players:', playerError);
-        } else if (!players || players.length === 0) {
-            console.warn('No players found in the players table.');
-        } else {
-            console.log('Players fetched successfully:', players);
-            setPlayers(players);
+            .select(`
+                player_id,
+                name,
+                stats (
+                    seasons_played
+                )
+            `);
+    
+        if (error) {
+            console.error('Error fetching players with seasons_played:', error);
+            return;
         }
-
-        console.log('fetchPlayerStats: Start fetching stats');
-
-        // Fetch stats
-        const { data: statsData, error: statsError } = await supabase
-            .from('stats')
-            .select('player_id, seasons_played');
-
-        if (statsError) {
-            console.error('Error fetching stats:', statsError);
-        } else if (!statsData || statsData.length === 0) {
-            console.warn('No stats found in the stats table.');
-        } else {
-            console.log('Stats data fetched successfully:', statsData);
-
-            const newPlayerStats = statsData.reduce(
-                (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
-                    acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
-                    return acc;
-                }, {}
-            );
-
-            console.log('Setting player stats:', newPlayerStats);
-            setPlayerStats(newPlayerStats);
+        
+        if (!data || data.length === 0) {
+            console.warn('No players or stats found');
+            return;
         }
+    
+        console.log('fetchPlayerStats: Fetched players with seasons_played:', data);
+    
+        // Transform data to map player stats as needed
+        const newPlayerStats = data.reduce((acc: { [key: number]: { seasonsPlayed: number } }, player: { player_id: number; stats: { seasons_played: number }[] }) => {
+            acc[player.player_id] = { seasonsPlayed: player.stats[0]?.seasons_played || 0 };
+            return acc;
+        }, {});
+    
+        setPlayers(data);
+        setPlayerStats(newPlayerStats);
     }, []);
 
     useEffect(() => {

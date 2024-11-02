@@ -62,10 +62,10 @@ const StatsPage: React.FC = () => {
     // Real-time subscription to update total_score and total_shots
     const subscribeToRealTimeUpdates = useCallback(() => {
         const playerInstanceChannel = supabase
-            .channel('player-instance-updates')
+            .channel('player-instance-db-changes')
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'player_instance' },
+                { event: '*', schema: 'public', table: 'player_instance' },
                 async () => {
                     // Re-fetch the stats data whenever there's a score update
                     fetchPlayerStats();
@@ -74,10 +74,10 @@ const StatsPage: React.FC = () => {
             .subscribe();
 
         const shotChannel = supabase
-            .channel('shots-inserts')
+            .channel('shots-db-changes')
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'shots' },
+                { event: '*', schema: 'public', table: 'shots' },
                 async () => {
                     // Re-fetch the stats data whenever a new shot is added
                     fetchPlayerStats();

@@ -148,194 +148,177 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     setShotCount(shotCount + change);
   };
 
-  const startNewSeason = async (): Promise<number | null> => {
-    const currentDate = new Date();
+  // Separate function to close out the current season and calculate stats
+const closeOutCurrentSeason = async (seasonId: number) => {
+  // Step 1: Calculate team and player stats for the current season
 
-    try {
-      const { data: currentSeason, error: currentSeasonError } = await supabase
-        .from('seasons')
-        .select('season_id, end_date')
-        .order('start_date', { ascending: false }) 
-        .limit(1)
+  // Find the team with the highest score
+  const { data: highestScoringTeam, error: highestTeamError } = await supabase
+    .from('teams')
+    .select('team_id, team_score')
+    .order('team_score', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (highestTeamError) throw highestTeamError;
+
+  if (highestScoringTeam) {
+    // Update team_wins for each player on the winning team
+    const { data: teamPlayers, error: teamPlayersError } = await supabase
+      .from('players')
+      .select('player_id')
+      .eq('team_id', highestScoringTeam.team_id);
+
+    if (teamPlayersError) throw teamPlayersError;
+
+    for (const player of teamPlayers) {
+      const { data: playerStats, error: playerStatsError } = await supabase
+        .from('stats')
+        .select('team_wins')
+        .eq('player_id', player.player_id)
         .single();
 
-      if (currentSeasonError) {
-        console.error('Error fetching current season:', currentSeasonError);
-      } else if (currentSeason && !currentSeason.end_date) {
-        const { error: updateSeasonError } = await supabase
-          .from('seasons')
-          .update({ end_date: currentDate.toISOString() })
-          .eq('season_id', currentSeason.season_id);
+      if (playerStatsError) throw playerStatsError;
 
-        if (updateSeasonError) throw updateSeasonError;
-      }
-
-      const { data: seasonData, error: seasonError } = await supabase
-        .from('seasons')
-        .insert({
-          season_name: seasonName || `Season ${currentDate.getFullYear()}`,
-          start_date: currentDate.toISOString(),
-          end_date: null, 
-          shot_total: shotCount,
-          rules: seasonRules || 'Default Rules',
-        })
-        .select();
-
-      if (seasonError || !seasonData || seasonData.length === 0) {
-        throw new Error('Error starting season');
-      }
-
-      return seasonData[0].season_id;
-
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error('An unexpected error occurred:', error);
-      }
-      return null;
+      const newTeamWins = (playerStats?.team_wins || 0) + 1;
+      await supabase
+        .from('stats')
+        .update({ team_wins: newTeamWins })
+        .eq('player_id', player.player_id);
     }
-  };
+  }
 
-  const handleSubmit = async () => {
-    const seasonId = await startNewSeason();
-  
-    if (seasonId !== null) {
-      try {
-        if (tiers.length === 0 || teams.length === 0 || players.length === 0) {
-          throw new Error('Tiers, Teams, and Players must be added before starting a season');
-        }
-  
-        // Step 1: Calculate team and player stats for the current season
-        // Find the team with the highest score
-        const { data: highestScoringTeam, error: highestTeamError } = await supabase
-          .from('teams')
-          .select('team_id, team_score')
-          .order('team_score', { ascending: false })
-          .limit(1)
-          .single();
-  
-        if (highestTeamError) throw highestTeamError;
-  
-        if (highestScoringTeam) {
-          // Update team_wins for each player on the winning team
-          const { data: teamPlayers, error: teamPlayersError } = await supabase
-            .from('players')
-            .select('player_id')
-            .eq('team_id', highestScoringTeam.team_id);
-  
-          if (teamPlayersError) throw teamPlayersError;
-  
-          for (const player of teamPlayers) {
-            const { data: playerStats, error: playerStatsError } = await supabase
-              .from('stats')
-              .select('team_wins')
-              .eq('player_id', player.player_id)
-              .single();
-  
-            if (playerStatsError) throw playerStatsError;
-  
-            const newTeamWins = (playerStats?.team_wins || 0) + 1;
-            await supabase
-              .from('stats')
-              .update({ team_wins: newTeamWins })
-              .eq('player_id', player.player_id);
-          }
-        }
-  
-        // Find the player with the highest score and increment their MVP awards
-        const { data: topScoringPlayer, error: topPlayerError } = await supabase
-          .from('player_instance')
-          .select('player_id, score')
-          .eq('season_id', seasonId)
-          .order('score', { ascending: false })
-          .limit(1)
-          .single();
-  
-        if (topPlayerError) throw topPlayerError;
-  
-        if (topScoringPlayer) {
-          const { data: mvpStats, error: mvpStatsError } = await supabase
-            .from('stats')
-            .select('mvp_awards')
-            .eq('player_id', topScoringPlayer.player_id)
-            .single();
-  
-          if (mvpStatsError) throw mvpStatsError;
-  
-          const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
-          await supabase
-            .from('stats')
-            .update({ mvp_awards: newMvpAwards })
-            .eq('player_id', topScoringPlayer.player_id);
-        }
-  
-        // Update seasons_played, high, low, total_score, and total_shots for each player
-        for (const player of players) {
-          const playerScore = player.score || 0;
-  
-          const { data: playerStats, error: playerStatsError } = await supabase
-            .from('stats')
-            .select('seasons_played, high, low, total_score, total_shots')
-            .eq('player_id', player.player_id)
-            .single();
-  
-          if (playerStatsError) throw playerStatsError;
-  
-          const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
-          const newHigh = Math.max(playerStats?.high || 0, playerScore);
-          const newLow = playerStats?.low === null ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
-          const newTotalScore = (playerStats?.total_score || 0) + playerScore;
-          const newTotalShots = (playerStats?.total_shots || 0) + shotCount;
-  
-          await supabase
-            .from('stats')
-            .update({
-              seasons_played: newSeasonsPlayed,
-              high: newHigh,
-              low: newLow,
-              total_score: newTotalScore,
-              total_shots: newTotalShots,
-            })
-            .eq('player_id', player.player_id);
-        }
-  
-        // Step 2: Close out the current season by setting its end date
-        const currentDate = new Date().toISOString();
-        const { error: closeSeasonError } = await supabase
-          .from('seasons')
-          .update({ end_date: currentDate })
-          .eq('season_id', seasonId);
-  
-        if (closeSeasonError) throw closeSeasonError;
-  
-        // Step 3: Create a new season
-        const newSeasonId = await startNewSeason();
-        if (!newSeasonId) throw new Error('Failed to start a new season.');
-  
-        // Step 4: Create new player instances for the new season
-        for (const player of players) {
-          const { error: playerInstanceError } = await supabase.from('player_instance').insert({
-            player_id: player.player_id,
-            season_id: newSeasonId,
-            shots_left: shotCount,
-            score: 0,
-          });
-  
-          if (playerInstanceError) throw playerInstanceError;
-        }
-  
-        onClose();
-        onStartSeason();
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error(error.message);
-        } else {
-          console.error('An unexpected error occurred:', error);
-        }
-      }
+  // Find the player with the highest score and increment their MVP awards
+  const { data: topScoringPlayer, error: topPlayerError } = await supabase
+    .from('player_instance')
+    .select('player_id, score')
+    .eq('season_id', seasonId)
+    .order('score', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (topPlayerError) throw topPlayerError;
+
+  if (topScoringPlayer) {
+    const { data: mvpStats, error: mvpStatsError } = await supabase
+      .from('stats')
+      .select('mvp_awards')
+      .eq('player_id', topScoringPlayer.player_id)
+      .single();
+
+    if (mvpStatsError) throw mvpStatsError;
+
+    const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
+    await supabase
+      .from('stats')
+      .update({ mvp_awards: newMvpAwards })
+      .eq('player_id', topScoringPlayer.player_id);
+  }
+
+  // Update seasons_played, high, low, total_score, and total_shots for each player
+  for (const player of players) {
+    const playerScore = player.score || 0;
+
+    const { data: playerStats, error: playerStatsError } = await supabase
+      .from('stats')
+      .select('seasons_played, high, low, total_score, total_shots')
+      .eq('player_id', player.player_id)
+      .single();
+
+    if (playerStatsError) throw playerStatsError;
+
+    const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
+    const newHigh = Math.max(playerStats?.high || 0, playerScore);
+    const newLow = playerStats?.low === null ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
+    const newTotalScore = (playerStats?.total_score || 0) + playerScore;
+    const newTotalShots = (playerStats?.total_shots || 0) + shotCount;
+
+    await supabase
+      .from('stats')
+      .update({
+        seasons_played: newSeasonsPlayed,
+        high: newHigh,
+        low: newLow,
+        total_score: newTotalScore,
+        total_shots: newTotalShots,
+      })
+      .eq('player_id', player.player_id);
+  }
+
+  // Step 2: Set the end date for the current season
+  const currentDate = new Date().toISOString();
+  const { error: closeSeasonError } = await supabase
+    .from('seasons')
+    .update({ end_date: currentDate })
+    .eq('season_id', seasonId);
+
+  if (closeSeasonError) throw closeSeasonError;
+};
+
+// Separate function to create a new season
+const createNewSeason = async (): Promise<number | null> => {
+  const currentDate = new Date();
+
+  const { data: seasonData, error: seasonError } = await supabase
+    .from('seasons')
+    .insert({
+      season_name: seasonName || `Season ${currentDate.getFullYear()}`,
+      start_date: currentDate.toISOString(),
+      end_date: null,
+      shot_total: shotCount,
+      rules: seasonRules || 'Default Rules',
+    })
+    .select();
+
+  if (seasonError || !seasonData || seasonData.length === 0) {
+    console.error("Error starting new season:", seasonError);
+    return null;
+  }
+
+  return seasonData[0].season_id;
+};
+
+const handleSubmit = async () => {
+  try {
+    const { data: currentSeason, error: currentSeasonError } = await supabase
+      .from('seasons')
+      .select('season_id, end_date')
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (currentSeasonError) throw currentSeasonError;
+    if (!currentSeason || currentSeason.end_date) throw new Error("No active season to close out.");
+
+    const seasonId = currentSeason.season_id;
+
+    // Step 1: Close out the current season (perform calculations and update stats)
+    await closeOutCurrentSeason(seasonId);
+
+    // Step 2: Create a new season
+    const newSeasonId = await createNewSeason();
+    if (!newSeasonId) throw new Error("Failed to start a new season.");
+
+    // Step 3: Create new player instances for the new season
+    for (const player of players) {
+      const { error: playerInstanceError } = await supabase.from('player_instance').insert({
+        player_id: player.player_id,
+        season_id: newSeasonId,
+        shots_left: shotCount,
+        score: 0,
+      });
+
+      if (playerInstanceError) throw playerInstanceError;
     }
-  };
+
+    // Close modal and notify parent component
+    onClose();
+    onStartSeason();
+  } catch (error) {
+    console.error("Error in handleSubmit:", error);
+    // Optionally handle user feedback for the error here
+  }
+};
 
   if (!isOpen) return null;
 

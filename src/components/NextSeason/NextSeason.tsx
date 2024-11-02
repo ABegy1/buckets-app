@@ -152,6 +152,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const closeOutCurrentSeason = async (seasonId: number) => {
     console.log("Closing out season ID:", seasonId);
   
+    // Retrieve the season shot total for calculating shots taken
+    const { data: currentSeason, error: seasonError } = await supabase
+      .from('seasons')
+      .select('shot_total')
+      .eq('season_id', seasonId)
+      .single();
+  
+    if (seasonError) throw seasonError;
+    const seasonShotTotal = currentSeason?.shot_total || 0;
+  
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
     const { data: highestScoringTeam, error: highestTeamError } = await supabase
@@ -230,11 +240,25 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
       if (playerStatsError) throw playerStatsError;
   
+      // Calculate shots taken for the season
+      const { data: currentInstance, error: instanceError } = await supabase
+        .from('player_instance')
+        .select('shots_left')
+        .eq('player_id', player.player_id)
+        .eq('season_id', seasonId)
+        .single();
+  
+      if (instanceError) throw instanceError;
+  
+      const shotsLeft = currentInstance?.shots_left || 0;
+      const shotsTaken = seasonShotTotal - shotsLeft;
+  
+      // Calculate updated values for stats
       const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
       const newHigh = playerStats?.high === 0 ? playerScore : Math.max(playerStats?.high || 0, playerScore);
       const newLow = playerStats?.low === 0 ? playerScore : Math.min(playerStats?.low || playerScore, playerScore);
       const newTotalScore = (playerStats?.total_score || 0) + playerScore;
-      const newTotalShots = (playerStats?.total_shots || 0) + shotCount;
+      const newTotalShots = (playerStats?.total_shots || 0) + shotsTaken;
   
       await supabase
         .from('stats')
@@ -257,6 +281,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     if (closeSeasonError) throw closeSeasonError;
   };
+  
 // Separate function to create a new season
 const createNewSeason = async (): Promise<number | null> => {
   const currentDate = new Date();

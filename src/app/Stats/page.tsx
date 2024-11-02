@@ -22,9 +22,7 @@ const StatsPage: React.FC = () => {
             .select(`
                 player_id,
                 name,
-                stats (
-                    seasons_played
-                )
+                stats:seasons_played
             `);
     
         if (error) {
@@ -41,10 +39,14 @@ const StatsPage: React.FC = () => {
         const formattedData = data.map(player => ({
             player_id: player.player_id,
             name: player.name,
-            seasons_played: player.stats?.seasons_played ?? 0
+            seasons_played: player.stats
         }));
         setPlayers(formattedData);
     }, []);
+    
+    useEffect(() => {
+        fetchPlayerStats();
+    }, [fetchPlayerStats]);
 
     return (
         <div className={styles.userContainer}>

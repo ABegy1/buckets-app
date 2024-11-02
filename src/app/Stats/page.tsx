@@ -1,7 +1,6 @@
 'use client'; // Required in Next.js App Router
 import React, { useCallback, useEffect, useState } from 'react';
 import styles from './Stats.module.css'; // Updated path for combined styles
-// @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/supabaseClient';
 
@@ -17,7 +16,6 @@ const StatsPage: React.FC = () => {
 
     // Fetch player stats focusing only on seasons_played
     const fetchPlayerStats = useCallback(async () => {
-        // Fetch players and their stats
         const { data: players, error: playerError } = await supabase
             .from('players')
             .select('player_id, name');
@@ -29,7 +27,6 @@ const StatsPage: React.FC = () => {
 
         setPlayers(players);
 
-        // Fetch seasons_played from the stats table for each player
         const { data: statsData, error: statsError } = await supabase
             .from('stats')
             .select('player_id, seasons_played');
@@ -39,10 +36,8 @@ const StatsPage: React.FC = () => {
             return;
         }
 
-        // Transform stats data into an object with player_id as the key
         const newPlayerStats = statsData.reduce(
             (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
-                console.log(`Player ID: ${stat.player_id}, Seasons Played: ${stat.seasons_played}`);
                 acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
                 return acc;
             }, {}
@@ -53,6 +48,17 @@ const StatsPage: React.FC = () => {
 
     useEffect(() => {
         fetchPlayerStats();
+
+        // Subscribe to changes in the stats table for real-time updates
+        const statsChannel = supabase
+            .channel('stats-db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, fetchPlayerStats)
+            .subscribe();
+
+        // Clean up subscription on component unmount
+        return () => {
+            supabase.removeChannel(statsChannel);
+        };
     }, [fetchPlayerStats]);
 
     return (

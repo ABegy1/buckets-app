@@ -16,7 +16,7 @@ const StatsPage: React.FC = () => {
     // Fetch players and their seasons_played separately, then combine the data
     const fetchPlayerStats = useCallback(async () => {
         console.log('Fetching players and their seasons_played');
-
+    
         // Step 1: Fetch player names from the players table
         const { data: playersData, error: playersError } = await supabase
             .from('players')
@@ -26,7 +26,9 @@ const StatsPage: React.FC = () => {
             console.error('Error fetching players:', playersError);
             return;
         }
-
+        
+        console.log('Fetched players:', playersData);
+    
         // Step 2: Fetch seasons_played from the stats table
         const { data: statsData, error: statsError } = await supabase
             .from('stats')
@@ -36,7 +38,9 @@ const StatsPage: React.FC = () => {
             console.error('Error fetching stats:', statsError);
             return;
         }
-
+    
+        console.log('Fetched stats:', statsData);
+    
         // Step 3: Combine data by matching player_id
         const combinedData = playersData.map(player => {
             const playerStats = statsData.find(stat => stat.player_id === player.player_id);
@@ -46,10 +50,11 @@ const StatsPage: React.FC = () => {
                 seasons_played: playerStats ? playerStats.seasons_played : 0
             };
         });
-
+    
         console.log('Combined player stats data:', combinedData);
         setPlayers(combinedData);
     }, []);
+    
     
     useEffect(() => {
         fetchPlayerStats();

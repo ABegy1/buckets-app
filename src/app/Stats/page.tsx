@@ -15,23 +15,36 @@ const StatsPage: React.FC = () => {
         router.push(`/${page}`);
     };
 
-    // Fetch players and their stats, then combine the data
+    // Fetch players and their stats, combining scores from `stats` and `player_instance`
     const fetchPlayerStats = useCallback(async () => {
         try {
+            // Step 1: Fetch player names from the `players` table
             const { data: playersData, error: playersError } = await supabase
                 .from('players')
                 .select('player_id, name');
             
             if (playersError) throw playersError;
 
+            // Step 2: Fetch `total_score` and `total_shots` from `stats`
             const { data: statsData, error: statsError } = await supabase
                 .from('stats')
                 .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score');
             
             if (statsError) throw statsError;
 
+            // Step 3: Fetch current season scores from `player_instance`
+            const { data: currentSeasonData, error: seasonError } = await supabase
+                .from('player_instance')
+                .select('player_id, score')
+                .is('season_id', null); // Assuming null `season_id` represents the current season
+
+            if (seasonError) throw seasonError;
+
+            // Step 4: Combine data by adding `total_score` from `stats` with `score` from the current season
             const combinedData = playersData.map(player => {
                 const playerStats = statsData.find(stat => stat.player_id === player.player_id);
+                const currentSeasonScore = currentSeasonData.find(instance => instance.player_id === player.player_id)?.score || 0;
+
                 return {
                     player_id: player.player_id,
                     name: player.name,
@@ -39,7 +52,7 @@ const StatsPage: React.FC = () => {
                     mvp_awards: playerStats ? playerStats.mvp_awards : 0,
                     team_wins: playerStats ? playerStats.team_wins : 0,
                     total_shots: playerStats ? playerStats.total_shots : 0,
-                    total_score: playerStats ? playerStats.total_score : 0,
+                    total_score: (playerStats ? playerStats.total_score : 0) + currentSeasonScore,
                 };
             });
 
@@ -49,28 +62,9 @@ const StatsPage: React.FC = () => {
         }
     }, []);
     
-    // Subscribe to real-time updates and call fetchPlayerStats on change
-    const subscribeToRealTimeUpdates = useCallback(() => {
-        const playerInstanceChannel = supabase
-            .channel('player-instance-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerStats)
-            .subscribe();
-
-        const shotChannel = supabase
-            .channel('shots-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchPlayerStats)
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(playerInstanceChannel);
-            supabase.removeChannel(shotChannel);
-        };
-    }, [fetchPlayerStats]);
-
     useEffect(() => {
         fetchPlayerStats();
-        subscribeToRealTimeUpdates();
-    }, [fetchPlayerStats, subscribeToRealTimeUpdates]);
+    }, [fetchPlayerStats]);
 
     return (
         <div className={styles.userContainer}>

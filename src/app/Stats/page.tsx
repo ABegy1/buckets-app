@@ -69,7 +69,7 @@ const StatsPage: React.FC = () => {
                 const low = playerStats ? playerStats.low : 1; // Use 1 to avoid division by zero
 
                 // Calculate average score and points per shot
-                const averageScore = high / low;
+                const averageScore = high + low / 2;
                 const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
 
                 return {

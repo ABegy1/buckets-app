@@ -1,6 +1,6 @@
-'use client'; // Required in Next.js App Router
+'use client';
 import React, { useCallback, useEffect, useState } from 'react';
-import styles from './Stats.module.css'; // Updated path for combined styles
+import styles from './Stats.module.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/supabaseClient';
 
@@ -14,61 +14,53 @@ const StatsPage: React.FC = () => {
         router.push(`/${page}`);
     };
 
-    // Fetch player stats focusing only on seasons_played
+    // Enhanced fetch with debug logs
     const fetchPlayerStats = useCallback(async () => {
         console.log('fetchPlayerStats: Start fetching players');
+
+        // Fetch players
         const { data: players, error: playerError } = await supabase
             .from('players')
             .select('player_id, name');
 
         if (playerError) {
             console.error('Error fetching players:', playerError);
-            return;
+        } else if (!players || players.length === 0) {
+            console.warn('No players found in the players table.');
+        } else {
+            console.log('Players fetched successfully:', players);
+            setPlayers(players);
         }
-        
-        if (!players) {
-            console.warn('No players fetched');
-            return;
-        }
-
-        console.log('fetchPlayerStats: Players fetched successfully:', players);
-        setPlayers(players);
 
         console.log('fetchPlayerStats: Start fetching stats');
+
+        // Fetch stats
         const { data: statsData, error: statsError } = await supabase
             .from('stats')
             .select('player_id, seasons_played');
 
         if (statsError) {
-            console.error('Error fetching player stats:', statsError);
-            return;
-        }
-        
-        if (!statsData) {
-            console.warn('No stats data fetched');
-            return;
-        }
+            console.error('Error fetching stats:', statsError);
+        } else if (!statsData || statsData.length === 0) {
+            console.warn('No stats found in the stats table.');
+        } else {
+            console.log('Stats data fetched successfully:', statsData);
 
-        console.log('fetchPlayerStats: Stats data fetched successfully:', statsData);
-        
-        const newPlayerStats = statsData.reduce(
-            (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
-                console.log(`Mapping stat for player_id ${stat.player_id} with seasonsPlayed ${stat.seasons_played}`);
-                acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
-                return acc;
-            }, {}
-        );
+            const newPlayerStats = statsData.reduce(
+                (acc: { [key: number]: { seasonsPlayed: number } }, stat) => {
+                    acc[stat.player_id] = { seasonsPlayed: stat.seasons_played };
+                    return acc;
+                }, {}
+            );
 
-        console.log('fetchPlayerStats: Setting player stats:', newPlayerStats);
-        setPlayerStats(newPlayerStats);
+            console.log('Setting player stats:', newPlayerStats);
+            setPlayerStats(newPlayerStats);
+        }
     }, []);
 
     useEffect(() => {
-        console.log('useEffect: Initial fetch of player stats');
         fetchPlayerStats();
 
-        console.log('useEffect: Subscribing to stats table changes');
-        // Subscribe to changes in the stats table for real-time updates
         const statsChannel = supabase
             .channel('stats-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, (payload) => {
@@ -77,9 +69,7 @@ const StatsPage: React.FC = () => {
             })
             .subscribe();
 
-        // Clean up subscription on component unmount
         return () => {
-            console.log('useEffect: Cleaning up subscription');
             supabase.removeChannel(statsChannel);
         };
     }, [fetchPlayerStats]);

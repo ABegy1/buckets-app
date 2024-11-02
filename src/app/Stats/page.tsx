@@ -17,48 +17,46 @@ const StatsPage: React.FC = () => {
 
     // Fetch players and their stats, then combine the data
     const fetchPlayerStats = useCallback(async () => {
-        console.log('Fetching players and their stats');
+        try {
+            console.log('Fetching players and their stats');
 
-        // Step 1: Fetch player names from the players table
-        const { data: playersData, error: playersError } = await supabase
-            .from('players')
-            .select('player_id, name');
-        
-        if (playersError) {
-            console.error('Error fetching players:', playersError);
-            return;
+            // Step 1: Fetch player names from the players table
+            const { data: playersData, error: playersError } = await supabase
+                .from('players')
+                .select('player_id, name');
+            
+            if (playersError) throw playersError;
+            
+            console.log('Fetched players:', playersData);
+
+            // Step 2: Fetch stats data from the stats table
+            const { data: statsData, error: statsError } = await supabase
+                .from('stats')
+                .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score');
+            
+            if (statsError) throw statsError;
+
+            console.log('Fetched stats:', statsData);
+
+            // Step 3: Combine data by matching player_id
+            const combinedData = playersData.map(player => {
+                const playerStats = statsData.find(stat => stat.player_id === player.player_id);
+                return {
+                    player_id: player.player_id,
+                    name: player.name,
+                    seasons_played: playerStats ? playerStats.seasons_played : 0,
+                    mvp_awards: playerStats ? playerStats.mvp_awards : 0,
+                    team_wins: playerStats ? playerStats.team_wins : 0,
+                    total_shots: playerStats ? playerStats.total_shots : 0,
+                    total_score: playerStats ? playerStats.total_score : 0,
+                };
+            });
+
+            console.log('Combined player stats data:', combinedData);
+            setPlayers(combinedData);
+        } catch (error) {
+            console.error('Error fetching player stats:', error);
         }
-        
-        console.log('Fetched players:', playersData);
-
-        // Step 2: Fetch stats data from the stats table
-        const { data: statsData, error: statsError } = await supabase
-            .from('stats')
-            .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score');
-        
-        if (statsError) {
-            console.error('Error fetching stats:', statsError);
-            return;
-        }
-
-        console.log('Fetched stats:', statsData);
-
-        // Step 3: Combine data by matching player_id
-        const combinedData = playersData.map(player => {
-            const playerStats = statsData.find(stat => stat.player_id === player.player_id);
-            return {
-                player_id: player.player_id,
-                name: player.name,
-                seasons_played: playerStats ? playerStats.seasons_played : 0,
-                mvp_awards: playerStats ? playerStats.mvp_awards : 0,
-                team_wins: playerStats ? playerStats.team_wins : 0,
-                total_shots: playerStats ? playerStats.total_shots : 0,
-                total_score: playerStats ? playerStats.total_score : 0,
-            };
-        });
-
-        console.log('Combined player stats data:', combinedData);
-        setPlayers(combinedData);
     }, []);
     
     // Real-time subscription to update total_score and total_shots
@@ -68,37 +66,8 @@ const StatsPage: React.FC = () => {
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'player_instance' },
-                async (payload) => {
-                    const updatedScore = payload.new.score;
-                    const previousScore = payload.old.score;
-                    const scoreDifference = updatedScore - previousScore;
-
-                    // Fetch current total_score, add the difference, and update
-                    const { data: statsData, error: statsError } = await supabase
-                        .from('stats')
-                        .select('total_score')
-                        .eq('player_id', payload.new.player_id)
-                        .single();
-
-                    if (statsError || !statsData) {
-                        console.error('Error fetching current total_score:', statsError);
-                        return;
-                    }
-
-                    const newTotalScore = statsData.total_score + scoreDifference;
-
-                    const { error: updateError } = await supabase
-                        .from('stats')
-                        .update({ total_score: newTotalScore })
-                        .eq('player_id', payload.new.player_id);
-                    
-                    if (updateError) {
-                        console.error('Error updating total_score:', updateError);
-                    } else {
-                        console.log('Updated total_score for player_id:', payload.new.player_id);
-                    }
-
-                    // Refresh data to reflect the real-time change
+                async () => {
+                    // Re-fetch the stats data whenever there's a score update
                     fetchPlayerStats();
                 }
             )
@@ -109,33 +78,8 @@ const StatsPage: React.FC = () => {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'shots' },
-                async (payload) => {
-                    // Fetch current total_shots, increment by 1, and update
-                    const { data: statsData, error: statsError } = await supabase
-                        .from('stats')
-                        .select('total_shots')
-                        .eq('player_id', payload.new.player_id)
-                        .single();
-
-                    if (statsError || !statsData) {
-                        console.error('Error fetching current total_shots:', statsError);
-                        return;
-                    }
-
-                    const newTotalShots = statsData.total_shots + 1;
-
-                    const { error: updateError } = await supabase
-                        .from('stats')
-                        .update({ total_shots: newTotalShots })
-                        .eq('player_id', payload.new.player_id);
-                    
-                    if (updateError) {
-                        console.error('Error updating total_shots:', updateError);
-                    } else {
-                        console.log('Updated total_shots for player_id:', payload.new.player_id);
-                    }
-
-                    // Refresh data to reflect the real-time change
+                async () => {
+                    // Re-fetch the stats data whenever a new shot is added
                     fetchPlayerStats();
                 }
             )

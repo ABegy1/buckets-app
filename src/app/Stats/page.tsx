@@ -8,7 +8,7 @@ const StatsPage: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
     const [players, setPlayers] = useState<
-        { player_id: number; name: string; seasons_played: number; mvp_awards: number; team_wins: number; total_shots: number; total_score: number }[]
+        { player_id: number; name: string; seasons_played: number; mvp_awards: number; team_wins: number; total_shots: number; total_score: number; high: number; low: number; average_score: number; points_per_shot: number }[]
     >([]);
 
     const handleNavigation = (page: string) => {
@@ -25,10 +25,10 @@ const StatsPage: React.FC = () => {
             
             if (playersError) throw playersError;
 
-            // Step 2: Fetch `total_score` and `total_shots` from `stats`
+            // Step 2: Fetch `total_score`, `total_shots`, `high`, and `low` from `stats`
             const { data: statsData, error: statsError } = await supabase
                 .from('stats')
-                .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score');
+                .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score, high, low');
             
             if (statsError) throw statsError;
 
@@ -52,7 +52,7 @@ const StatsPage: React.FC = () => {
 
             if (instanceError) throw instanceError;
 
-            // Step 5: Combine data for each player, adding up `total_score` and calculating shots taken
+            // Step 5: Combine data for each player, adding up `total_score`, `high`, and `low`, and calculating shots taken
             const combinedData = playersData.map(player => {
                 const playerStats = statsData.find(stat => stat.player_id === player.player_id);
                 const currentInstance = currentSeasonData.find(instance => instance.player_id === player.player_id);
@@ -62,14 +62,28 @@ const StatsPage: React.FC = () => {
                 // Calculate shots taken this season
                 const currentSeasonShots = seasonShotTotal - shotsLeft;
 
+                // Calculate total values
+                const totalShots = (playerStats ? playerStats.total_shots : 0) + currentSeasonShots;
+                const totalScore = (playerStats ? playerStats.total_score : 0) + currentSeasonScore;
+                const high = playerStats ? playerStats.high : 0;
+                const low = playerStats ? playerStats.low : 1; // Use 1 to avoid division by zero
+
+                // Calculate average score and points per shot
+                const averageScore = high / low;
+                const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
+
                 return {
                     player_id: player.player_id,
                     name: player.name,
                     seasons_played: playerStats ? playerStats.seasons_played : 0,
                     mvp_awards: playerStats ? playerStats.mvp_awards : 0,
                     team_wins: playerStats ? playerStats.team_wins : 0,
-                    total_shots: (playerStats ? playerStats.total_shots : 0) + currentSeasonShots,
-                    total_score: (playerStats ? playerStats.total_score : 0) + currentSeasonScore,
+                    total_shots: totalShots,
+                    total_score: totalScore,
+                    high: high,
+                    low: low,
+                    average_score: averageScore,
+                    points_per_shot: pointsPerShot,
                 };
             });
 
@@ -128,6 +142,10 @@ const StatsPage: React.FC = () => {
                                     <p>Team Wins: {player.team_wins}</p>
                                     <p>Total Shots: {player.total_shots}</p>
                                     <p>Total Score: {player.total_score}</p>
+                                    <p>High Score: {player.high}</p>
+                                    <p>Low Score: {player.low}</p>
+                                    <p>Average Score: {player.average_score.toFixed(2)}</p>
+                                    <p>Points Per Shot: {player.points_per_shot.toFixed(2)}</p>
                                 </div>
                             ))}
                         </div>

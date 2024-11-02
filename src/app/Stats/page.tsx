@@ -32,29 +32,35 @@ const StatsPage: React.FC = () => {
             
             if (statsError) throw statsError;
 
-            // Step 3: Get the current season ID (where `end_date` is NULL)
+            // Step 3: Get the current season data where `end_date` is NULL
             const { data: currentSeason, error: seasonError } = await supabase
                 .from('seasons')
-                .select('season_id')
+                .select('season_id, shot_total')
                 .is('end_date', null)
                 .single();
 
             if (seasonError || !currentSeason) throw seasonError;
 
             const currentSeasonId = currentSeason.season_id;
+            const seasonShotTotal = currentSeason.shot_total;
 
-            // Step 4: Fetch current season scores from `player_instance`
+            // Step 4: Fetch current season scores and shots left from `player_instance`
             const { data: currentSeasonData, error: instanceError } = await supabase
                 .from('player_instance')
-                .select('player_id, score')
+                .select('player_id, score, shots_left')
                 .eq('season_id', currentSeasonId);
 
             if (instanceError) throw instanceError;
 
-            // Step 5: Combine data by adding `total_score` from `stats` with `score` from the current season
+            // Step 5: Combine data for each player, adding up `total_score` and calculating shots taken
             const combinedData = playersData.map(player => {
                 const playerStats = statsData.find(stat => stat.player_id === player.player_id);
-                const currentSeasonScore = currentSeasonData.find(instance => instance.player_id === player.player_id)?.score || 0;
+                const currentInstance = currentSeasonData.find(instance => instance.player_id === player.player_id);
+                const currentSeasonScore = currentInstance?.score || 0;
+                const shotsLeft = currentInstance?.shots_left || 0;
+                
+                // Calculate shots taken this season
+                const currentSeasonShots = seasonShotTotal - shotsLeft;
 
                 return {
                     player_id: player.player_id,
@@ -62,7 +68,7 @@ const StatsPage: React.FC = () => {
                     seasons_played: playerStats ? playerStats.seasons_played : 0,
                     mvp_awards: playerStats ? playerStats.mvp_awards : 0,
                     team_wins: playerStats ? playerStats.team_wins : 0,
-                    total_shots: playerStats ? playerStats.total_shots : 0,
+                    total_shots: (playerStats ? playerStats.total_shots : 0) + currentSeasonShots,
                     total_score: (playerStats ? playerStats.total_score : 0) + currentSeasonScore,
                 };
             });

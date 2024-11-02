@@ -1,5 +1,5 @@
-'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+'use client'; // Required in Next.js App Router
+import React, { useEffect, useState, useCallback } from 'react';
 import styles from './Stats.module.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/supabaseClient';
@@ -7,64 +7,48 @@ import { supabase } from '@/supabaseClient';
 const StatsPage: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
-    const [players, setPlayers] = useState<{ player_id: number; name: string }[]>([]);
-    const [playerStats, setPlayerStats] = useState<{ [key: number]: { seasonsPlayed: number } }>({});
+    const [players, setPlayers] = useState<{ player_id: number; name: string; seasons_played: number | null }[]>([]);
 
     const handleNavigation = (page: string) => {
         router.push(`/${page}`);
     };
 
-    // Enhanced fetch with debug logs
+    // Fetch players with seasons_played using LEFT JOIN query
     const fetchPlayerStats = useCallback(async () => {
-        console.log('fetchPlayerStats: Start fetching players with seasons_played');
-        
-        // Fetch players and their seasons_played in one query
+        console.log('Fetching players with seasons_played');
+
         const { data, error } = await supabase
-            .from('players')
-            .select(`
-                player_id,
-                name,
-                stats (
-                    seasons_played
-                )
-            `);
-    
+            .rpc('custom_query', { // Replace with your own function if needed
+                sql: `
+                SELECT
+                    p.player_id,
+                    p.name,
+                    s.seasons_played
+                FROM
+                    public.players p
+                LEFT JOIN
+                    public.stats s 
+                ON
+                    p.player_id = s.player_id;
+                `
+            });
+
         if (error) {
-            console.error('Error fetching players with seasons_played:', error);
+            console.error('Error fetching player stats:', error);
             return;
         }
-        
+
         if (!data || data.length === 0) {
-            console.warn('No players or stats found');
+            console.warn('No players or stats data found');
             return;
         }
-    
-        console.log('fetchPlayerStats: Fetched players with seasons_played:', data);
-    
-        // Transform data to map player stats as needed
-        const newPlayerStats = data.reduce((acc: { [key: number]: { seasonsPlayed: number } }, player: { player_id: number; stats: { seasons_played: number }[] }) => {
-            acc[player.player_id] = { seasonsPlayed: player.stats[0]?.seasons_played || 0 };
-            return acc;
-        }, {});
-    
+
+        console.log('Players with seasons_played:', data);
         setPlayers(data);
-        setPlayerStats(newPlayerStats);
     }, []);
 
     useEffect(() => {
         fetchPlayerStats();
-
-        const statsChannel = supabase
-            .channel('stats-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, (payload) => {
-                console.log('Real-time update received from stats table:', payload);
-                fetchPlayerStats();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(statsChannel);
-        };
     }, [fetchPlayerStats]);
 
     return (
@@ -107,7 +91,7 @@ const StatsPage: React.FC = () => {
                             {players.map(player => (
                                 <div key={player.player_id} className={styles.playerStat}>
                                     <h2>{player.name}</h2>
-                                    <p>Seasons Played: {playerStats[player.player_id]?.seasonsPlayed || 0}</p>
+                                    <p>Seasons Played: {player.seasons_played ?? 0}</p>
                                 </div>
                             ))}
                         </div>

@@ -161,7 +161,73 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     if (seasonError) throw seasonError;
     const seasonShotTotal = currentSeason?.shot_total || 0;
   
-    // Calculate team and player stats for the current season
+    // Step 1: Calculate team and player stats for the current season
+    // Find the team with the highest score
+    const { data: highestScoringTeam, error: highestTeamError } = await supabase
+      .from('teams')
+      .select('team_id, team_score')
+      .order('team_score', { ascending: false })
+      .limit(1)
+      .single();
+  
+    if (highestTeamError) throw highestTeamError;
+  
+    if (highestScoringTeam) {
+      // Update team_wins for each player on the winning team
+      const { data: teamPlayers, error: teamPlayersError } = await supabase
+        .from('players')
+        .select('player_id')
+        .eq('team_id', highestScoringTeam.team_id);
+  
+      if (teamPlayersError) throw teamPlayersError;
+  
+      for (const player of teamPlayers) {
+        const { data: playerStats, error: playerStatsError } = await supabase
+          .from('stats')
+          .select('team_wins')
+          .eq('player_id', player.player_id)
+          .single();
+  
+        if (playerStatsError) throw playerStatsError;
+  
+        const newTeamWins = (playerStats?.team_wins || 0) + 1;
+        await supabase
+          .from('stats')
+          .update({ team_wins: newTeamWins })
+          .eq('player_id', player.player_id);
+      }
+    }
+  
+    // Find the player with the highest score and increment their MVP awards
+    const { data: topScoringPlayer, error: topPlayerError } = await supabase
+      .from('player_instance')
+      .select('player_id, score')
+      .eq('season_id', seasonId)
+      .order('score', { ascending: false })
+      .limit(1);
+  
+    if (topPlayerError) throw topPlayerError;
+  
+    if (topScoringPlayer && topScoringPlayer.length > 0) {
+      const topPlayer = topScoringPlayer[0];
+      const { data: mvpStats, error: mvpStatsError } = await supabase
+        .from('stats')
+        .select('mvp_awards')
+        .eq('player_id', topPlayer.player_id)
+        .single();
+  
+      if (mvpStatsError) throw mvpStatsError;
+  
+      const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
+      await supabase
+        .from('stats')
+        .update({ mvp_awards: newMvpAwards })
+        .eq('player_id', topPlayer.player_id);
+    } else {
+      console.warn('No top scoring player found for this season.');
+    }
+  
+    // Update seasons_played, high, low, total_score, and total_shots for each player
     for (const player of players) {
       // Retrieve all instances of the player for this season
       const { data: playerInstances, error: playerInstancesError } = await supabase
@@ -174,8 +240,14 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
       // Calculate the total score for this season by summing all player_instance scores
       const seasonScore = playerInstances.reduce((acc, instance) => acc + (instance.score || 0), 0);
+      console.log(`Player ${player.player_id} season score:`, seasonScore);
   
-      // Retrieve current stats to get the existing total_score
+      // Calculate the minimum shots_left across all instances
+      const shotsLeft = Math.min(...playerInstances.map(instance => instance.shots_left || seasonShotTotal));
+      const shotsTaken = seasonShotTotal - shotsLeft;
+      console.log(`Player ${player.player_id} shots taken:`, shotsTaken);
+  
+      // Retrieve current stats to get the existing total_score and other fields
       const { data: playerStats, error: playerStatsError } = await supabase
         .from('stats')
         .select('seasons_played, high, low, total_score, total_shots')
@@ -185,18 +257,45 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       if (playerStatsError) throw playerStatsError;
   
       const currentTotalScore = playerStats?.total_score || 0;
+      console.log(`Player ${player.player_id} current total score:`, currentTotalScore);
   
-      // Calculate the new total score
+      // Calculate the new total score by adding the season's score to the existing total_score
       const newTotalScore = currentTotalScore + seasonScore;
+      console.log(`Player ${player.player_id} new total score:`, newTotalScore);
   
-      // Other fields, such as high, low, and seasons_played, would be handled here if necessary.
+      // Initialize high and low scores if they are 0
+      let newHigh = playerStats?.high === 0 ? seasonScore : playerStats?.high;
+      let newLow = playerStats?.low === 0 ? seasonScore : playerStats?.low;
+      console.log(`Player ${player.player_id} initial high: ${newHigh}, initial low: ${newLow}`);
+  
+      // Update high and low based on current season score
+      if (seasonScore > newHigh) {
+        console.log(`Updating high for player ${player.player_id}:`, seasonScore);
+        newHigh = seasonScore;
+      }
+      if (seasonScore < newLow) {
+        console.log(`Updating low for player ${player.player_id}:`, seasonScore);
+        newLow = seasonScore;
+      }
+  
+      const newSeasonsPlayed = (playerStats?.seasons_played || 0) + 1;
+      const newTotalShots = (playerStats?.total_shots || 0) + shotsTaken;
+  
+      console.log(`Final values for player ${player.player_id} - Seasons Played: ${newSeasonsPlayed}, High: ${newHigh}, Low: ${newLow}, Total Score: ${newTotalScore}, Total Shots: ${newTotalShots}`);
+  
       await supabase
         .from('stats')
-        .update({ total_score: newTotalScore })
+        .update({
+          seasons_played: newSeasonsPlayed,
+          high: newHigh,
+          low: newLow,
+          total_score: newTotalScore,
+          total_shots: newTotalShots,
+        })
         .eq('player_id', player.player_id);
     }
   
-    // Set the end date for the current season
+    // Step 2: Set the end date for the current season
     const currentDate = new Date().toISOString();
     const { error: closeSeasonError } = await supabase
       .from('seasons')
@@ -205,7 +304,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     if (closeSeasonError) throw closeSeasonError;
   };
-  
   
 // Separate function to create a new season
 const createNewSeason = async (): Promise<number | null> => {

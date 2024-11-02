@@ -73,13 +73,27 @@ const StatsPage: React.FC = () => {
                     const previousScore = payload.old.score;
                     const scoreDifference = updatedScore - previousScore;
 
-                    const { error } = await supabase
+                    // Fetch current total_score, add the difference, and update
+                    const { data: statsData, error: statsError } = await supabase
                         .from('stats')
-                        .update({ total_score: supabase.rpc('increment', { column: 'total_score', value: scoreDifference }) })
+                        .select('total_score')
+                        .eq('player_id', payload.new.player_id)
+                        .single();
+
+                    if (statsError || !statsData) {
+                        console.error('Error fetching current total_score:', statsError);
+                        return;
+                    }
+
+                    const newTotalScore = statsData.total_score + scoreDifference;
+
+                    const { error: updateError } = await supabase
+                        .from('stats')
+                        .update({ total_score: newTotalScore })
                         .eq('player_id', payload.new.player_id);
                     
-                    if (error) {
-                        console.error('Error updating total_score:', error);
+                    if (updateError) {
+                        console.error('Error updating total_score:', updateError);
                     } else {
                         console.log('Updated total_score for player_id:', payload.new.player_id);
                     }
@@ -96,13 +110,27 @@ const StatsPage: React.FC = () => {
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'shots' },
                 async (payload) => {
-                    const { error } = await supabase
+                    // Fetch current total_shots, increment by 1, and update
+                    const { data: statsData, error: statsError } = await supabase
                         .from('stats')
-                        .update({ total_shots: supabase.rpc('increment', { column: 'total_shots', value: 1 }) })
+                        .select('total_shots')
+                        .eq('player_id', payload.new.player_id)
+                        .single();
+
+                    if (statsError || !statsData) {
+                        console.error('Error fetching current total_shots:', statsError);
+                        return;
+                    }
+
+                    const newTotalShots = statsData.total_shots + 1;
+
+                    const { error: updateError } = await supabase
+                        .from('stats')
+                        .update({ total_shots: newTotalShots })
                         .eq('player_id', payload.new.player_id);
                     
-                    if (error) {
-                        console.error('Error updating total_shots:', error);
+                    if (updateError) {
+                        console.error('Error updating total_shots:', updateError);
                     } else {
                         console.log('Updated total_shots for player_id:', payload.new.player_id);
                     }

@@ -188,32 +188,35 @@ const closeOutCurrentSeason = async (seasonId: number) => {
     }
   }
 
-  // Find the player with the highest score and increment their MVP awards
-  const { data: topScoringPlayer, error: topPlayerError } = await supabase
-    .from('player_instance')
-    .select('player_id, score')
-    .eq('season_id', seasonId)
-    .order('score', { ascending: false })
-    .limit(1)
-    .single();
+ // Find the player with the highest score and increment their MVP awards
+const { data: topScoringPlayer, error: topPlayerError } = await supabase
+.from('player_instance')
+.select('player_id, score')
+.eq('season_id', seasonId)
+.order('score', { ascending: false })
+.limit(1);
 
-  if (topPlayerError) throw topPlayerError;
+if (topPlayerError) throw topPlayerError;
 
-  if (topScoringPlayer) {
-    const { data: mvpStats, error: mvpStatsError } = await supabase
-      .from('stats')
-      .select('mvp_awards')
-      .eq('player_id', topScoringPlayer.player_id)
-      .single();
+// Check if there is a top scoring player, as the result could be empty
+if (topScoringPlayer && topScoringPlayer.length > 0) {
+const topPlayer = topScoringPlayer[0];
+const { data: mvpStats, error: mvpStatsError } = await supabase
+  .from('stats')
+  .select('mvp_awards')
+  .eq('player_id', topPlayer.player_id)
+  .single();
 
-    if (mvpStatsError) throw mvpStatsError;
+if (mvpStatsError) throw mvpStatsError;
 
-    const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
-    await supabase
-      .from('stats')
-      .update({ mvp_awards: newMvpAwards })
-      .eq('player_id', topScoringPlayer.player_id);
-  }
+const newMvpAwards = (mvpStats?.mvp_awards || 0) + 1;
+await supabase
+  .from('stats')
+  .update({ mvp_awards: newMvpAwards })
+  .eq('player_id', topPlayer.player_id);
+} else {
+console.warn('No top scoring player found for this season.');
+}
 
   // Update seasons_played, high, low, total_score, and total_shots for each player
   for (const player of players) {

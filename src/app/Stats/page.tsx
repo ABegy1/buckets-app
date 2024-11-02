@@ -7,41 +7,48 @@ import { supabase } from '@/supabaseClient';
 const StatsPage: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
-    const [players, setPlayers] = useState<{ player_id: number; name: string; seasons_played: number | null }[]>([]);
+    const [players, setPlayers] = useState<{ player_id: number; name: string; seasons_played: number }[]>([]);
 
     const handleNavigation = (page: string) => {
         router.push(`/${page}`);
     };
 
-    // Fetch players with seasons_played using LEFT JOIN query
+    // Fetch players and their seasons_played separately, then combine the data
     const fetchPlayerStats = useCallback(async () => {
-        console.log('Fetching players with seasons_played');
-    
-        const { data, error } = await supabase
+        console.log('Fetching players and their seasons_played');
+
+        // Step 1: Fetch player names from the players table
+        const { data: playersData, error: playersError } = await supabase
             .from('players')
-            .select(`
-                player_id,
-                name,
-                stats:seasons_played
-            `);
-    
-        if (error) {
-            console.error('Error fetching player stats:', error);
+            .select('player_id, name');
+        
+        if (playersError) {
+            console.error('Error fetching players:', playersError);
             return;
         }
-    
-        if (!data || data.length === 0) {
-            console.warn('No players or stats data found');
+
+        // Step 2: Fetch seasons_played from the stats table
+        const { data: statsData, error: statsError } = await supabase
+            .from('stats')
+            .select('player_id, seasons_played');
+        
+        if (statsError) {
+            console.error('Error fetching stats:', statsError);
             return;
         }
-    
-        console.log('Players with seasons_played:', data);
-        const formattedData = data.map(player => ({
-            player_id: player.player_id,
-            name: player.name,
-            seasons_played: player.stats
-        }));
-        setPlayers(formattedData);
+
+        // Step 3: Combine data by matching player_id
+        const combinedData = playersData.map(player => {
+            const playerStats = statsData.find(stat => stat.player_id === player.player_id);
+            return {
+                player_id: player.player_id,
+                name: player.name,
+                seasons_played: playerStats ? playerStats.seasons_played : 0
+            };
+        });
+
+        console.log('Combined player stats data:', combinedData);
+        setPlayers(combinedData);
     }, []);
     
     useEffect(() => {
@@ -88,7 +95,7 @@ const StatsPage: React.FC = () => {
                             {players.map(player => (
                                 <div key={player.player_id} className={styles.playerStat}>
                                     <h2>{player.name}</h2>
-                                    <p>Seasons Played: {player.seasons_played ?? 0}</p>
+                                    <p>Seasons Played: {player.seasons_played}</p>
                                 </div>
                             ))}
                         </div>

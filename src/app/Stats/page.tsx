@@ -61,6 +61,48 @@ const StatsPage: React.FC = () => {
         setPlayers(combinedData);
     }, []);
     
+    // Real-time subscription to update total_score and total_shots
+    useEffect(() => {
+        const scoreChannel = supabase.channel('player_instance_updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'player_instance' }, async (payload) => {
+                const updatedScore = payload.new.score;
+                const previousScore = payload.old.score;
+                const scoreDifference = updatedScore - previousScore;
+
+                const { error } = await supabase
+                    .from('stats')
+                    .update({ total_score: supabase.rpc('increment', { column: 'total_score', value: scoreDifference }) })
+                    .eq('player_id', payload.new.player_id);
+                
+                if (error) {
+                    console.error('Error updating total_score:', error);
+                } else {
+                    console.log('Updated total_score for player_id:', payload.new.player_id);
+                }
+            })
+            .subscribe();
+
+        const shotChannel = supabase.channel('shots_inserts')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shots' }, async (payload) => {
+                const { error } = await supabase
+                    .from('stats')
+                    .update({ total_shots: supabase.rpc('increment', { column: 'total_shots', value: 1 }) })
+                    .eq('player_id', payload.new.player_id);
+                
+                if (error) {
+                    console.error('Error updating total_shots:', error);
+                } else {
+                    console.log('Updated total_shots for player_id:', payload.new.player_id);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(scoreChannel);
+            supabase.removeChannel(shotChannel);
+        };
+    }, []);
+
     useEffect(() => {
         fetchPlayerStats();
     }, [fetchPlayerStats]);

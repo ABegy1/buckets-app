@@ -1,0 +1,34 @@
+/* PlayerTierStats.module.css */
+
+.tierStatsContainer {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-top: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+.tierStat {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #ffffff;
+}
+
+.tierStat h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.tierStat p {
+    margin: 0.3rem 0;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* Optional styling to make values bold for readability */
+.tierStat p span {
+    font-weight: bold;
+}

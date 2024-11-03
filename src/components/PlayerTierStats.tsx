@@ -24,6 +24,7 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
     useEffect(() => {
         const fetchTierStats = async () => {
             try {
+                // Step 1: Fetch base tier stats for the player
                 const { data: tierStatsData, error: tierStatsError } = await supabase
                     .from('tier_stats')
                     .select('tier_id, total_score, total_shots, high, low')
@@ -31,29 +32,62 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
 
                 if (tierStatsError) throw tierStatsError;
 
+                // Step 2: Fetch tier names
                 const { data: tiersData, error: tiersError } = await supabase
                     .from('tiers')
                     .select('tier_id, tier_name');
 
                 if (tiersError) throw tiersError;
 
-                const mappedTierStats = tierStatsData.map(tierStat => {
+                // Step 3: Get the current season where `end_date` is NULL
+                const { data: currentSeason, error: seasonError } = await supabase
+                    .from('seasons')
+                    .select('season_id')
+                    .is('end_date', null)
+                    .single();
+
+                if (seasonError || !currentSeason) throw seasonError;
+
+                const currentSeasonId = currentSeason.season_id;
+
+                // Step 4: Fetch player's current season shot data filtered by tier
+                const { data: shotsData, error: shotsError } = await supabase
+                    .from('shots')
+                    .select('result, tier_id')
+                    .eq('instance_id', playerId) // Assuming instance_id is unique per player in `player_instance`
+                    .eq('season_id', currentSeasonId);
+
+                if (shotsError) throw shotsError;
+
+                // Step 5: Calculate real-time tier stats by combining base stats and current season shots
+                const updatedTierStats = tierStatsData.map(tierStat => {
                     const tier = tiersData.find(t => t.tier_id === tierStat.tier_id);
-                    const tierAverageScore = (tierStat.high + tierStat.low) / 2;
-                    const tierPointsPerShot = tierStat.total_shots > 0 ? tierStat.total_score / tierStat.total_shots : 0;
+                    const tierShots = shotsData.filter(shot => shot.tier_id === tierStat.tier_id);
+
+                    // Current season calculations for tier
+                    const currentTotalScore = tierShots.reduce((acc, shot) => acc + shot.result, 0);
+                    const currentTotalShots = tierShots.length;
+                    const currentHigh = Math.max(tierStat.high, ...tierShots.map(shot => shot.result));
+                    const currentLow = Math.min(tierStat.low, ...tierShots.map(shot => shot.result), 1); // Avoid division by zero
+
+                    // Combine base stats and current season data
+                    const totalScore = tierStat.total_score + currentTotalScore;
+                    const totalShots = tierStat.total_shots + currentTotalShots;
+                    const averageScore = (currentHigh + currentLow) / 2;
+                    const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
 
                     return {
                         tier_name: tier ? tier.tier_name : 'Unknown',
-                        total_score: tierStat.total_score,
-                        total_shots: tierStat.total_shots,
-                        high: tierStat.high,
-                        low: tierStat.low,
-                        average_score: tierAverageScore,
-                        points_per_shot: tierPointsPerShot,
+                        total_score: totalScore,
+                        total_shots: totalShots,
+                        high: currentHigh,
+                        low: currentLow,
+                        average_score: averageScore,
+                        points_per_shot: pointsPerShot,
                     };
                 });
 
-                setTierStats(mappedTierStats);
+                setTierStats(updatedTierStats);
             } catch (error) {
                 console.error('Error fetching tier stats:', error);
             }

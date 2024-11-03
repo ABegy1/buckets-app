@@ -1,4 +1,3 @@
-// PlayerTierStats.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import styles from './PlayerTierStats.module.css';
@@ -19,6 +18,7 @@ interface TierStat {
 
 const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
     const [tierStats, setTierStats] = useState<TierStat[]>([]);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
         const fetchTierStats = async () => {
@@ -61,19 +61,28 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
         fetchTierStats();
     }, [playerId]);
 
+    const toggleExpansion = () => setIsExpanded(!isExpanded);
+
     return (
         <div className={styles.tierStatsContainer}>
-            {tierStats.map((tier, index) => (
-                <div key={index} className={styles.tierStat}>
-                    <h3>Tier: {tier.tier_name}</h3>
-                    <p>Total Score: {tier.total_score}</p>
-                    <p>Total Shots: {tier.total_shots}</p>
-                    <p>High Score: {tier.high}</p>
-                    <p>Low Score: {tier.low}</p>
-                    <p>Average Score: {tier.average_score.toFixed(2)}</p>
-                    <p>Points Per Shot: {tier.points_per_shot.toFixed(2)}</p>
+            <button onClick={toggleExpansion} className={styles.toggleButton}>
+                {isExpanded ? 'Hide Tier Stats' : 'Show Tier Stats'}
+            </button>
+            {isExpanded && (
+                <div className={styles.tierStatsContent}>
+                    {tierStats.map((tier, index) => (
+                        <div key={index} className={styles.tierStat}>
+                            <h3>Tier: {tier.tier_name}</h3>
+                            <p>Total Score: {tier.total_score}</p>
+                            <p>Total Shots: {tier.total_shots}</p>
+                            <p>High Score: {tier.high}</p>
+                            <p>Low Score: {tier.low}</p>
+                            <p>Average Score: {tier.average_score.toFixed(2)}</p>
+                            <p>Points Per Shot: {tier.points_per_shot.toFixed(2)}</p>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            )}
         </div>
     );
 };

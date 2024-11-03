@@ -2,21 +2,41 @@
 
 .tierStatsContainer {
     margin-top: 1rem;
-    padding: 1rem;
+    padding: 0.5rem;
     border-top: 1px solid #ccc;
     background-color: #f9f9f9;
 }
 
-.tierStat {
-    margin-bottom: 1rem;
+.toggleButton {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    text-align: left;
+    width: 100%;
+}
+
+.toggleButton:hover {
+    text-decoration: underline;
+}
+
+.tierStatsContent {
     padding: 0.5rem;
     border: 1px solid #ddd;
     border-radius: 5px;
     background-color: #ffffff;
 }
 
+.tierStat {
+    margin-bottom: 1rem;
+}
+
 .tierStat h3 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #333;
     margin-bottom: 0.5rem;
@@ -26,9 +46,4 @@
     margin: 0.3rem 0;
     font-size: 0.95rem;
     color: #555;
-}
-
-/* Optional styling to make values bold for readability */
-.tierStat p span {
-    font-weight: bold;
 }

@@ -320,6 +320,7 @@ const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
             : stats.seasonScore;
         const newSeasonsPlayed = (playerStat.seasons_played || 0) + 1;
         const newTotalShots = (playerStat.total_shots || 0) + shotsTaken;
+        console.log(shotsTaken)
   
         const { error: updateStatsError } = await supabase
           .from('stats')

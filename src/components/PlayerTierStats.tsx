@@ -50,16 +50,26 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
 
                 const currentSeasonId = currentSeason.season_id;
 
-                // Step 4: Fetch player's current season shot data filtered by tier
+                // Step 4: Fetch player's current season player_instance records
+                const { data: playerInstanceData, error: instanceError } = await supabase
+                    .from('player_instance')
+                    .select('player_instance_id')
+                    .eq('season_id', currentSeasonId)
+                    .eq('player_id', playerId);
+
+                if (instanceError) throw instanceError;
+
+                const playerInstanceIds = playerInstanceData.map(instance => instance.player_instance_id);
+
+                // Step 5: Fetch current season shots by instance IDs and tier
                 const { data: shotsData, error: shotsError } = await supabase
                     .from('shots')
                     .select('result, tier_id')
-                    .eq('instance_id', playerId) // Assuming instance_id is unique per player in `player_instance`
-                    .eq('season_id', currentSeasonId);
+                    .in('instance_id', playerInstanceIds);
 
                 if (shotsError) throw shotsError;
 
-                // Step 5: Calculate real-time tier stats by combining base stats and current season shots
+                // Step 6: Calculate real-time tier stats by combining base stats and current season shots
                 const updatedTierStats = tierStatsData.map(tierStat => {
                     const tier = tiersData.find(t => t.tier_id === tierStat.tier_id);
                     const tierShots = shotsData.filter(shot => shot.tier_id === tierStat.tier_id);

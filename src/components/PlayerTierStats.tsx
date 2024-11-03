@@ -69,30 +69,27 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
 
                 if (shotsError) throw shotsError;
 
-                // Step 6: Calculate real-time tier stats by combining base stats and current season shots
+                // Step 6: Calculate real-time total_score and total_shots by combining base stats with current season shots
                 const updatedTierStats = tierStatsData.map(tierStat => {
                     const tier = tiersData.find(t => t.tier_id === tierStat.tier_id);
                     const tierShots = shotsData.filter(shot => shot.tier_id === tierStat.tier_id);
 
-                    // Current season calculations for tier
+                    // Current season calculations for this tier
                     const currentTotalScore = tierShots.reduce((acc, shot) => acc + shot.result, 0);
                     const currentTotalShots = tierShots.length;
-                    const currentHigh = Math.max(tierStat.high, ...tierShots.map(shot => shot.result));
-                    const currentLow = Math.min(tierStat.low, ...tierShots.map(shot => shot.result), 1); // Avoid division by zero
 
-                    // Combine base stats and current season data
+                    // Combine base stats with current season data
                     const totalScore = tierStat.total_score + currentTotalScore;
                     const totalShots = tierStat.total_shots + currentTotalShots;
-                    const averageScore = (currentHigh + currentLow) / 2;
                     const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
 
                     return {
                         tier_name: tier ? tier.tier_name : 'Unknown',
                         total_score: totalScore,
                         total_shots: totalShots,
-                        high: currentHigh,
-                        low: currentLow,
-                        average_score: averageScore,
+                        high: tierStat.high,  // Unchanged, as specified
+                        low: tierStat.low,    // Unchanged, as specified
+                        average_score: (tierStat.high + tierStat.low) / 2,  // Calculated once based on base stats
                         points_per_shot: pointsPerShot,
                     };
                 });

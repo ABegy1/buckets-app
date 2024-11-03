@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styles from './Stats.module.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/supabaseClient';
+import PlayerTierStats from '@/components/PlayerTierStats';
 
 const StatsPage: React.FC = () => {
     const router = useRouter();
@@ -146,6 +147,7 @@ const StatsPage: React.FC = () => {
                                     <p>Low Score: {player.low}</p>
                                     <p>Average Score: {player.average_score.toFixed(2)}</p>
                                     <p>Points Per Shot: {player.points_per_shot.toFixed(2)}</p>
+                                    <PlayerTierStats playerId={player.player_id} />
                                 </div>
                             ))}
                         </div>

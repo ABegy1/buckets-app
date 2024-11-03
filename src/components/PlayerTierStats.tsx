@@ -1,3 +1,4 @@
+// PlayerTierStats.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 import styles from './PlayerTierStats.module.css';
@@ -61,7 +62,7 @@ const PlayerTierStats: React.FC<PlayerTierStatsProps> = ({ playerId }) => {
         fetchTierStats();
     }, [playerId]);
 
-    const toggleExpansion = () => setIsExpanded(!isExpanded);
+    const toggleExpansion = () => setIsExpanded(prev => !prev);
 
     return (
         <div className={styles.tierStatsContainer}>

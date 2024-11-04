@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     try {
       // Step 1: Fetch the current season
       const { data: currentSeason, error: seasonError } = await supabase
-        .from('season')
+        .from('seasons')
         .select('season_id')
         .is('end_date', null)
         .single();

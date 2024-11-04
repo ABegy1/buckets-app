@@ -122,6 +122,17 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
+    const generateUniqueShotId = () => {
+      const timestamp = Date.now(); // Current timestamp in milliseconds
+      const randomNum = Math.floor(Math.random() * 1000); // Random number between 0 and 999
+      const shotIdStr = `${timestamp}${randomNum}`; // Combine timestamp and random number
+      const shotIdInt = parseInt(shotIdStr.slice(-9), 10); // Get last 9 digits to fit int4
+    
+      return shotIdInt;
+    };
+    
+    // Usage in your handleSubmit function
+    const shotId = generateUniqueShotId();
   
     try {
       // Insert new shot with tier_id
@@ -130,6 +141,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         shot_date: new Date().toISOString(),
         result: finalPoints,
         tier_id: tierId, // Include tier_id in shot record
+        shot_id: shotId,
       });
   
       if (shotError) {

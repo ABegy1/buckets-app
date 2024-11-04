@@ -1,10 +1,12 @@
 'use client'
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
+import { Howl } from 'howler';
+
 
 
 
@@ -75,6 +77,8 @@ const FreeAgencyPage: React.FC = () => {
   const [freeAgents, setFreeAgents] = useState<any[]>([]); 
   const router = useRouter();
   const pathname = usePathname();
+  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
+  const previousFreeAgentsRef = useRef<any[]>([]);
 
   const handleNavigation = (page: string) => {
     router.push(`/${page}`);
@@ -183,6 +187,36 @@ const FreeAgencyPage: React.FC = () => {
     fetchFreeAgents();
     subscribeToRealTimeUpdates();
   }, [subscribeToRealTimeUpdates]);
+
+  useEffect(() => {
+    // Skip comparison on the initial render
+    if (previousFreeAgentsRef.current.length === 0) {
+      previousFreeAgentsRef.current = freeAgents;
+      return;
+    }
+
+    const previousFreeAgents = previousFreeAgentsRef.current;
+
+    freeAgents.forEach((player) => {
+      let previousStreak = 0;
+
+      const previousPlayer = previousFreeAgents.find(
+        (prevPlayer) => prevPlayer.name === player.name
+      );
+
+      if (previousPlayer) {
+        previousStreak = previousPlayer.current_streak;
+      }
+
+      if (player.current_streak >= 3 && previousStreak < 3) {
+        // Play the sound when a player reaches a streak of 3 or more
+        sound.play();
+      }
+    });
+
+    // Update the previous freeAgents reference with the current state
+    previousFreeAgentsRef.current = freeAgents;
+  }, [freeAgents, sound]);
 
   return (
     <div className={styles.userContainer}>

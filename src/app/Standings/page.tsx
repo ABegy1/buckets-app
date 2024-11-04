@@ -1,9 +1,12 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
+import { Howl } from 'howler';
+
+
 
 // @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
@@ -175,6 +178,9 @@ const StandingsPage: React.FC = () => {
   const [seasonRules, setSeasonRules] = useState<string>(''); 
   const router = useRouter();
   const pathname = usePathname();
+  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
+  const previousTeamsRef = useRef<TeamWithPlayers[]>([]);
+
 
   const handleNavigation = (page: string) => {
     router.push(`/${page}`);
@@ -455,6 +461,44 @@ const StandingsPage: React.FC = () => {
       };
     }
   }, [userView]);
+
+  useEffect(() => {
+    // Skip comparison on the initial render
+    if (previousTeamsRef.current.length === 0) {
+      previousTeamsRef.current = teams;
+      return;
+    }
+
+    const previousTeams = previousTeamsRef.current;
+
+    teams.forEach((team) => {
+      const previousTeam = previousTeams.find(
+        (prevTeam) => prevTeam.team_name === team.team_name
+      );
+
+      team.players.forEach((player) => {
+        let previousShotsMadeInRow = 0;
+
+        if (previousTeam) {
+          const previousPlayer = previousTeam.players.find(
+            (prevPlayer) => prevPlayer.name === player.name
+          );
+          if (previousPlayer) {
+            previousShotsMadeInRow = previousPlayer.shots_made_in_row;
+          }
+        }
+
+        if (player.shots_made_in_row >= 3 && previousShotsMadeInRow < 3) {
+          // Play the sound when a player reaches a streak of 3 or more
+          sound.play();
+        }
+      });
+    });
+
+    // Update the previous teams reference with the current state
+    previousTeamsRef.current = teams;
+  }, [teams, sound]);
+
 
   return (
     <div className={styles.userContainer}>

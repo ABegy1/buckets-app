@@ -8,6 +8,8 @@ import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
+import { Howl } from 'howler';
+
 
 interface TierWithPlayers {
   tier_name: string;
@@ -32,6 +34,8 @@ const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [seasonName, setSeasonName] = useState<string>('');
   const [userView, setUserView] = useState<string>('');
+  const sound = new Howl({ src: ['/sounds/onfire.mp3'] });
+
 
   const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
 

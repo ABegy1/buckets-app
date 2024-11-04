@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import './modal.css';
 import { supabase } from '@/supabaseClient';
 import { Howl } from 'howler';
-import { MdAttachMoney } from "react-icons/md";
 
 
 interface ModalProps {
@@ -40,36 +39,48 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   // Fetch player instance and tier information
   const fetchPlayerInstanceAndTier = useCallback(async () => {
     try {
-      // Fetch player instance
+      // Step 1: Fetch the current season
+      const { data: currentSeason, error: seasonError } = await supabase
+        .from('season')
+        .select('season_id')
+        .is('end_date', null)
+        .single();
+  
+      if (seasonError || !currentSeason) {
+        console.error('Error fetching current season:', seasonError);
+        return;
+      }
+  
+      // Step 2: Fetch player instance for the current season
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
         .select('player_instance_id, score, shots_left, player_id')
         .eq('player_id', playerId)
-        .order('season_id', { ascending: false })
-        .limit(1);
-
-      if (instanceError || !playerInstance || playerInstance.length === 0) {
+        .eq('season_id', currentSeason.season_id) // Ensure it's the current season
+        .single();
+  
+      if (instanceError || !playerInstance) {
         console.error('Error fetching player instance:', instanceError);
         return;
       }
-
-      const instanceId = playerInstance[0].player_instance_id;
+  
+      const instanceId = playerInstance.player_instance_id;
       setPlayerInstanceId(instanceId);
-      setCurrentScore(playerInstance[0].score); // Set the current score
-      setShotsLeft(playerInstance[0].shots_left); // Set shots left
-
+      setCurrentScore(playerInstance.score); // Set the current score
+      setShotsLeft(playerInstance.shots_left); // Set shots left
+  
       // Fetch player's tier_id
       const { data: player, error: playerError } = await supabase
         .from('players')
         .select('tier_id')
         .eq('player_id', playerId)
         .single();
-
+  
       if (playerError || !player) {
         console.error('Error fetching player information:', playerError);
         return;
       }
-
+  
       setTierId(player.tier_id); // Set tier_id
     } catch (error) {
       console.error('Unexpected error:', error);

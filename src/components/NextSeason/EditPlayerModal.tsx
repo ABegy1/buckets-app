@@ -17,6 +17,8 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
   const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id);
   const [teamId, setTeamId] = useState<number>(player?.team_id || teams[0]?.team_id);
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(player?.is_free_agent || false);
+  const [isHidden, setIsHidden] = useState<boolean>(player?.is_hidden || false);
+
 
   useEffect(() => {
     if (player) {
@@ -24,6 +26,8 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
       setTierId(player.tier_id);
       setTeamId(player.team_id);
       setIsFreeAgent(player.is_free_agent);
+      setIsHidden(player.is_hidden);
+
     }
   }, [player, teams]);
 
@@ -34,7 +38,8 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
         name: playerName,
         tier_id: tierId,
         team_id: isFreeAgent ? null : teamId, // Set team_id to null if free agent
-        is_free_agent: isFreeAgent // Update free agent status
+        is_free_agent: isFreeAgent,
+        is_hidden: isHidden, // Update free agent status
       })
       .eq('player_id', player.player_id);
 
@@ -48,6 +53,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
       tier_id: tierId,
       team_id: isFreeAgent ? null : teamId,
       is_free_agent: isFreeAgent,
+      is_hidden: isHidden,
     });
     onClose();
   };
@@ -107,7 +113,16 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({ isOpen, onClose, play
               Free Agent
             </label>
           </div>
-
+          <div>
+  <label>
+    <input
+      type="checkbox"
+      checked={isHidden}
+      onChange={() => setIsHidden(!isHidden)}
+    />
+    Hide Player
+  </label>
+</div>
           <div className={styles.modalActions}>
             <button onClick={handleUpdatePlayer} className={styles.saveButton}>Save</button>
             <button onClick={onClose} className={styles.cancelButton}>Cancel</button>

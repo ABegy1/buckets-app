@@ -1,6 +1,6 @@
 .adjustTeams {
   width: 100%;
-  max-width: 900px; /* Adjust the width to fit both sections side by side */
+  max-width: 900px;
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
@@ -14,10 +14,27 @@
   color: #333;
 }
 
+/* 1) Use flex with custom ratios */
 .adjustTeams .sections-container {
   display: flex;
-  justify-content: space-between;
-  gap: 20px; /* Space between Player/Team Edit and Edit Team Names */
+  gap: 20px; /* Space between the table and team-edit sections */
+}
+
+/* 2) Give the table more space with flex:3 */
+.adjustTeams .table-container {
+  flex: 3; /* 3 parts for the player table */
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 3) Give the team-edit section less space with flex:1 */
+.adjustTeams .team-edit-container {
+  flex: 1; /* 1 part for the team name edit */
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* spacing between each team row */
 }
 
 .adjustTeams p {
@@ -25,54 +42,32 @@
   font-size: 1em;
   color: #666;
 }
-.adjustTeams .team-edit-container {
-  display: flex;
-  flex-wrap: wrap; /* Allows the items to wrap onto the next line if necessary */
-  gap: 20px; /* Adds spacing between items */
-  margin-top: 20px;
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-}
 
-.adjustTeams .table-container {
-  max-height: 400px; /* Set the max height for the scroll area */
-  overflow-y: auto; /* Enable vertical scrolling */
-  flex: 1; /* Ensures it takes up the appropriate space */
-}
 .adjustTeams .teamRow {
   display: flex;
   align-items: center;
-  margin-right: 20px; /* Adds space between each team row */
+  margin-right: 20px;
 }
 
 .adjustTeams .teamRow label {
   margin-right: 10px;
-  white-space: nowrap; /* Prevents the label from breaking into multiple lines */
+  white-space: nowrap;
 }
 
 .adjustTeams .teamRow input {
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 200px; /* Fixes the width for better alignment */
+  width: 200px; /* You can tweak this if needed */
 }
 
-@media (max-width: 768px) {
-  .adjustTeams .teamRow {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .adjustTeams .teamRow input {
-    width: 100%;
-  }
-}
+/* Table styling */
 .adjustTeams table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed; /* Ensures consistent column widths */
+  /* table-layout: fixed; 
+     Uncomment if you want columns to have equal/fixed widths. 
+     If you want them to auto-size, use: table-layout: auto; */
 }
 
 .adjustTeams thead {
@@ -81,14 +76,7 @@
   top: 0;
   z-index: 1;
 }
-.adjustTeams .team-edit-container {
-  max-height: 400px; /* Adjust the height as needed */
-  overflow-y: auto;  /* Enables vertical scrolling */
-  flex: 1; /* Ensures it takes up the appropriate space */
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Adds spacing between each team row */
-}
+
 .adjustTeams th,
 .adjustTeams td {
   padding: 12px 15px;
@@ -100,6 +88,7 @@
   background-color: #fafafa;
 }
 
+/* Dropdown & text input styling */
 .adjustTeams select {
   width: 100%;
   padding: 6px 12px;
@@ -115,7 +104,6 @@
   border-color: #007BFF;
 }
 
-/* Styling for input fields for player name and team name */
 .adjustTeams input[type="text"] {
   width: 100%;
   padding: 6px 12px;
@@ -124,7 +112,7 @@
   border-radius: 4px;
   background-color: #fff;
   font-size: 1em;
-  box-sizing: border-box; /* Ensure the input fields maintain their size */
+  box-sizing: border-box;
 }
 
 .adjustTeams input[type="text"]:focus {
@@ -132,6 +120,7 @@
   border-color: #007BFF;
 }
 
+/* Responsive adjustments */
 @media (max-width: 600px) {
   .adjustTeams {
     padding: 10px;
@@ -147,5 +136,10 @@
   .adjustTeams input[type="text"] {
     padding: 5px 10px;
     font-size: 0.9em;
+  }
+
+  /* Stacked layout for smaller screens */
+  .adjustTeams .sections-container {
+    flex-direction: column;
   }
 }

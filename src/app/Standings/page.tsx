@@ -465,7 +465,7 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(seasonChannel);
       };
     }
-  }, [userView]);
+  }, [userView,sound ]);
 
   return (
     <div className={styles.userContainer}>

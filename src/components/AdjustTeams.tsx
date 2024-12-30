@@ -52,7 +52,8 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     fetchPlayersAndTeams();
   }, [isOpen]);
 
-  const handleTeamChange = async (playerId: number, newTeamId: number) => {
+  const handleTeamChange = async (playerId: number, newTeamId: number | null) => {
+    // If you want "no team", pass in null instead of 0.
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
         return { ...player, team_id: newTeamId };
@@ -60,12 +61,12 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
       return player;
     });
     setPlayers(updatedPlayers);
-
+  
     const { error } = await supabase
       .from('players')
       .update({ team_id: newTeamId })
       .eq('player_id', playerId);
-
+  
     if (error) {
       console.error('Error updating player team:', error);
     }

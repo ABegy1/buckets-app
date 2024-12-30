@@ -17,13 +17,14 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     const fetchPlayersAndTeams = async () => {
       setLoading(true);
       try {
-        // Fetch players and their current teams
+        // 1) Fetch players and include is_hidden
         const { data: playerData, error: playerError } = await supabase
           .from('players')
           .select(`
             player_id,
             name,
-            team_id
+            team_id,
+            is_hidden
           `);
 
         if (playerError) {
@@ -52,15 +53,15 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     fetchPlayersAndTeams();
   }, [isOpen]);
 
+  // Update player's team / free agent status
   const handleTeamChange = async (playerId: number, newTeamId: number | null) => {
-    // If newTeamId is null => free agent; otherwise belongs to a team
     const isFreeAgent = newTeamId === null;
-  
-    // Locally update `players` state
+
+    // Locally update players
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
-        return { 
-          ...player, 
+        return {
+          ...player,
           team_id: isFreeAgent ? null : newTeamId,
           is_free_agent: isFreeAgent
         };
@@ -68,20 +69,22 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
       return player;
     });
     setPlayers(updatedPlayers);
-  
-    // Update the DB
+
+    // Update DB
     const { error } = await supabase
       .from('players')
       .update({
         team_id: isFreeAgent ? null : newTeamId,
-        is_free_agent: isFreeAgent,
+        is_free_agent: isFreeAgent
       })
       .eq('player_id', playerId);
-  
+
     if (error) {
       console.error('Error updating player team:', error);
     }
   };
+
+  // Update player's name
   const handlePlayerNameChange = async (playerId: number, newName: string) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -101,6 +104,29 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
     }
   };
 
+  // 2) Handle toggling is_hidden
+  const handleIsHiddenChange = async (playerId: number, newIsHidden: boolean) => {
+    // Update local state
+    const updatedPlayers = players.map(player => {
+      if (player.player_id === playerId) {
+        return { ...player, is_hidden: newIsHidden };
+      }
+      return player;
+    });
+    setPlayers(updatedPlayers);
+
+    // Update DB
+    const { error } = await supabase
+      .from('players')
+      .update({ is_hidden: newIsHidden })
+      .eq('player_id', playerId);
+
+    if (error) {
+      console.error('Error updating player visibility:', error);
+    }
+  };
+
+  // Update team name
   const handleTeamNameChange = async (teamId: number, newName: string) => {
     const updatedTeams = teams.map(team => {
       if (team.team_id === teamId) {
@@ -134,6 +160,7 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                 <tr>
                   <th>Player</th>
                   <th>Team</th>
+                  <th>Hidden?</th> {/* 3) New column for is_hidden */}
                 </tr>
               </thead>
               <tbody>
@@ -148,31 +175,42 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                         />
                       </td>
                       <td>
-  <select
-    value={player?.team_id || ''}
-    onChange={(e) => {
-      const val = e.target.value;
-      const newTeamId = val === '' ? null : parseInt(val, 10);
-      handleTeamChange(player?.player_id, newTeamId);
-    }}
-  >
-    <option value="">No Team</option>
-    {teams.length > 0 ? (
-      teams.map(team => (
-        <option key={team?.team_id} value={team?.team_id}>
-          {team?.team_name || 'Unknown Team'}
-        </option>
-      ))
-    ) : (
-      <option disabled>No teams available</option>
-    )}
-  </select>
-</td>
+                        <select
+                          value={player?.team_id || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const newTeamId = val === '' ? null : parseInt(val, 10);
+                            handleTeamChange(player?.player_id, newTeamId);
+                          }}
+                        >
+                          <option value="">No Team</option>
+                          {teams.length > 0 ? (
+                            teams.map(team => (
+                              <option key={team?.team_id} value={team?.team_id}>
+                                {team?.team_name || 'Unknown Team'}
+                              </option>
+                            ))
+                          ) : (
+                            <option disabled>No teams available</option>
+                          )}
+                        </select>
+                      </td>
+                      {/* 4) is_hidden checkbox */}
+                      <td>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={player?.is_hidden || false} 
+                            onChange={(e) => handleIsHiddenChange(player?.player_id, e.target.checked)}
+                          />
+                          Hidden
+                        </label>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2}>No players found</td>
+                    <td colSpan={3}>No players found</td>
                   </tr>
                 )}
               </tbody>

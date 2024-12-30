@@ -31,23 +31,25 @@ const StatsPage: React.FC = () => {
   // Fetch players and their stats, combining scores from `stats` and `player_instance`
   const fetchPlayerStats = useCallback(async () => {
     try {
-      // Step 1: Fetch player names from the `players` table
+      // 1) Fetch player names from the `players` table, including is_hidden
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('player_id, name');
+        .select('player_id, name, is_hidden');
 
       if (playersError) throw playersError;
+      if (!playersData) return;
 
-      // Step 2: Fetch `total_score`, `total_shots`, `high`, and `low` from `stats`
+      // 2) Filter out any players who are hidden
+      const visiblePlayersData = playersData.filter((p) => !p.is_hidden);
+
+      // 3) Fetch `total_score`, `total_shots`, etc. from `stats`
       const { data: statsData, error: statsError } = await supabase
         .from('stats')
-        .select(
-          'player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score, high, low'
-        );
+        .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score, high, low');
 
       if (statsError) throw statsError;
 
-      // Step 3: Get the current season data where `end_date` is NULL
+      // 4) Get the current season data where `end_date` is NULL
       const { data: currentSeason, error: seasonError } = await supabase
         .from('seasons')
         .select('season_id, shot_total')
@@ -59,7 +61,7 @@ const StatsPage: React.FC = () => {
       const currentSeasonId = currentSeason.season_id;
       const seasonShotTotal = currentSeason.shot_total;
 
-      // Step 4: Fetch current season scores and shots left from `player_instance`
+      // 5) Fetch current season scores and shots left from `player_instance`
       const { data: currentSeasonData, error: instanceError } = await supabase
         .from('player_instance')
         .select('player_id, score, shots_left')
@@ -67,12 +69,10 @@ const StatsPage: React.FC = () => {
 
       if (instanceError) throw instanceError;
 
-      // Step 5: Combine data for each player, adding up `total_score`, `high`, and `low`, and calculating shots taken
-      const combinedData = playersData.map((player) => {
-        const playerStats = statsData.find(
-          (stat) => stat.player_id === player.player_id
-        );
-        const currentInstance = currentSeasonData.find(
+      // 6) Combine data for each *visible* player
+      const combinedData = visiblePlayersData.map((player) => {
+        const playerStats = statsData?.find((stat) => stat.player_id === player.player_id);
+        const currentInstance = currentSeasonData?.find(
           (instance) => instance.player_id === player.player_id
         );
         const currentSeasonScore = currentInstance?.score || 0;
@@ -82,12 +82,10 @@ const StatsPage: React.FC = () => {
         const currentSeasonShots = seasonShotTotal - shotsLeft;
 
         // Calculate total values
-        const totalShots =
-          (playerStats ? playerStats.total_shots : 0) + currentSeasonShots;
-        const totalScore =
-          (playerStats ? playerStats.total_score : 0) + currentSeasonScore;
-        const high = playerStats ? playerStats.high : 0;
-        const low = playerStats ? playerStats.low : 0;
+        const totalShots = (playerStats?.total_shots || 0) + currentSeasonShots;
+        const totalScore = (playerStats?.total_score || 0) + currentSeasonScore;
+        const high = playerStats?.high || 0;
+        const low = playerStats?.low || 0;
 
         // Calculate average score and points per shot
         const averageScore = (high + low) / 2;
@@ -96,19 +94,19 @@ const StatsPage: React.FC = () => {
         return {
           player_id: player.player_id,
           name: player.name,
-          seasons_played: playerStats ? playerStats.seasons_played : 0,
-          mvp_awards: playerStats ? playerStats.mvp_awards : 0,
-          team_wins: playerStats ? playerStats.team_wins : 0,
+          seasons_played: playerStats?.seasons_played || 0,
+          mvp_awards: playerStats?.mvp_awards || 0,
+          team_wins: playerStats?.team_wins || 0,
           total_shots: totalShots,
           total_score: totalScore,
-          high: high,
-          low: low,
+          high,
+          low,
           average_score: averageScore,
           points_per_shot: pointsPerShot,
         };
       });
 
-      // **Add this line to sort players by total_score in descending order**
+      // Sort players by total_score in descending order
       combinedData.sort((a, b) => b.total_score - a.total_score);
 
       setPlayers(combinedData);
@@ -176,12 +174,10 @@ const StatsPage: React.FC = () => {
                   <p>Total Score: {player.total_score}</p>
                   <p>High Score: {player.high}</p>
                   <p>Low Score: {player.low}</p>
-                  <p>
-                    Average Score: {player.average_score.toFixed(2)}
-                  </p>
-                  <p>
-                    Points Per Shot: {player.points_per_shot.toFixed(2)}
-                  </p>
+                  <p>Average Score: {player.average_score.toFixed(2)}</p>
+                  <p>Points Per Shot: {player.points_per_shot.toFixed(2)}</p>
+
+                  {/* PlayerTierStats is presumably a separate component showing tier-based stats */}
                   <PlayerTierStats playerId={player.player_id} />
                 </div>
               ))}

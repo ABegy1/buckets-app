@@ -169,7 +169,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     if (seasonError) handleError(seasonError, 'Failed to retrieve current season');
     if (!currentSeason) handleError(null, 'Current season data is null');
-const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
+    const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
   
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
@@ -363,22 +363,30 @@ const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
   
               // Fetch current tier stats
               const { data: tierStat, error: tierStatError } = await supabase
-                .from('tier_stats')
-                .select('total_score, total_shots')
-                .eq('player_id', playerId)
-                .eq('tier_id', tierId)
-                .single();
-  
+              .from('tier_stats')
+              .select('total_score, total_shots')
+              .eq('player_id', playerId)
+              .eq('tier_id', tierId)
+              .maybeSingle(); 
               if (tierStatError) {
-                handleError(
-                  tierStatError,
-                  `Failed to retrieve tier stats for player ${playerId}, tier ${tierId}`
-                );
+                // This means the request truly failed, not just "no rows returned"
+                handleError(tierStatError, `Failed to retrieve tier stats for player ${playerId}, tier ${tierId}`);
               } else if (!tierStat) {
-                handleError(
-                  null,
-                  `Tier stats not found for player ID ${playerId}, tier ID ${tierId}`
-                );
+                // No row found => either create one or skip
+              
+                // (Optional) if you want to create new row if not found:
+                const { error: insertTierStatsError } = await supabase
+                  .from('tier_stats')
+                  .insert({
+                    player_id: playerId,
+                    tier_id: tierId,
+                    total_score: tierData.total_score,
+                    total_shots: tierData.total_shots,
+                  });
+              
+                if (insertTierStatsError) {
+                  handleError(insertTierStatsError, `Failed to insert new tier_stats row for player ${playerId}, tier ${tierId}`);
+                }
               } else {
                 const newTotalScore = (tierStat.total_score || 0) + tierData.total_score;
                 const newTotalShots = (tierStat.total_shots || 0) + tierData.total_shots;

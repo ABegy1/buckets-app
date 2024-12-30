@@ -53,25 +53,35 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   }, [isOpen]);
 
   const handleTeamChange = async (playerId: number, newTeamId: number | null) => {
-    // If you want "no team", pass in null instead of 0.
+    // If newTeamId is null => free agent; otherwise belongs to a team
+    const isFreeAgent = newTeamId === null;
+  
+    // Locally update `players` state
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
-        return { ...player, team_id: newTeamId };
+        return { 
+          ...player, 
+          team_id: isFreeAgent ? null : newTeamId,
+          is_free_agent: isFreeAgent
+        };
       }
       return player;
     });
     setPlayers(updatedPlayers);
   
+    // Update the DB
     const { error } = await supabase
       .from('players')
-      .update({ team_id: newTeamId })
+      .update({
+        team_id: isFreeAgent ? null : newTeamId,
+        is_free_agent: isFreeAgent,
+      })
       .eq('player_id', playerId);
   
     if (error) {
       console.error('Error updating player team:', error);
     }
   };
-
   const handlePlayerNameChange = async (playerId: number, newName: string) => {
     const updatedPlayers = players.map(player => {
       if (player.player_id === playerId) {
@@ -138,22 +148,26 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                         />
                       </td>
                       <td>
-                        <select
-                          value={player?.team_id || ''}
-                          onChange={(e) => handleTeamChange(player?.player_id, Number(e.target.value))}
-                        >
-                          <option value="">No Team</option>
-                          {teams.length > 0 ? (
-                            teams.map(team => (
-                              <option key={team?.team_id} value={team?.team_id}>
-                                {team?.team_name || 'Unknown Team'}
-                              </option>
-                            ))
-                          ) : (
-                            <option disabled>No teams available</option>
-                          )}
-                        </select>
-                      </td>
+  <select
+    value={player?.team_id || ''}
+    onChange={(e) => {
+      const val = e.target.value;
+      const newTeamId = val === '' ? null : parseInt(val, 10);
+      handleTeamChange(player?.player_id, newTeamId);
+    }}
+  >
+    <option value="">No Team</option>
+    {teams.length > 0 ? (
+      teams.map(team => (
+        <option key={team?.team_id} value={team?.team_id}>
+          {team?.team_name || 'Unknown Team'}
+        </option>
+      ))
+    ) : (
+      <option disabled>No teams available</option>
+    )}
+  </select>
+</td>
                     </tr>
                   ))
                 ) : (

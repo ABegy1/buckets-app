@@ -1,44 +1,32 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
 import { Howl } from 'howler';
 
-
-
-// @ts-ignore
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 
 interface Team {
   team_id: number;
   team_name: string;
-  team_score: number; // Add team_score here
-}
-
-interface Player {
-  tiers: any;
-  player_id: number;
-  name: string;
-  tier_id?: number; // Optional if not fetched
-  team_id?: number; // Optional if not fetched
-  is_free_agent: boolean; // Add this field
+  team_score: number;
 }
 
 interface TeamWithPlayers {
   team_name: string;
   players: {
     shots_made_in_row: number;
-    shots_missed_in_row: number; // Track miss streak
+    shots_missed_in_row: number;
     tier_color: string | undefined;
     name: string;
     shots_left: number;
-    player_score: number; // Rename total_points to player_score
+    player_score: number;
   }[];
   total_shots: number;
-  team_score: number; // Rename total_points to team_score
+  team_score: number;
 }
 
 // Function to calculate the current streak of consecutive made shots
@@ -46,7 +34,7 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
   try {
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('result') // Use 'result' field
+      .select('result')
       .eq('instance_id', playerInstanceId)
       .order('shot_date', { ascending: true });
 
@@ -59,7 +47,7 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
       if (shot.result !== 0) {
         currentStreak++;
       } else {
-        currentStreak = 0; // Reset streak if a missed shot
+        currentStreak = 0; // Reset streak if missed
       }
       shotsMadeInRow = currentStreak;
     });
@@ -76,7 +64,7 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
   try {
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('result') // Use 'result' field
+      .select('result')
       .eq('instance_id', playerInstanceId)
       .order('shot_date', { ascending: true });
 
@@ -89,7 +77,7 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
       if (shot.result === 0) {
         currentMissStreak++;
       } else {
-        currentMissStreak = 0; // Reset streak if a made shot
+        currentMissStreak = 0; // Reset streak if made
       }
       shotsMissedInRow = currentMissStreak;
     });
@@ -101,7 +89,7 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
   }
 };
 
-
+// Update each team's total score based on its players' scores for the active season
 const updateTeamScores = async () => {
   try {
     // Fetch the active season (where end_date is null)
@@ -112,13 +100,12 @@ const updateTeamScores = async () => {
       .single();
 
     if (seasonError || !activeSeason) throw seasonError;
-    
-    const activeSeasonId = activeSeason.season_id; // Store the active season_id
+    const activeSeasonId = activeSeason.season_id;
 
     // Fetch all teams
     const { data: teamsData, error: teamsError } = await supabase
       .from('teams')
-      .select('team_id, team_score'); // Fetch the team_id and team_score
+      .select('team_id, team_score');
 
     if (teamsError) throw teamsError;
 
@@ -133,19 +120,17 @@ const updateTeamScores = async () => {
         if (playersError) throw playersError;
 
         let teamScore = 0;
-
-        // For each player, fetch their player_instance for the active season and sum their scores
+        // Sum up the score for each player's instance in the active season
         await Promise.all(
           players.map(async (player: any) => {
-            const { data: playerInstances, error: playerInstanceError } = await supabase
+            const { data: playerInstances, error: piError } = await supabase
               .from('player_instance')
               .select('score')
               .eq('player_id', player.player_id)
-              .eq('season_id', activeSeasonId); // Ensure only instances for the active season
+              .eq('season_id', activeSeasonId);
 
-            if (playerInstanceError) throw playerInstanceError;
+            if (piError) throw piError;
 
-            // Sum player instance scores
             const playerTotalScore = playerInstances.reduce(
               (acc: number, instance: any) => acc + instance.score,
               0
@@ -154,14 +139,13 @@ const updateTeamScores = async () => {
           })
         );
 
-        // Update the team's score in the database
+        // Update the team's total score
         const { error: updateError } = await supabase
           .from('teams')
           .update({ team_score: teamScore })
           .eq('team_id', team.team_id);
 
         if (updateError) throw updateError;
-
         console.log(`Team ${team.team_id} score updated to ${teamScore}`);
       })
     );
@@ -170,7 +154,6 @@ const updateTeamScores = async () => {
   }
 };
 
-
 const StandingsPage: React.FC = () => {
   const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
   const [userView, setUserView] = useState<string>('Standings');
@@ -178,9 +161,9 @@ const StandingsPage: React.FC = () => {
   const [seasonRules, setSeasonRules] = useState<string>(''); 
   const router = useRouter();
   const pathname = usePathname();
-  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
-  const previousTeamsRef = useRef<TeamWithPlayers[]>([]);
 
+  // Initialize Howl once
+  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
 
   const handleNavigation = (page: string) => {
     router.push(`/${page}`);
@@ -212,11 +195,11 @@ const StandingsPage: React.FC = () => {
   
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('team_name, team_score, team_id'); // Fetch the team_score as well
+        .select('team_name, team_score, team_id');
   
       if (teamsError) throw teamsError;
   
-      const teamsWithPlayers: any[] = await Promise.all(
+      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
         teamsData.map(async (team: any) => {
           const { data: players, error: playersError } = await supabase
             .from('players')
@@ -224,16 +207,16 @@ const StandingsPage: React.FC = () => {
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
   
-          const playersWithStats: any[] = await Promise.all(
+          const playersWithStats = await Promise.all(
             players.map(async (player: any) => {
-              const { data: playerInstance, error: playerInstanceError } = await supabase
+              const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
                 .select('player_instance_id, shots_left, score')
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
   
-              if (playerInstanceError || !playerInstance) throw playerInstanceError;
+              if (piError || !playerInstance) throw piError;
   
               const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
               const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
@@ -241,7 +224,7 @@ const StandingsPage: React.FC = () => {
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
-                player_score: playerInstance.score, // Change total_points to player_score
+                player_score: playerInstance.score,
                 tier_color: player.tiers?.color || '#000',
                 shots_made_in_row: shotsMadeInRow,
                 shots_missed_in_row: shotsMissedInRow,
@@ -249,7 +232,8 @@ const StandingsPage: React.FC = () => {
             })
           );
   
-          playersWithStats.sort((a, b) => b.player_score - a.player_score); // Sort players by player_score
+          // Sort players by their score, descending
+          playersWithStats.sort((a, b) => b.player_score - a.player_score);
   
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
   
@@ -257,14 +241,13 @@ const StandingsPage: React.FC = () => {
             team_name: team.team_name,
             players: playersWithStats,
             total_shots: totalShots,
-            team_score: team.team_score, // Use team_score fetched from the database
+            team_score: team.team_score,
           };
         })
       );
   
-      // Sort the teams by team_score in descending order before setting the state
+      // Sort the teams by team_score in descending order
       teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
-  
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error('Error fetching teams, players, and season info:', error);
@@ -284,28 +267,29 @@ const StandingsPage: React.FC = () => {
   
       const { data: freeAgents, error: freeAgentsError } = await supabase
         .from('players')
-        .select('*, tiers(color)')  // Fetch tier color as well
+        .select('*, tiers(color)')
         .eq('is_free_agent', true);
   
       if (freeAgentsError) throw freeAgentsError;
   
       const freeAgentsWithStats = await Promise.all(
-        freeAgents.map(async (player: { player_id: number; name: string; tiers: { color: string } }) => {
-          const { data: playerInstance, error: playerInstanceError } = await supabase
+        freeAgents.map(async (player: any) => {
+          const { data: playerInstance, error: piError } = await supabase
             .from('player_instance')
             .select('shots_left, score')
             .eq('player_id', player.player_id)
             .eq('season_id', activeSeasonId)
             .single();
   
-          if (playerInstanceError || !playerInstance) throw playerInstanceError;
+          if (piError || !playerInstance) throw piError;
   
           return {
             name: player.name,
             shots_left: playerInstance.shots_left,
-            total_points: playerInstance.score,
-            tier_color: player.tiers?.color || '#000',  // Use player tier color or fallback to black
-            shots_made_in_row: 0,  // Default value for shots_made_in_row
+            player_score: playerInstance.score,
+            tier_color: player.tiers?.color || '#000',
+            shots_made_in_row: 0, // default
+            shots_missed_in_row: 0, // default
           };
         })
       );
@@ -330,13 +314,13 @@ const StandingsPage: React.FC = () => {
         return;
       }
 
-      setUserView(data.View); // Set the current user view
+      setUserView(data.View);
     } catch (err) {
       console.error('Error fetching user view:', err);
     }
   };
 
-  // Real-time updates for the user's View field
+  // Keep userView updated in real time
   useEffect(() => {
     const subscribeToUserViewChanges = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -344,7 +328,7 @@ const StandingsPage: React.FC = () => {
 
       const { user } = session;
 
-      // Set up a real-time subscription for changes to the 'users' table
+      // Subscribe to changes on this user's View
       const userViewChannel = supabase
         .channel('user-view-changes')
         .on(
@@ -352,12 +336,12 @@ const StandingsPage: React.FC = () => {
           { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
           (payload) => {
             const updatedView = payload.new.View;
-            setUserView(updatedView); // Update the UI with the new view
+            setUserView(updatedView);
           }
         )
         .subscribe();
 
-      // Fetch the initial view
+      // Fetch initial view
       fetchUserView();
 
       return () => {
@@ -372,20 +356,18 @@ const StandingsPage: React.FC = () => {
     if (userView === 'FreeAgent') {
       const fetchAndSetFreeAgents = async () => {
         const freeAgents = await fetchFreeAgents();
-        
-        // Ensure freeAgents is always an array before passing to setTeams
-        setTeams([{ 
+        setTeams([{
           team_name: 'Free Agents', 
           players: freeAgents?.map(player => ({
             name: player.name,
             shots_left: player.shots_left,
-            player_score: player.total_points, 
+            player_score: player.player_score, 
             tier_color: player.tier_color,
             shots_made_in_row: 0,
-            shots_missed_in_row: 0 
-          })) ?? [],  
-          total_shots: 0, 
-          team_score: 0 
+            shots_missed_in_row: 0
+          })) ?? [],
+          total_shots: 0,
+          team_score: 0
         }]);
       };
   
@@ -412,15 +394,18 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(shotChannel);
       };
     }
+
     if (userView === 'Standings') {
+      // Initial fetch and update
       fetchTeamsAndPlayers();
       updateTeamScores();
 
+      // Subscribe to changes in player_instance, team, player
       const playerInstanceChannel = supabase
         .channel('player-instance-db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, () => {
           fetchTeamsAndPlayers();
-          updateTeamScores(); // Update team scores on player_instance changes
+          updateTeamScores();
         })
         .subscribe();
 
@@ -434,10 +419,31 @@ const StandingsPage: React.FC = () => {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
         .subscribe();
 
+      // **Shots** subscription: check new shot, if 3rd consecutive => play sound
       const shotChannel = supabase
-        .channel('shots-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchTeamsAndPlayers)
-        .subscribe();
+  .channel('shots-db-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
+    async (payload) => {
+      try {
+        // Cast payload.new to a ShotsRow-like object
+        const newRow = payload.new as { result: number; instance_id: number };
+
+        const { result, instance_id } = newRow;
+        // If it's a made shot (non-zero)
+        if (result !== 0) {
+          const newStreak = await calculateShotsMadeInRow(instance_id);
+          if (newStreak === 3) {
+            sound.play();
+          }
+        }
+        await fetchTeamsAndPlayers();
+        await updateTeamScores();
+      } catch (error) {
+        console.error('Error processing shot change:', error);
+      }
+    }
+  )
+  .subscribe();
 
       return () => {
         supabase.removeChannel(playerInstanceChannel);
@@ -446,59 +452,20 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(shotChannel);
       };
     }
+
     if (userView === 'Rules') {
       fetchTeamsAndPlayers();
 
       const seasonChannel = supabase
-      .channel('season-rules-changes')
+        .channel('season-rules-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'seasons' }, fetchTeamsAndPlayers)
         .subscribe();
-
       
       return () => {
         supabase.removeChannel(seasonChannel);
-        
       };
     }
   }, [userView]);
-
-  useEffect(() => {
-    // Skip comparison on the initial render
-    if (previousTeamsRef.current.length === 0) {
-      previousTeamsRef.current = teams;
-      return;
-    }
-
-    const previousTeams = previousTeamsRef.current;
-
-    teams.forEach((team) => {
-      const previousTeam = previousTeams.find(
-        (prevTeam) => prevTeam.team_name === team.team_name
-      );
-
-      team.players.forEach((player) => {
-        let previousShotsMadeInRow = 0;
-
-        if (previousTeam) {
-          const previousPlayer = previousTeam.players.find(
-            (prevPlayer) => prevPlayer.name === player.name
-          );
-          if (previousPlayer) {
-            previousShotsMadeInRow = previousPlayer.shots_made_in_row;
-          }
-        }
-
-        if (player.shots_made_in_row >= 3 && previousShotsMadeInRow < 3) {
-          // Play the sound when a player reaches a streak of 3 or more
-          sound.play();
-        }
-      });
-    });
-
-    // Update the previous teams reference with the current state
-    previousTeamsRef.current = teams;
-  }, [teams, sound]);
-
 
   return (
     <div className={styles.userContainer}>
@@ -531,54 +498,58 @@ const StandingsPage: React.FC = () => {
           </button>
         </nav>
       </header>
+      
       <main className={styles.userContent}>
-      {userView === 'Standings' ? (
-        <div className={styles.container}>
-          <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
-          <div className={styles.teams}>
-            {teams.map((team, index) => (
-              <div key={index} className={styles.team}>
-                <h2 className={styles.teamTitle}>{team.team_name}</h2>
-                <div className={styles.row}>
-                  <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Shots Left</span>
-                  <span className={styles.columnHeader}>Total Points</span>
-                </div>
-                {team.players.map((player, playerIndex) => (
-                  <div key={playerIndex} className={styles.row}>
-                    <div className={styles.playerNameColumn}>
-                      <div className={styles.playerName}>
-                        <span className={styles.colorCircle} style={{ backgroundColor: player.tier_color }}></span>
-                        <span>{player.name}</span>
-                        
-                        {/* Display fire icon if player has 3 or more consecutive made shots */}
-                        {player.shots_made_in_row >= 3 && (
-                          <span className={styles.fireIcon}>
-                            <FaFireFlameCurved />
-                          </span>
-                        )}
-
-                        {/* Display cold icon if player has 3 or more consecutive missed shots */}
-                        {player.shots_missed_in_row >= 4 && (
-                          <span className={styles.coldIcon}>
-                            <FaSnowflake />
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className={styles.shotsLeft}>{player.shots_left}</span>
-                    <span className={styles.totalPoints}>{player.player_score}</span>
+        {userView === 'Standings' ? (
+          <div className={styles.container}>
+            <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
+            <div className={styles.teams}>
+              {teams.map((team, index) => (
+                <div key={index} className={styles.team}>
+                  <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                  <div className={styles.row}>
+                    <span className={styles.columnHeader}>Name</span>
+                    <span className={styles.columnHeader}>Shots Left</span>
+                    <span className={styles.columnHeader}>Total Points</span>
                   </div>
-                ))}
-                <div className={styles.teamStats}>
-                  <span>Total Shots Remaining: {team.total_shots}</span>
-                  <span>Total Score: {team.team_score}</span>
+                  {team.players.map((player, playerIndex) => (
+                    <div key={playerIndex} className={styles.row}>
+                      <div className={styles.playerNameColumn}>
+                        <div className={styles.playerName}>
+                          <span
+                            className={styles.colorCircle}
+                            style={{ backgroundColor: player.tier_color }}
+                          />
+                          <span>{player.name}</span>
+                          
+                          {/* Fire icon if the player has 3+ consecutive makes */}
+                          {player.shots_made_in_row >= 3 && (
+                            <span className={styles.fireIcon}>
+                              <FaFireFlameCurved />
+                            </span>
+                          )}
+
+                          {/* Cold icon if the player has 4+ consecutive misses */}
+                          {player.shots_missed_in_row >= 4 && (
+                            <span className={styles.coldIcon}>
+                              <FaSnowflake />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={styles.shotsLeft}>{player.shots_left}</span>
+                      <span className={styles.totalPoints}>{player.player_score}</span>
+                    </div>
+                  ))}
+                  <div className={styles.teamStats}>
+                    <span>Total Shots Remaining: {team.total_shots}</span>
+                    <span>Total Score: {team.team_score}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ) :userView === 'FreeAgent' ? (
+        ) : userView === 'FreeAgent' ? (
           <div className={styles.freeAgencyPage}>
             <h2>{seasonName} Free Agents</h2>
             <div className={styles.players}>
@@ -588,11 +559,30 @@ const StandingsPage: React.FC = () => {
                 <span className={styles.columnHeader}>Total Points</span>
               </div>
               {teams[0]?.players.map((player, playerIndex) => (
-                <div key={playerIndex} className={styles.playerRow} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className={styles.playerName} style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}>{player.name}</span>
-                <span className={styles.shotsLeft} style={{ flex: 1, textAlign: 'center' }}>{player.shots_left}</span>
-                <span className={styles.totalPoints} style={{ flex: 1, textAlign: 'center' }}>{player.player_score}</span>
-              </div>
+                <div
+                  key={playerIndex}
+                  className={styles.playerRow}
+                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <span
+                    className={styles.playerName}
+                    style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}
+                  >
+                    {player.name}
+                  </span>
+                  <span
+                    className={styles.shotsLeft}
+                    style={{ flex: 1, textAlign: 'center' }}
+                  >
+                    {player.shots_left}
+                  </span>
+                  <span
+                    className={styles.totalPoints}
+                    style={{ flex: 1, textAlign: 'center' }}
+                  >
+                    {player.player_score}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
@@ -603,6 +593,7 @@ const StandingsPage: React.FC = () => {
           </div>
         ) : null}
       </main>
+
       <footer className={styles.userFooter}>
         <p>&copy; 2024 Buckets Game. All rights reserved.</p>
         <button className={styles.signOutButton} onClick={handleSignOut}>

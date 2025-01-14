@@ -161,3 +161,30 @@ For more details, refer to the [Next.js Deployment Documentation](https://nextjs
 4. Improve documentation for API routes and Supabase functions.
 
 ---
+# Developer Notes
+
+## Author Information
+- **Name**: Aaron Begy
+- **Email**: [abegy7@gmail.com](mailto:abegy7@gmail.com)
+- **Phone**: 440-591-2020
+
+## Onboarding Instructions
+To gain access to the Supabase database and begin development, follow these steps:
+
+1. **Create a Supabase Account**  
+   Visit [Supabase](https://supabase.com) and create an account if you do not already have one.
+
+2. **Request Access**  
+   Contact Aaron Begy via email or phone to be added to the Supabase team associated with this project.
+
+3. **Accept the Invitation**  
+   Once added, you will receive an email invitation to join the Supabase project team. Follow the instructions in the invitation to gain access.
+
+4. **Environment Setup**  
+   Ensure your local development environment is configured with the correct Supabase credentials and environment variables. Refer to the `.env.example` file for required keys.
+
+5. **Review the Documentation**  
+   Check the project `README.md` or related documentation for additional setup and development guidelines.
+
+## Support
+If you encounter any issues or need further clarification, feel free to reach out to Aaron Begy using the contact information provided above.

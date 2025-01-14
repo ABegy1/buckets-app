@@ -1,5 +1,9 @@
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
+
+ /**
+   * creates the db schema
+   */
 // Retaining the old users table
 export const usersTable = pgTable('users', {
   id: serial('id').primaryKey(),

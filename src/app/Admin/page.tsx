@@ -1,4 +1,4 @@
-'use client'; // Required in Next.js App Router
+'use client'; 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './adminPage.module.css'; // Import the combined CSS module
@@ -8,12 +8,11 @@ import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
-import { Howl } from 'howler';
 
 interface Player {
   player_id: number;
   name: string;
-  is_hidden: boolean; // <-- be sure the type includes is_hidden
+  is_hidden: boolean; 
 }
 
 interface TierWithPlayers {
@@ -21,22 +20,26 @@ interface TierWithPlayers {
   color: string;
   players: Player[];
 }
-
+/**
+ * AdminPage Component
+ * 
+ * This component serves as the admin dashboard for managing various aspects of the application.
+ * It displays the current season's standings, allows the admin to view player details.
+ */
 const AdminPage = () => {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [tiers, setTiers] = useState<TierWithPlayers[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedName, setSelectedName] = useState('');
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false);
-  const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [seasonName, setSeasonName] = useState<string>('');
-  const [userView, setUserView] = useState<string>('');
-  const sound = new Howl({ src: ['/sounds/onfire.mp3'] });
+  const [user, setUser] = useState<User | null>(null); // Tracks logged-in user
+  const [tiers, setTiers] = useState<TierWithPlayers[]>([]); // Stores tiers and players
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility
+  const [selectedName, setSelectedName] = useState(''); // Selected player's name for modal
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null); // Selected player's ID for modal
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar visibility
+  const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false); // Current season modal visibility
+  const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false); // Next season modal visibility
+  const [loading, setLoading] = useState(true); // Page loading state
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
+  const [seasonName, setSeasonName] = useState<string>(''); // Active season name
+  const [userView, setUserView] = useState<string>(''); // User's current view setting
 
   const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
 
@@ -47,6 +50,8 @@ const AdminPage = () => {
       setUser(session?.user ?? null);
 
       if (session?.user) {
+          // Check if the user has the 'Admin' role
+
         const { data, error } = await supabase
           .from('users')
           .select('role, View')
@@ -54,26 +59,27 @@ const AdminPage = () => {
           .single();
 
         if (error || data.role !== 'Admin') {
+          // Redirect non-admins to the homepage
           router.push('/');
         } else {
           setIsAdmin(true);
-          setUserView(data.View || 'Standings');
+          setUserView(data.View || 'Standings'); // Set default user view
         }
       }
-      setLoading(false);
+      setLoading(false);// Mark loading as complete
     };
 
     getUserSessionAndRole();
-
+     // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
-        router.push('/');
+        router.push('/'); // Redirect unauthenticated users
       }
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      authListener.subscription.unsubscribe(); // Cleanup subscription
     };
   }, [router]);
 
@@ -95,7 +101,7 @@ const AdminPage = () => {
       if (tiersError) {
         console.error('Error fetching tiers:', tiersError);
       } else {
-        setTiers(tiersData || []);
+        setTiers(tiersData || []); // Update state with fetched data
       }
     };
 
@@ -125,7 +131,7 @@ const AdminPage = () => {
         const { data: activeSeason, error: seasonError } = await supabase
           .from('seasons')
           .select('season_name')
-          .is('end_date', null)
+          .is('end_date', null) // Fetch active season
           .single();
 
         if (seasonError || !activeSeason) {
@@ -173,7 +179,7 @@ const AdminPage = () => {
       if (updateError) {
         console.error('Error updating user view:', updateError);
       } else {
-        setUserView(newView);
+        setUserView(newView); // Update local state
         console.log(`User view updated to ${newView}`);
       }
     } catch (err) {
@@ -311,7 +317,7 @@ const AdminPage = () => {
 
       {/* Footer */}
       <footer className={styles.adminFooter}>
-        <p>&copy; 2024 Buckets Game. Admin Panel. All rights reserved.</p>
+        <p>&copy; 2025 Buckets Game. Admin Panel. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -1,14 +1,24 @@
-'use client'; // Required in Next.js App Router
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
-import type { User } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+'use client'; // Required in Next.js App Router for client-side rendering
 
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient'; // Supabase client for authentication and database operations
+import type { User } from '@supabase/supabase-js'; // Supabase User type definition
+import { useRouter } from 'next/navigation'; // Next.js router for navigation
+
+/**
+ * Custom Hook: useUserRole
+ * 
+ * Fetches the role of a user based on their full name by making an API call.
+ * Tracks the user's role using state.
+ * 
+ * @param {string | null} fullName - The full name of the user.
+ * @returns {Object} - An object containing the user's role.
+ */
 const useUserRole = (fullName: string | null) => {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!fullName) return;
+    if (!fullName) return; // Skip fetching role if full name is not available
 
     const fetchUserRole = async () => {
       try {
@@ -18,7 +28,7 @@ const useUserRole = (fullName: string | null) => {
           throw new Error('Failed to fetch user role');
         }
         const data = await response.json();
-        setRole(data.role);
+        setRole(data.role); // Set the fetched role in state
       } catch (error) {
         console.error('Error fetching user role:', error);
       }
@@ -27,50 +37,60 @@ const useUserRole = (fullName: string | null) => {
     fetchUserRole();
   }, [fullName]);
 
-  return { role };
+  return { role }; // Return the user's role
 };
 
+/**
+ * HomePage Component
+ * 
+ * The main entry point of the application. Handles user authentication,
+ * role fetching, user addition to the database, and redirects based on user role.
+ */
 const HomePage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Track if loading is in progress
-  const [authChecked, setAuthChecked] = useState(false); // Track if authentication check is done
-  const [userAdded, setUserAdded] = useState(false); // Track if user is added
-  const router = useRouter(); // For navigation
+  const [user, setUser] = useState<User | null>(null); // Current authenticated user
+  const [loading, setLoading] = useState(true); // Tracks whether session is being checked
+  const [authChecked, setAuthChecked] = useState(false); // Tracks if authentication check is complete
+  const [userAdded, setUserAdded] = useState(false); // Tracks whether the user has been added to the database
+  const router = useRouter(); // Next.js router for navigation
 
-  // Fetch the user role once user is signed in
+  // Fetch the user role using a custom hook
   const { role } = useUserRole(user?.user_metadata.full_name ?? null);
 
-  // Fetch user session and update state
+  /**
+   * Fetch the current user session and set up authentication state change listener.
+   */
   useEffect(() => {
     const getUserSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Error fetching session:', error);
       } else {
-        setUser(session?.user ?? null);
+        setUser(session?.user ?? null); // Set the authenticated user
       }
-      setLoading(false); // Loading done after checking session
-      setAuthChecked(true); // Authentication check is complete
+      setLoading(false); // Authentication check is done
+      setAuthChecked(true);
     };
 
     getUserSession();
 
-    // Listen to auth state changes (including sign-out)
+    // Set up listener for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        setUser(session.user ?? null); // User signed in or state updated
+        setUser(session.user ?? null); // Update user state when signed in
       } else {
-        setUser(null); // User signed out
-        router.push('/'); // Redirect to sign-in page after 
+        setUser(null); // Clear user state on sign-out
+        router.push('/'); // Redirect to homepage after sign-out
       }
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      authListener.subscription.unsubscribe(); // Clean up listener on component unmount
     };
   }, [router]);
 
-  // Automatically handle sign-in if no user is authenticated
+  /**
+   * Automatically sign in the user with Google OAuth if no user is authenticated.
+   */
   useEffect(() => {
     if (authChecked && !loading && !user) {
       const signInWithGoogle = async () => {
@@ -84,7 +104,9 @@ const HomePage = () => {
     }
   }, [authChecked, loading, user]);
 
-  // Add the user to the Supabase users table if they don't already exist
+  /**
+   * Add the user to the database if they don't already exist.
+   */
   useEffect(() => {
     const addUserIfNotExists = async () => {
       if (user && !userAdded) {
@@ -94,7 +116,7 @@ const HomePage = () => {
           .eq('email', user.email);
 
         if (!data || data.length === 0) {
-          // User doesn't exist, so add them
+          // User doesn't exist; add them to the database
           console.log('User not found, adding to Supabase');
           await supabase
             .from('users')
@@ -112,19 +134,21 @@ const HomePage = () => {
     }
   }, [user, userAdded]);
 
-  // Handle role-based redirection after session and role are both loaded
+  /**
+   * Redirect the user based on their role after session and role checks are complete.
+   */
   useEffect(() => {
     if (user && role && userAdded) {
       if (role === 'Admin') {
-        router.push('/Admin'); // Redirect to admin page
+        router.push('/Admin'); // Redirect admins to the admin page
       } else {
-        router.push('/Standings'); // Redirect to user page
+        router.push('/Standings'); // Redirect standard users to the standings page
       }
     }
   }, [user, role, router, userAdded]);
 
-  // Prevent rendering until the authentication check is complete
-  return null;
+  // Prevent rendering until authentication check is complete
+  return null; // Render nothing while processing authentication
 };
 
 export default HomePage;

@@ -8,7 +8,12 @@ import { FaSnowflake } from "react-icons/fa6";
 import { Howl } from 'howler';
 
 
-
+/**
+ * FreeAgency Page
+ * 
+ * This component serves as the Free Agency dashboard 
+ * It displays all the free agents within the current season and their associated statistics
+ */
 
 const calculateCurrentShotStreak = async (playerInstanceId: number) => {
   try {
@@ -73,20 +78,28 @@ const calculateCurrentMissStreak = async (playerInstanceId: number) => {
 };
 
 const FreeAgencyPage: React.FC = () => {
-  const [seasonName, setSeasonName] = useState<string>(''); 
-  const [freeAgents, setFreeAgents] = useState<any[]>([]); 
+  // State variables to track page data and UI interactions
+  const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
+  const [freeAgents, setFreeAgents] = useState<any[]>([]); // List of free agents and their stats
   const router = useRouter();
   const pathname = usePathname();
-  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
-  const previousFreeAgentsRef = useRef<any[]>([]);
+  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []); // Audio for streaks
+  const previousFreeAgentsRef = useRef<any[]>([]); // Reference to previous free agent data for streak comparison
 
-  const handleNavigation = (page: string) => {
+   /**
+   * Navigates to a different page based on the provided route.
+   * @param page The route to navigate to.
+   */
+   const handleNavigation = (page: string) => {
     router.push(`/${page}`);
   };
 
-  // Fetch free agents and calculate shots in a row
+  /**
+   * Fetches free agents and their associated stats for the current season.
+   */
   const fetchFreeAgents = async () => {
     try {
+      // Fetch the current season details
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
         .select('season_id, season_name')
@@ -97,14 +110,16 @@ const FreeAgencyPage: React.FC = () => {
   
       const activeSeasonId = activeSeason.season_id;
       setSeasonName(activeSeason.season_name);
-  
+        // Fetch free agent data
+
       const { data: freeAgentsData, error: freeAgentsError } = await supabase
         .from('players')
         .select('*, tiers(color)')
         .eq('is_free_agent', true);
   
       if (freeAgentsError) throw freeAgentsError;
-  
+        // Enrich free agent data with stats
+
       const freeAgentsWithStats = await Promise.all(
         freeAgentsData.map(async (player: any) => {
           const { data: playerInstance, error: playerInstanceError } = await supabase
@@ -138,6 +153,10 @@ const FreeAgencyPage: React.FC = () => {
       console.error('Error fetching free agents and stats:', error);
     }
   };
+
+  /**
+   * Subscribes to real-time updates for changes to player, player instance, and shot data.
+   */
   const subscribeToRealTimeUpdates = useCallback(async () => {
     const { data: activeSeason } = await supabase
       .from('seasons')
@@ -182,12 +201,16 @@ const FreeAgencyPage: React.FC = () => {
       supabase.removeChannel(shotChannel);
     };
   }, []);
-
+ /**
+   * Effects to initialize data fetching and real-time subscriptions.
+   */
   useEffect(() => {
     fetchFreeAgents();
     subscribeToRealTimeUpdates();
   }, [subscribeToRealTimeUpdates]);
-
+  /**
+   * Compares current and previous free agents to trigger sound effects for streaks.
+   */
   useEffect(() => {
     // Skip comparison on the initial render
     if (previousFreeAgentsRef.current.length === 0) {
@@ -220,9 +243,13 @@ const FreeAgencyPage: React.FC = () => {
 
   return (
     <div className={styles.userContainer}>
+       {/* Header Section */}
+
       <header className={styles.navbar}>
         <h1 className={styles.navbarTitle}>Buckets</h1>
         <nav className={styles.navMenu}>
+          {/* Navigation buttons */}
+
           <button
             onClick={() => handleNavigation('Standings')}
             className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
@@ -249,6 +276,7 @@ const FreeAgencyPage: React.FC = () => {
           </button>
         </nav>
       </header>
+      {/* Main Content */}
 
       <main className={styles.userContent}>
         <div className={styles.freeAgencyPage}>
@@ -289,9 +317,10 @@ const FreeAgencyPage: React.FC = () => {
           </div>
         </div>
       </main>
+      {/* Footer Section */}
 
       <footer className={styles.userFooter}>
-        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
+        <p>&copy; 2025 Buckets Game. All rights reserved.</p>
         <button className={styles.signOutButton} onClick={() => { /* Add sign out logic here */ }}>
           Sign Out
         </button>

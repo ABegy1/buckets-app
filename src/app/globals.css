@@ -1,28 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Import Tailwind CSS base styles */
+@tailwind base; /* Applies Tailwind's base styles like resets and typography */
+@tailwind components; /* Includes Tailwind's pre-designed components */
+@tailwind utilities; /* Adds Tailwind's utility classes */
 
+/* Define CSS custom properties (variables) */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 0, 0, 0; /* Default foreground color (black) */
+  --background-start-rgb: 214, 219, 220; /* Gradient start color (light gray) */
+  --background-end-rgb: 255, 255, 255; /* Gradient end color (white) */
 }
 
+/* Dark mode styles */
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --foreground-rgb: 255, 255, 255; /* Foreground color for dark mode (white) */
+    --background-start-rgb: 0, 0, 0; /* Gradient start color for dark mode (black) */
+    --background-end-rgb: 0, 0, 0; /* Gradient end color for dark mode (black) */
   }
 }
 
+/* Global body styles */
 body {
-  margin: 0;
-  font-family: 'Roboto', sans-serif;
+  margin: 0; /* Remove default body margin */
+  font-family: 'Roboto', sans-serif; /* Set global font to Roboto */
 }
 
+/* Custom Tailwind utility layer */
 @layer utilities {
   .text-balance {
-    text-wrap: balance;
+    text-wrap: balance; /* Ensures balanced text wrapping for better readability */
   }
 }

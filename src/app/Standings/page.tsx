@@ -155,20 +155,27 @@ const updateTeamScores = async () => {
 };
 
 const StandingsPage: React.FC = () => {
-  const [teams, setTeams] = useState<TeamWithPlayers[]>([]);
-  const [userView, setUserView] = useState<string>('Standings');
-  const [seasonName, setSeasonName] = useState<string>(''); 
-  const [seasonRules, setSeasonRules] = useState<string>(''); 
-  const router = useRouter();
-  const pathname = usePathname();
+ // State variables
+ const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
+ const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
+ const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
+ const [seasonRules, setSeasonRules] = useState<string>(''); // Rules of the current season
+ const router = useRouter(); // Router for navigation
+ const pathname = usePathname(); // Current pathname of the app
 
-  // Initialize Howl once
-  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
-
+ // Initialize Howl for playing sound effects (memoized for performance)
+ const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
+  /**
+   * Navigates to the specified page.
+   * @param page The target page to navigate to.
+   */
   const handleNavigation = (page: string) => {
     router.push(`/${page}`);
   };
 
+  /**
+   * Signs out the current user and redirects to the home page.
+   */
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
@@ -178,9 +185,14 @@ const StandingsPage: React.FC = () => {
     }
   };
 
-  // Fetch teams and players (for Standings view)
+    /**
+   * Fetches teams and their players for the Standings view.
+   * Includes player stats like shots left, scores, and streaks.
+   */
   const fetchTeamsAndPlayers = async () => {
     try {
+            // Fetch active season details
+
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
         .select('season_id, season_name, rules')
@@ -192,13 +204,15 @@ const StandingsPage: React.FC = () => {
       const activeSeasonId = activeSeason.season_id;
       setSeasonName(activeSeason.season_name);
       setSeasonRules(activeSeason.rules);
-  
+        // Fetch teams
+
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('team_name, team_score, team_id');
   
       if (teamsError) throw teamsError;
-  
+        // Enrich teams with their players and stats
+
       const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
         teamsData.map(async (team: any) => {
           const { data: players, error: playersError } = await supabase
@@ -217,7 +231,8 @@ const StandingsPage: React.FC = () => {
                 .single();
   
               if (piError || !playerInstance) throw piError;
-  
+              // Calculate streaks
+
               const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
               const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
   
@@ -234,7 +249,8 @@ const StandingsPage: React.FC = () => {
   
           // Sort players by their score, descending
           playersWithStats.sort((a, b) => b.player_score - a.player_score);
-  
+          // Calculate total shots left for the team
+
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
   
           return {
@@ -254,6 +270,9 @@ const StandingsPage: React.FC = () => {
     }
   };
   
+   /**
+   * Fetches free agents and their stats for the FreeAgent view.
+   */
   const fetchFreeAgents = async () => {
     try {
       const { data: activeSeason, error: seasonError } = await supabase
@@ -299,7 +318,9 @@ const StandingsPage: React.FC = () => {
       console.error('Error fetching free agents and stats:', error);
     }
   };
-
+ /**
+   * Fetches the current user's view from the database.
+   */
   const fetchUserView = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -320,7 +341,9 @@ const StandingsPage: React.FC = () => {
     }
   };
 
-  // Keep userView updated in real time
+ /**
+   * Subscribes to user view changes in real time and updates state accordingly.
+   */
   useEffect(() => {
     const subscribeToUserViewChanges = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -328,7 +351,7 @@ const StandingsPage: React.FC = () => {
 
       const { user } = session;
 
-      // Subscribe to changes on this user's View
+     // Subscribe to updates on the user's View field
       const userViewChannel = supabase
         .channel('user-view-changes')
         .on(
@@ -352,6 +375,7 @@ const StandingsPage: React.FC = () => {
     subscribeToUserViewChanges();
   }, []);
 
+ // Additional `useEffect` for managing real-time subscriptions based on `userView`
   useEffect(() => {
     if (userView === 'FreeAgent') {
       const fetchAndSetFreeAgents = async () => {
@@ -467,141 +491,157 @@ const StandingsPage: React.FC = () => {
     }
   }, [userView,sound ]);
 
-  return (
-    <div className={styles.userContainer}>
-      <header className={styles.navbar}>
-        <h1 className={styles.navbarTitle}>Buckets</h1>
-        <nav className={styles.navMenu}>
-          <button
-            onClick={() => handleNavigation('Standings')}
-            className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-          >
-            Standings
-          </button>
-          <button
-            onClick={() => handleNavigation('FreeAgency')}
-            className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-          >
-            Free Agency
-          </button>
-          <button
-            onClick={() => handleNavigation('Rules')}
-            className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-          >
-            Rules
-          </button>
-          <button
-            onClick={() => handleNavigation('Stats')}
-            className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-          >
-            Stats
-          </button>
-        </nav>
-      </header>
-      
-      <main className={styles.userContent}>
-        {userView === 'Standings' ? (
-          <div className={styles.container}>
-            <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
-            <div className={styles.teams}>
-              {teams.map((team, index) => (
-                <div key={index} className={styles.team}>
-                  <h2 className={styles.teamTitle}>{team.team_name}</h2>
-                  <div className={styles.row}>
-                    <span className={styles.columnHeader}>Name</span>
-                    <span className={styles.columnHeader}>Shots Left</span>
-                    <span className={styles.columnHeader}>Total Points</span>
-                  </div>
-                  {team.players.map((player, playerIndex) => (
-                    <div key={playerIndex} className={styles.row}>
-                      <div className={styles.playerNameColumn}>
-                        <div className={styles.playerName}>
-                          <span
-                            className={styles.colorCircle}
-                            style={{ backgroundColor: player.tier_color }}
-                          />
-                          <span>{player.name}</span>
-                          
-                          {/* Fire icon if the player has 3+ consecutive makes */}
-                          {player.shots_made_in_row >= 3 && (
-                            <span className={styles.fireIcon}>
-                              <FaFireFlameCurved />
-                            </span>
-                          )}
-
-                          {/* Cold icon if the player has 4+ consecutive misses */}
-                          {player.shots_missed_in_row >= 4 && (
-                            <span className={styles.coldIcon}>
-                              <FaSnowflake />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={styles.shotsLeft}>{player.shots_left}</span>
-                      <span className={styles.totalPoints}>{player.player_score}</span>
-                    </div>
-                  ))}
-                  <div className={styles.teamStats}>
-                    <span>Total Shots Remaining: {team.total_shots}</span>
-                    <span>Total Score: {team.team_score}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : userView === 'FreeAgent' ? (
-          <div className={styles.freeAgencyPage}>
-            <h2>{seasonName} Free Agents</h2>
-            <div className={styles.players}>
-              <div className={styles.headerRow}>
-                <span className={styles.columnHeader}>Name</span>
-                <span className={styles.columnHeader}>Shots Left</span>
-                <span className={styles.columnHeader}>Total Points</span>
-              </div>
-              {teams[0]?.players.map((player, playerIndex) => (
-                <div
-                  key={playerIndex}
-                  className={styles.playerRow}
-                  style={{ display: 'flex', justifyContent: 'space-between' }}
-                >
-                  <span
-                    className={styles.playerName}
-                    style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}
-                  >
-                    {player.name}
-                  </span>
-                  <span
-                    className={styles.shotsLeft}
-                    style={{ flex: 1, textAlign: 'center' }}
-                  >
-                    {player.shots_left}
-                  </span>
-                  <span
-                    className={styles.totalPoints}
-                    style={{ flex: 1, textAlign: 'center' }}
-                  >
-                    {player.player_score}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : userView === 'Rules' ? (
-          <div className={styles.rulesPage}>
-            <h2>{seasonName} Rules</h2>
-            <ReactMarkdown>{seasonRules}</ReactMarkdown>
-          </div>
-        ) : null}
-      </main>
-
-      <footer className={styles.userFooter}>
-        <p>&copy; 2024 Buckets Game. All rights reserved.</p>
-        <button className={styles.signOutButton} onClick={handleSignOut}>
-          Sign Out
+ return (
+  <div className={styles.userContainer}>
+    {/* Header Section */}
+    <header className={styles.navbar}>
+      <h1 className={styles.navbarTitle}>Buckets</h1>
+      <nav className={styles.navMenu}>
+        {/* Navigation Buttons */}
+        <button
+          onClick={() => handleNavigation('Standings')}
+          className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
+        >
+          Standings
         </button>
-      </footer>
-    </div>
-  );
+        <button
+          onClick={() => handleNavigation('FreeAgency')}
+          className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
+        >
+          Free Agency
+        </button>
+        <button
+          onClick={() => handleNavigation('Rules')}
+          className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
+        >
+          Rules
+        </button>
+        <button
+          onClick={() => handleNavigation('Stats')}
+          className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
+        >
+          Stats
+        </button>
+      </nav>
+    </header>
+
+    {/* Main Content Section */}
+    <main className={styles.userContent}>
+      {userView === 'Standings' ? (
+        // Standings View
+        <div className={styles.container}>
+          <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
+          <div className={styles.teams}>
+            {teams.map((team, index) => (
+              <div key={index} className={styles.team}>
+                {/* Team Title */}
+                <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                {/* Table Headers */}
+                <div className={styles.row}>
+                  <span className={styles.columnHeader}>Name</span>
+                  <span className={styles.columnHeader}>Shots Left</span>
+                  <span className={styles.columnHeader}>Total Points</span>
+                </div>
+                {team.players.map((player, playerIndex) => (
+                  <div key={playerIndex} className={styles.row}>
+                    {/* Player Name and Icons */}
+                    <div className={styles.playerNameColumn}>
+                      <div className={styles.playerName}>
+                        {/* Tier Color Indicator */}
+                        <span
+                          className={styles.colorCircle}
+                          style={{ backgroundColor: player.tier_color }}
+                        />
+                        <span>{player.name}</span>
+                        
+                        {/* Fire Icon: 3+ Consecutive Makes */}
+                        {player.shots_made_in_row >= 3 && (
+                          <span className={styles.fireIcon}>
+                            <FaFireFlameCurved />
+                          </span>
+                        )}
+
+                        {/* Cold Icon: 4+ Consecutive Misses */}
+                        {player.shots_missed_in_row >= 4 && (
+                          <span className={styles.coldIcon}>
+                            <FaSnowflake />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Player Stats */}
+                    <span className={styles.shotsLeft}>{player.shots_left}</span>
+                    <span className={styles.totalPoints}>{player.player_score}</span>
+                  </div>
+                ))}
+                {/* Team Stats */}
+                <div className={styles.teamStats}>
+                  <span>Total Shots Remaining: {team.total_shots}</span>
+                  <span>Total Score: {team.team_score}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : userView === 'FreeAgent' ? (
+        // Free Agent View
+        <div className={styles.freeAgencyPage}>
+          <h2>{seasonName} Free Agents</h2>
+          <div className={styles.players}>
+            {/* Table Headers */}
+            <div className={styles.headerRow}>
+              <span className={styles.columnHeader}>Name</span>
+              <span className={styles.columnHeader}>Shots Left</span>
+              <span className={styles.columnHeader}>Total Points</span>
+            </div>
+            {teams[0]?.players.map((player, playerIndex) => (
+              <div
+                key={playerIndex}
+                className={styles.playerRow}
+                style={{ display: 'flex', justifyContent: 'space-between' }}
+              >
+                {/* Player Info */}
+                <span
+                  className={styles.playerName}
+                  style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}
+                >
+                  {player.name}
+                </span>
+                <span
+                  className={styles.shotsLeft}
+                  style={{ flex: 1, textAlign: 'center' }}
+                >
+                  {player.shots_left}
+                </span>
+                <span
+                  className={styles.totalPoints}
+                  style={{ flex: 1, textAlign: 'center' }}
+                >
+                  {player.player_score}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : userView === 'Rules' ? (
+        // Rules View
+        <div className={styles.rulesPage}>
+          <h2>{seasonName} Rules</h2>
+          {/* Render Markdown Rules */}
+          <ReactMarkdown>{seasonRules}</ReactMarkdown>
+        </div>
+      ) : null}
+    </main>
+
+    {/* Footer Section */}
+    <footer className={styles.userFooter}>
+      <p>&copy; 2025 Buckets Game. All rights reserved.</p>
+      <button className={styles.signOutButton} onClick={handleSignOut}>
+        Sign Out
+      </button>
+    </footer>
+  </div>
+);
 };
 
 export default StandingsPage;

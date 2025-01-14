@@ -1,5 +1,19 @@
+/**
+ * AddPlayers Component
+ *
+ * This component allows administrators to add new players to an active season.
+ * Features include:
+ * - Fetching active season data, players, teams, and tiers from the Supabase backend.
+ * - Adding a player to the selected team and tier or marking them as a free agent.
+ * - Dynamically updating the list of current players in real-time.
+ * - Support for assigning players a specific number of shots for the season.
+ *
+ * Props:
+ * - `isOpen`: Determines whether the component should be active or not.
+ */
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/supabaseClient'; // Adjust to your supabase client import
+import { supabase } from '@/supabaseClient'; // Adjust to your Supabase client import path
 import styles from './AddPlayers.module.css';
 
 interface AddPlayersProps {
@@ -7,116 +21,137 @@ interface AddPlayersProps {
 }
 
 const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
-    const [players, setPlayers] = useState<any[]>([]);
-    const [teams, setTeams] = useState<any[]>([]);
-    const [tiers, setTiers] = useState<any[]>([]);
-    const [newPlayerName, setNewPlayerName] = useState<string>(''); 
-    const [selectedTier, setSelectedTier] = useState<number | null>(null); 
-    const [selectedTeam, setSelectedTeam] = useState<number | null>(null); 
-    const [shotCount, setShotCount] = useState<number>(40); 
-    const [seasonId, setSeasonId] = useState<number | null>(null); 
-    const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // New state for free agent status
-  
-    useEffect(() => {
-      if (!isOpen) return;
+  // State management for players, teams, tiers, and form inputs
+  const [players, setPlayers] = useState<any[]>([]); // List of players
+  const [teams, setTeams] = useState<any[]>([]); // List of teams
+  const [tiers, setTiers] = useState<any[]>([]); // List of tiers
+  const [newPlayerName, setNewPlayerName] = useState<string>(''); // Input for new player name
+  const [selectedTier, setSelectedTier] = useState<number | null>(null); // Selected tier for new player
+  const [selectedTeam, setSelectedTeam] = useState<number | null>(null); // Selected team for new player
+  const [shotCount, setShotCount] = useState<number>(40); // Initial shot count for the player
+  const [seasonId, setSeasonId] = useState<number | null>(null); // Active season ID
+  const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
 
-      const fetchActiveSeason = async () => {
-        const { data, error } = await supabase
-          .from('seasons')
-          .select('season_id')
-          .is('end_date', null)
-          .single();
+  /**
+   * Effect to fetch data when the component is opened.
+   * Fetches:
+   * - Active season information
+   * - Existing players, teams, and tiers
+   */
+  useEffect(() => {
+    if (!isOpen) return; // Exit if the component is not open
 
-        if (error || !data) {
-          console.error('Error fetching active season:', error);
-        } else {
-          setSeasonId(data.season_id);
-        }
-      };
-
-      const fetchPlayers = async () => {
-        const { data, error } = await supabase.from('players').select('*');
-        if (error) {
-          console.error('Error fetching players:', error);
-        } else {
-          setPlayers(data || []);
-        }
-      };
-
-      const fetchTeams = async () => {
-        const { data, error } = await supabase.from('teams').select('*');
-        if (error) {
-          console.error('Error fetching teams:', error);
-        } else {
-          setTeams(data || []);
-          if (!isFreeAgent) {
-            setSelectedTeam(data?.[0]?.team_id || null); // Default to first available team only if not a free agent
-          }
-        }
-      };
-
-      const fetchTiers = async () => {
-        const { data, error } = await supabase.from('tiers').select('*');
-        if (error) {
-          console.error('Error fetching tiers:', error);
-        } else {
-          setTiers(data || []);
-          setSelectedTier(data?.[0]?.tier_id || null);
-        }
-      };
-
-      fetchActiveSeason();
-      fetchPlayers();
-      fetchTeams();
-      fetchTiers();
-    }, [isOpen, isFreeAgent]);
-
-    const handleAddPlayer = async () => {
-      if (!seasonId) {
-        console.error('No active season found. Cannot add players.');
-        return;
-      }
-
-      if (!newPlayerName || !selectedTier || (!selectedTeam && !isFreeAgent)) {
-        console.error('Player name, team, or tier is missing.');
-        return;
-      }
-
-      const { data: newPlayer, error } = await supabase
-        .from('players')
-        .insert([{ 
-          name: newPlayerName, 
-          tier_id: selectedTier,  
-          team_id: isFreeAgent ? null : selectedTeam,  // If free agent, set team_id to null
-          is_free_agent: isFreeAgent // Set free agent status
-        }])
-        .select()
+    const fetchActiveSeason = async () => {
+      const { data, error } = await supabase
+        .from('seasons')
+        .select('season_id')
+        .is('end_date', null)
         .single();
-
-      if (error || !newPlayer) {
-        console.error('Error adding player:', error);
-        return;
+      if (error || !data) {
+        console.error('Error fetching active season:', error);
+      } else {
+        setSeasonId(data.season_id); // Set the active season ID
       }
+    };
 
-      const { error: playerInstanceError } = await supabase.from('player_instance').insert({
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase.from('players').select('*');
+      if (error) {
+        console.error('Error fetching players:', error);
+      } else {
+        setPlayers(data || []); // Update the players list
+      }
+    };
+
+    const fetchTeams = async () => {
+      const { data, error } = await supabase.from('teams').select('*');
+      if (error) {
+        console.error('Error fetching teams:', error);
+      } else {
+        setTeams(data || []);
+        if (!isFreeAgent) {
+          setSelectedTeam(data?.[0]?.team_id || null); // Default to the first team if not a free agent
+        }
+      }
+    };
+
+    const fetchTiers = async () => {
+      const { data, error } = await supabase.from('tiers').select('*');
+      if (error) {
+        console.error('Error fetching tiers:', error);
+      } else {
+        setTiers(data || []);
+        setSelectedTier(data?.[0]?.tier_id || null); // Default to the first tier
+      }
+    };
+
+    fetchActiveSeason();
+    fetchPlayers();
+    fetchTeams();
+    fetchTiers();
+  }, [isOpen, isFreeAgent]);
+
+  /**
+   * Handles adding a new player to the active season.
+   * Validates inputs and updates the backend.
+   */
+  const handleAddPlayer = async () => {
+    if (!seasonId) {
+      console.error('No active season found. Cannot add players.');
+      return;
+    }
+
+    if (!newPlayerName || !selectedTier || (!selectedTeam && !isFreeAgent)) {
+      console.error('Player name, team, or tier is missing.');
+      return;
+    }
+
+    // Insert the new player into the database
+    const { data: newPlayer, error } = await supabase
+      .from('players')
+      .insert([
+        {
+          name: newPlayerName,
+          tier_id: selectedTier,
+          team_id: isFreeAgent ? null : selectedTeam,
+          is_free_agent: isFreeAgent,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error || !newPlayer) {
+      console.error('Error adding player:', error);
+      return;
+    }
+
+    // Create a player instance for the active season
+    const { error: playerInstanceError } = await supabase
+      .from('player_instance')
+      .insert({
         player_id: newPlayer.player_id,
         season_id: seasonId,
         shots_left: shotCount,
         score: 0,
       });
 
-      if (playerInstanceError) {
-        console.error('Error adding player instance:', playerInstanceError);
-      } else {
-        setPlayers([...players, newPlayer]);
-        setNewPlayerName('');
-      }
-    };
+    if (playerInstanceError) {
+      console.error('Error adding player instance:', playerInstanceError);
+    } else {
+      setPlayers([...players, newPlayer]); // Add new player to the local state
+      setNewPlayerName(''); // Clear the input field
+    }
+  };
 
-    return (
-      <div className={styles.addPlayers}>
+  return (
+    /**
+     * Render the AddPlayers form and player list.
+     * Only show the form if `isOpen` is true.
+     */
+    <div className={styles.addPlayers}>
       <h2>Add Players to Active Season</h2>
 
+      {/* Input for player name */}
       <label>
         Player Name:
         <input
@@ -127,6 +162,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         />
       </label>
 
+      {/* Checkbox for free agent status */}
       <label>
         Free Agent:
         <input
@@ -141,12 +177,11 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         />
       </label>
 
+      {/* Team dropdown (hidden if free agent) */}
       {!isFreeAgent && (
         <label>
           Team:
-          <select 
-            value={selectedTeam || ''} 
-            onChange={(e) => setSelectedTeam(Number(e.target.value))}>
+          <select value={selectedTeam || ''} onChange={(e) => setSelectedTeam(Number(e.target.value))}>
             {teams.map((team) => (
               <option key={team.team_id} value={team.team_id}>
                 {team.team_name}
@@ -156,6 +191,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         </label>
       )}
 
+      {/* Tier dropdown */}
       <label>
         Tier:
         <select value={selectedTier || ''} onChange={(e) => setSelectedTier(Number(e.target.value))}>
@@ -167,6 +203,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         </select>
       </label>
 
+      {/* List of current players */}
       <h3>Current Players</h3>
       <div className={styles.playersSection}>
         <ul>
@@ -178,9 +215,12 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         </ul>
       </div>
 
-      <button className={styles.globalButton} onClick={handleAddPlayer}>Add Player</button>
+      {/* Button to add a new player */}
+      <button className={styles.globalButton} onClick={handleAddPlayer}>
+        Add Player
+      </button>
     </div>
-    );
+  );
 };
 
 export default AddPlayers;

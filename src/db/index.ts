@@ -3,6 +3,8 @@ import { config } from 'dotenv';
 import postgres from 'postgres';
 
 config({ path: '.env' });
-
+ /**
+   * connect to the postgres database
+   */
 const client = postgres(process.env.DATABASE_URL!);
 export const db = drizzle(client);

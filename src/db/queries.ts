@@ -23,7 +23,9 @@ import {
   SelectShot,
   shotsTable
 } from './schema';
-
+ /**
+   * (drizzle schema queries)
+   */
 // User related queries
 export async function createUser(data: InsertUser) {
   await db.insert(usersTable).values(data).execute();

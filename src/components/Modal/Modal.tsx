@@ -1,233 +1,225 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import './modal.css';
-import { supabase } from '@/supabaseClient';
-import { Howl } from 'howler';
+import './modal.css'; // Import CSS for modal styling
+import { supabase } from '@/supabaseClient'; // Supabase client for database interactions
+import { Howl } from 'howler'; // Audio library for sound effects
 
-
+// Props definition for the Modal component
 interface ModalProps {
-  name: string;
-  isOpen: boolean;
-  onClose: () => void;
-  playerId: number;  // Pass player ID to the modal
+  name: string; // Name of the player
+  isOpen: boolean; // Determines whether the modal is visible
+  onClose: () => void; // Callback function to close the modal
+  playerId: number; // Player ID associated with the modal
 }
 
+/**
+ * Modal Component
+ * 
+ * This component serves as an interactive modal for managing player stats, recording shots,
+ * and handling specific shot scenarios like Moneyball or Double points.
+ */
 const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
-  const [points, setPoints] = useState<number | null>(null);
-  const [isMoneyball, setIsMoneyball] = useState<boolean>(false);
-  const [isDouble, setIsDouble] = useState<boolean>(false);
-  const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null);
-  const [currentScore, setCurrentScore] = useState<number>(0);
-  const [tierId, setTierId] = useState<number | null>(null);
-  const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Track shots left
-  const sound = new Howl({ src: ['/sounds/shot.mp3'] });
+  // State variables for managing modal interactions and player data
+  const [points, setPoints] = useState<number | null>(null); // Points for the shot
+  const [isMoneyball, setIsMoneyball] = useState<boolean>(false); // Tracks if the current shot is a Moneyball
+  const [isDouble, setIsDouble] = useState<boolean>(false); // Tracks if the shot has double points
+  const [playerInstanceId, setPlayerInstanceId] = useState<number | null>(null); // Player instance ID
+  const [currentScore, setCurrentScore] = useState<number>(0); // Current score of the player
+  const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
+  const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
+  const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
+
+  /**
+   * Resets the form to its initial state when the modal is closed.
+   */
   const resetForm = () => {
     setPoints(null);
     setIsMoneyball(false);
     setIsDouble(false);
     setPlayerInstanceId(null);
     setTierId(null);
-    setShotsLeft(null); // Reset shots left
+    setShotsLeft(null);
   };
+
+  /**
+   * Plays a notification sound when a shot is successfully recorded.
+   */
   const playNotification = () => {
     sound.play();
   };
+
+  /**
+   * Handles closing the modal and resetting its state.
+   */
   const handleClose = () => {
     resetForm();
     onClose();
   };
 
-  // Fetch player instance and tier information
+  /**
+   * Fetches player instance and tier information for the current season.
+   */
   const fetchPlayerInstanceAndTier = useCallback(async () => {
     try {
-      // Step 1: Fetch the current season
+      // Fetch the current season
       const { data: currentSeason, error: seasonError } = await supabase
         .from('seasons')
         .select('season_id')
         .is('end_date', null)
         .single();
-  
+
       if (seasonError || !currentSeason) {
         console.error('Error fetching current season:', seasonError);
         return;
       }
-  
-      // Step 2: Fetch player instance for the current season
+
+      // Fetch player instance details
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score, shots_left, player_id')
+        .select('player_instance_id, score, shots_left')
         .eq('player_id', playerId)
-        .eq('season_id', currentSeason.season_id) // Ensure it's the current season
+        .eq('season_id', currentSeason.season_id)
         .single();
-  
+
       if (instanceError || !playerInstance) {
         console.error('Error fetching player instance:', instanceError);
         return;
       }
-  
-      const instanceId = playerInstance.player_instance_id;
-      setPlayerInstanceId(instanceId);
-      setCurrentScore(playerInstance.score); // Set the current score
-      setShotsLeft(playerInstance.shots_left); // Set shots left
-  
-      // Fetch player's tier_id
+
+      // Update state with player instance data
+      setPlayerInstanceId(playerInstance.player_instance_id);
+      setCurrentScore(playerInstance.score);
+      setShotsLeft(playerInstance.shots_left);
+
+      // Fetch the player's tier ID
       const { data: player, error: playerError } = await supabase
         .from('players')
         .select('tier_id')
         .eq('player_id', playerId)
         .single();
-  
+
       if (playerError || !player) {
         console.error('Error fetching player information:', playerError);
         return;
       }
-  
-      setTierId(player.tier_id); // Set tier_id
+
+      setTierId(player.tier_id);
     } catch (error) {
       console.error('Unexpected error:', error);
     }
   }, [playerId]);
 
+  /**
+   * Fetch data when the modal is opened and set up real-time updates for player instance changes.
+   */
   useEffect(() => {
     if (!isOpen) return;
 
-    // Fetch initial data
     fetchPlayerInstanceAndTier();
 
-    // Subscribe to real-time changes in player_instance
     const playerInstanceChannel = supabase
       .channel('player-instance-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchPlayerInstanceAndTier)
       .subscribe();
 
     return () => {
-      // Cleanup subscriptions
       supabase.removeChannel(playerInstanceChannel);
     };
   }, [isOpen, fetchPlayerInstanceAndTier]);
 
+  /**
+   * Automatically set the Moneyball flag based on specific shot counts.
+   */
   useEffect(() => {
-    // Automatically toggle Moneyball if shotsLeft is 1, 11, 21, 31, or 41
-    const isMoneyballShot = shotsLeft === 1 || shotsLeft === 11 || shotsLeft === 21 || shotsLeft === 31 || shotsLeft === 41;
+    const isMoneyballShot = [1, 11, 21, 31, 41].includes(shotsLeft || 0);
     setIsMoneyball(isMoneyballShot);
-  }, [shotsLeft]);  // Trigger this effect whenever shotsLeft changes
+  }, [shotsLeft]);
 
+  /**
+   * Handles the submission of the shot and updates player data in the database.
+   */
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
-  
-    // Play notification only if the points are 1 or 2 and the Moneyball is selected
-    if ((points === 1 || points === 2) && isMoneyball) {
-      playNotification();
-    }
-  
+
+    // Adjust points for Moneyball and Double scenarios
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
+
+    // Generate a unique shot ID
     const generateUniqueShotId = () => {
-      const timestamp = Date.now(); // Current timestamp in milliseconds
-      const randomNum = Math.floor(Math.random() * 1000); // Random number between 0 and 999
-      const shotIdStr = `${timestamp}${randomNum}`; // Combine timestamp and random number
-      const shotIdInt = parseInt(shotIdStr.slice(-9), 10); // Get last 9 digits to fit int4
-    
-      return shotIdInt;
+      const timestamp = Date.now();
+      const randomNum = Math.floor(Math.random() * 1000);
+      const shotIdStr = `${timestamp}${randomNum}`;
+      return parseInt(shotIdStr.slice(-9), 10);
     };
-    
-    // Usage in your handleSubmit function
+
     const shotId = generateUniqueShotId();
-  
+
     try {
-      // Insert new shot with tier_id
+      // Record the shot in the database
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
         result: finalPoints,
-        tier_id: tierId, // Include tier_id in shot record
+        tier_id: tierId,
         shot_id: shotId,
       });
-  
+
       if (shotError) {
         console.error('Error recording shot:', shotError);
         return;
       }
-  
-      // Update player instance with the new score and shots left
+
+      // Update player instance score and remaining shots
       const newScore = currentScore + finalPoints;
-      const newShotsLeft = shotsLeft !== null ? shotsLeft - 1 : 0;
-  
+      const newShotsLeft = (shotsLeft || 0) - 1;
+
       const { error: updateScoreError } = await supabase
         .from('player_instance')
-        .update({ 
-          score: newScore, 
-          shots_left: newShotsLeft 
-        })
+        .update({ score: newScore, shots_left: newShotsLeft })
         .eq('player_instance_id', playerInstanceId);
-  
+
       if (updateScoreError) {
         console.error('Error updating player score and shots_left:', updateScoreError);
         return;
       }
-  
+
       console.log('Score and shots_left updated successfully');
       handleClose();
     } catch (error) {
       console.error('Unexpected error:', error);
     }
   };
-  
 
+  // Render nothing if the modal is not open
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      {/* Add a conditional class to apply a red border if it's a moneyball shot */}
       <div className={`modal-content ${isMoneyball ? 'highlight-modal-border' : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={handleClose}>X</button>
-    
+
         <h2>{name}</h2>
-         {/* Moneyball Indicator */}
-    {isMoneyball && (
-      <div className="moneyball-indicator">
-        <span>This is a Moneyball Shot!</span>
-      </div>
-    )}
-        <div className="modal-body">
-          <div>
-            {/* Display shots left and highlight specific shots (1, 11, 21, 31, 41) */}
-            <p className={isMoneyball ? 'highlight-moneyball' : ''}>
-              Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
-            </p>
+
+        {/* Moneyball Indicator */}
+        {isMoneyball && (
+          <div className="moneyball-indicator">
+            <span>This is a Moneyball Shot!</span>
           </div>
+        )}
+
+        <div className="modal-body">
+          <p className={isMoneyball ? 'highlight-moneyball' : ''}>
+            Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
+          </p>
           <div className="points">
-            <button
-              className={points === 0 ? 'selected' : ''}
-              onClick={() => setPoints(0)}
-            >
-              0
-            </button>
-            <button
-              className={points === 1 ? 'selected' : ''}
-              onClick={() => setPoints(1)}
-            >
-              1
-            </button>
-            <button
-              className={points === 2 ? 'selected' : ''}
-              onClick={() => setPoints(2)}
-            >
-              2
-            </button>
+            <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>
+            <button className={points === 1 ? 'selected' : ''} onClick={() => setPoints(1)}>1</button>
+            <button className={points === 2 ? 'selected' : ''} onClick={() => setPoints(2)}>2</button>
           </div>
           <div className="actions">
-  <div className="button-row">
-
-    <button
-      className={isDouble ? 'selected' : ''}
-      onClick={() => setIsDouble(!isDouble)}
-    >
-      Double
-    </button>
-  </div>
-  
-</div>
+            <button className={isDouble ? 'selected' : ''} onClick={() => setIsDouble(!isDouble)}>Double</button>
+          </div>
           <button onClick={handleSubmit}>Submit</button>
         </div>
       </div>

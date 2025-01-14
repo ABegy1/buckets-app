@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, getRoleByName, getViewByName, updateUserView } from '@/db/queries';
-
+/**
+ * route.ts
+ * 
+ * in earlier iterations of the app i was working directly with the vercel postgres database using drizzle as the orm to interact with the database.
+ * various queries were written through this path but most of the functionality has been replaced by the supabase api.
+ *
+ */
 export async function POST(req: NextRequest) {
   const { name, view } = await req.json();
   console.log('Received request to update user view:', { name, view });

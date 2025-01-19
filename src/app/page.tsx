@@ -71,6 +71,7 @@ const HomePage = () => {
       setAuthChecked(true);
     };
 
+    console.log('getUserSession');
     getUserSession();
 
     // Set up listener for auth state changes
@@ -91,16 +92,39 @@ const HomePage = () => {
   /**
    * Automatically sign in the user with Google OAuth if no user is authenticated.
    */
+  // useEffect(() => {
+  //   if (authChecked && !loading && !user) {
+  //     const signInWithGoogle = async () => {
+  //       const { error } = await supabase.auth.signInWithOAuth({
+  //         provider: 'google',
+  //       });
+  //       if (error) console.error('Error signing in with Google:', error.message);
+  //     };
+
+  //     signInWithGoogle();
+  //   }
+  // }, [authChecked, loading, user]);
+
+
+    /**
+   * Automatically sign in the user with email if no user is authenticated.
+   */
   useEffect(() => {
     if (authChecked && !loading && !user) {
-      const signInWithGoogle = async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
+      const signInWithEmail = async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: 'admin@admin.com',
+          password: 'Bucketspass011!',
         });
-        if (error) console.error('Error signing in with Google:', error.message);
+        if (error) {
+          console.error('Error signing in with email:', error.message);
+        }
+        else {
+          console.log('User logged in: ', data);
+        }
       };
 
-      signInWithGoogle();
+      signInWithEmail();
     }
   }, [authChecked, loading, user]);
 
@@ -120,7 +144,7 @@ const HomePage = () => {
           console.log('User not found, adding to Supabase');
           await supabase
             .from('users')
-            .insert([{ name: user.user_metadata.full_name, email: user.email, role: 'User', View: 'Standings' }]);
+            .insert([{ name: 'anonymous', email: user.email, role: 'User', View: 'Standings' }]);
           setUserAdded(true);
         } else {
           console.log('User already exists in Supabase');
@@ -130,7 +154,11 @@ const HomePage = () => {
     };
 
     if (user) {
+      console.log("Adding new user: ", user);
       addUserIfNotExists();
+    }
+    else{
+      console.log("Returning user: ", user);
     }
   }, [user, userAdded]);
 

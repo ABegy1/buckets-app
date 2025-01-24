@@ -1,5 +1,5 @@
 insert into
 users
 values
-('admin@admin.com', 'Admin', 1, 'anonymous', 'Admin');
+('admin@admin.com', 'Admin', 1, 'anonymous', 'Standings');
 

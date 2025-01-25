@@ -88,19 +88,39 @@ const HomePage = () => {
     };
   }, [router]);
 
-  /**
-   * Automatically sign in the user with Google OAuth if no user is authenticated.
+    /**
+   * Automatically sign in the user with email if running in dev. Google otherwise
    */
   useEffect(() => {
     if (authChecked && !loading && !user) {
-      const signInWithGoogle = async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-        });
-        if (error) console.error('Error signing in with Google:', error.message);
-      };
+      if(process.env.NODE_ENV == 'development'){
+        console.log("Running in dev mode, logging in with local account");
+        const signInWithEmail = async () => {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: 'admin@admin.com',
+            password: 'Bucketspass011!',
+          });
+          if (error) {
+            console.error('Error signing in with email:', error.message);
+          }
+          else {
+            console.log('User logged in: ', data);
+          }
+        };
 
-      signInWithGoogle();
+        signInWithEmail();
+      }
+      else{
+        console.log("Logging in with Google");
+        const signInWithGoogle = async () => {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+          });
+          if (error) console.error('Error signing in with Google:', error.message);
+        };
+
+        signInWithGoogle();
+      }
     }
   }, [authChecked, loading, user]);
 

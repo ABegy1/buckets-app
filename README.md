@@ -140,6 +140,9 @@ If you're new to the **Buckets App**, follow these steps to get started:
    - Use the browser console and `console.log` for inspecting data flow.
    - Check Supabase logs for errors in real-time updates or API calls.
 
+7. **Seed Data**:
+   - If you want to seed the development db with data, you will need to set `enabled` to `true` in the `db.seed` section of your `config.toml` file.
+   - **Make sure to set the `db.seed` setting back to `false` before pushing to production in order to avoid auto-seeding the production db!!!**
 ---
 
 ## Deployment

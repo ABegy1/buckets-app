@@ -134,11 +134,14 @@ const AdminPage = () => {
           .is('end_date', null) // Fetch active season
           .single();
 
-        if (seasonError || !activeSeason) {
+        if (seasonError) {
           throw seasonError;
         }
+        else if(!activeSeason){
+          setSeasonName('No Active Season');
+        }
+        else setSeasonName(activeSeason.season_name);
 
-        setSeasonName(activeSeason.season_name);
       } catch (error) {
         console.error('Error fetching current season:', error);
       }

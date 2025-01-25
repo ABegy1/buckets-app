@@ -27,7 +27,9 @@
   margin: 0;
 }
 
-/* Updated Sign Out button styling (carried over from previous update) */
+/* Updated Sign Out button styling */
+/* trying to trigger automated build */
+
 .signOutButton {
   background-color: #ff6b6b;
   color: white;

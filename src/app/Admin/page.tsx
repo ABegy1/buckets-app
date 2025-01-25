@@ -132,7 +132,7 @@ const AdminPage = () => {
           .from('seasons')
           .select('season_name')
           .is('end_date', null) // Fetch active season
-          .maybeSingle();
+          .single();
 
         if (seasonError) {
           throw seasonError;

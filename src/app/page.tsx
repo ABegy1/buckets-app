@@ -90,7 +90,7 @@ const HomePage = () => {
   }, [router]);
 
     /**
-   * Automatically sign in the user with email if no user is authenticated.
+   * Automatically sign in the user with email if running in dev. Google otherwise
    */
   useEffect(() => {
     if (authChecked && !loading && !user) {
@@ -141,7 +141,7 @@ const HomePage = () => {
           console.log('User not found, adding to Supabase');
           await supabase
             .from('users')
-            .insert([{ name: 'anonymous', email: user.email, role: 'User', View: 'Standings' }]);
+            .insert([{ name: user.user_metadata.full_name, email: user.email, role: 'User', View: 'Standings' }]);
           setUserAdded(true);
         } else {
           console.log('User already exists in Supabase');
@@ -151,11 +151,7 @@ const HomePage = () => {
     };
 
     if (user) {
-      console.log("Adding new user: ", user);
       addUserIfNotExists();
-    }
-    else{
-      console.log("Returning user: ", user);
     }
   }, [user, userAdded]);
 

@@ -89,42 +89,39 @@ const HomePage = () => {
     };
   }, [router]);
 
-  /**
-   * Automatically sign in the user with Google OAuth if no user is authenticated.
-   */
-  // useEffect(() => {
-  //   if (authChecked && !loading && !user) {
-  //     const signInWithGoogle = async () => {
-  //       const { error } = await supabase.auth.signInWithOAuth({
-  //         provider: 'google',
-  //       });
-  //       if (error) console.error('Error signing in with Google:', error.message);
-  //     };
-
-  //     signInWithGoogle();
-  //   }
-  // }, [authChecked, loading, user]);
-
-
     /**
    * Automatically sign in the user with email if no user is authenticated.
    */
   useEffect(() => {
     if (authChecked && !loading && !user) {
-      const signInWithEmail = async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'admin@admin.com',
-          password: 'Bucketspass011!',
-        });
-        if (error) {
-          console.error('Error signing in with email:', error.message);
-        }
-        else {
-          console.log('User logged in: ', data);
-        }
-      };
+      if(process.env.NODE_ENV == 'development'){
+        console.log("Running in dev mode, logging in with local account");
+        const signInWithEmail = async () => {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: 'admin@admin.com',
+            password: 'Bucketspass011!',
+          });
+          if (error) {
+            console.error('Error signing in with email:', error.message);
+          }
+          else {
+            console.log('User logged in: ', data);
+          }
+        };
 
-      signInWithEmail();
+        signInWithEmail();
+      }
+      else{
+        console.log("Logging in with Google");
+        const signInWithGoogle = async () => {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+          });
+          if (error) console.error('Error signing in with Google:', error.message);
+        };
+
+        signInWithGoogle();
+      }
     }
   }, [authChecked, loading, user]);
 

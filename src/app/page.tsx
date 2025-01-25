@@ -71,7 +71,6 @@ const HomePage = () => {
       setAuthChecked(true);
     };
 
-    console.log('getUserSession');
     getUserSession();
 
     // Set up listener for auth state changes

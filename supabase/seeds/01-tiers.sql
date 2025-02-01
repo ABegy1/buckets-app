@@ -1,5 +1,5 @@
 insert into tiers (tier_id, tier_name, color)
-values  (1, 'Green', '0x008000'),
-        (2, 'Yellow', '0xFFFF00'),
-        (3, 'Red', '0xFF0000'),
-        (4, 'Black', '0x000000');
+values  (1, 'Green', '#008000'),
+        (2, 'Yellow', '#FFFF00'),
+        (3, 'Red', '#FF0000'),
+        (4, 'Black', '#000000');

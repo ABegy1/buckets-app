@@ -445,29 +445,29 @@ const StandingsPage: React.FC = () => {
 
       // **Shots** subscription: check new shot, if 3rd consecutive => play sound
       const shotChannel = supabase
-  .channel('shots-db-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
-    async (payload) => {
-      try {
-        // Cast payload.new to a ShotsRow-like object
-        const newRow = payload.new as { result: number; instance_id: number };
+        .channel('shots-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
+          async (payload) => {
+            try {
+              // Cast payload.new to a ShotsRow-like object
+              const newRow = payload.new as { result: number; instance_id: number };
 
-        const { result, instance_id } = newRow;
-        // If it's a made shot (non-zero)
-        if (result !== 0) {
-          const newStreak = await calculateShotsMadeInRow(instance_id);
-          if (newStreak === 3) {
-            sound.play();
+              const { result, instance_id } = newRow;
+              // If it's a made shot (non-zero)
+              if (result !== 0) {
+                const newStreak = await calculateShotsMadeInRow(instance_id);
+                if (newStreak === 3) {
+                  sound.play();
+                }
+              }
+              await fetchTeamsAndPlayers();
+              await updateTeamScores();
+            } catch (error) {
+              console.error('Error processing shot change:', error);
+            }
           }
-        }
-        await fetchTeamsAndPlayers();
-        await updateTeamScores();
-      } catch (error) {
-        console.error('Error processing shot change:', error);
-      }
-    }
-  )
-  .subscribe();
+        )
+        .subscribe();
 
       return () => {
         supabase.removeChannel(playerInstanceChannel);

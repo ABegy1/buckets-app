@@ -29,8 +29,9 @@
 }
 
 .navMenu {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .navItem {
@@ -43,8 +44,9 @@
 }
 
 .active {
-    border-bottom: 2px solid #fff; /* Highlight active tab */
-    font-weight: bold;
+  /* inverted color due to needing to invert the logo */
+  border-bottom: 2px solid #000000; /* Highlight active tab */
+  font-weight: bold;
 }
 
 /* Footer styling */

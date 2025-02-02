@@ -11,7 +11,8 @@
 
   .navMenu {
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.25rem;
   }
   
   .navItem {
@@ -35,7 +36,8 @@
     flex-shrink: 0;
   }
   .active {
-    border-bottom: 2px solid #fff; /* Highlight active tab */
+    /* inverted color due to needing to invert the logo */
+    border-bottom: 2px solid #000000; /* Highlight active tab */
     font-weight: bold;
   }
   .statsContainer {

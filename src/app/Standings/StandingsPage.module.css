@@ -224,7 +224,8 @@
 }
 .navMenu {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .navItem {
@@ -253,7 +254,8 @@
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 .active {
-  border-bottom: 2px solid #fff; /* Highlight active tab */
+  /* inverted color due to needing to invert the logo */
+  border-bottom: 2px solid #000000; /* Highlight active tab */
   font-weight: bold;
 }
 .signOutButton:active {

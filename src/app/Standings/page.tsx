@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
@@ -8,6 +8,18 @@ import { Howl } from 'howler';
 
 import { usePathname, useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+
+import Image from 'next/image'
+import bucketsLogo from "@/assets/images/buckets.png"
+import scoreLogo from "@/assets/images/add.png" 
+import standingsLogo from "@/assets/images/speedometer.png"
+import freeAgencyLogo from "@/assets/images/bench.png"
+import rulesLogo from "@/assets/images/document.png"
+import statsLogo from "@/assets/images/analytics.png"
+import userLogo from "@/assets/images/user.png" 
+import adminLogo from "@/assets/images/administrator.png" 
+
+import { stat } from 'fs';
 
 interface Team {
   team_id: number;
@@ -495,33 +507,66 @@ const StandingsPage: React.FC = () => {
   <div className={styles.userContainer}>
     {/* Header Section */}
     <header className={styles.navbar}>
-      <h1 className={styles.navbarTitle}>Buckets</h1>
+      <div className={styles.navMenu}>
+        <Image className={`${styles.navItem} dark:invert`} 
+                  src={bucketsLogo}
+                  alt='Buckets!'
+                  width="75"
+                  height="75"
+        >
+        </Image>
+        <h1 className={`${styles.navbarTitle}`}>Buckets</h1>
+      </div>
       <nav className={styles.navMenu}>
         {/* Navigation Buttons */}
-        <button
-          onClick={() => handleNavigation('Standings')}
-          className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-        >
-          Standings
-        </button>
-        <button
-          onClick={() => handleNavigation('FreeAgency')}
-          className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-        >
-          Free Agency
-        </button>
-        <button
-          onClick={() => handleNavigation('Rules')}
-          className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-        >
-          Rules
-        </button>
-        <button
-          onClick={() => handleNavigation('Stats')}
-          className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-        >
-          Stats
-        </button>
+        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
+          src={scoreLogo}
+          alt='Score'
+          width="65"
+          height="65"
+          onClick={() => handleNavigation('Admin')}>
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} dark:invert`} 
+          src={standingsLogo}
+          alt='Standings'
+          width="75"
+          height="75"
+          onClick={() => handleNavigation('Standings')}>
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} dark:invert`} 
+          src={freeAgencyLogo}
+          alt='Free Agency'
+          width="65"
+          height="65"
+          onClick={() => handleNavigation('FreeAgency')}>
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} dark:invert`} 
+          src={rulesLogo}
+          alt='Rules'
+          width="65"
+          height="65"
+          onClick={() => handleNavigation('Rules')}>
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} dark:invert`} 
+          src={statsLogo}
+          alt='Stats'
+          width="65"
+          height="65"
+          onClick={() => handleNavigation('Stats')}>
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} dark:invert`} 
+          src={userLogo}
+          alt='Stats'
+          width="65"
+          height="65">
+        </Image>
+        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
+          src={adminLogo}
+          alt='Stats'
+          width="65"
+          height="65"
+          onClick={() => handleNavigation('Admin')}>
+        </Image>
       </nav>
     </header>
 

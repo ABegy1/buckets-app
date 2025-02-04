@@ -519,48 +519,48 @@ const StandingsPage: React.FC = () => {
       </div>
       <nav className={styles.navMenu}>
         {/* Navigation Buttons */}
-        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`} 
           src={scoreLogo}
           alt='Score'
           width="65"
           height="65"
           onClick={() => handleNavigation('Admin')}>
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} invert`} 
           src={standingsLogo}
           alt='Standings'
           width="75"
           height="75"
           onClick={() => handleNavigation('Standings')}>
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} invert`} 
           src={freeAgencyLogo}
           alt='Free Agency'
           width="65"
           height="65"
           onClick={() => handleNavigation('FreeAgency')}>
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} invert`} 
           src={rulesLogo}
           alt='Rules'
           width="65"
           height="65"
           onClick={() => handleNavigation('Rules')}>
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} invert`} 
           src={statsLogo}
           alt='Stats'
           width="65"
           height="65"
           onClick={() => handleNavigation('Stats')}>
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} invert`} 
           src={userLogo}
           alt='Stats'
           width="65"
           height="65">
         </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
+        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`} 
           src={adminLogo}
           alt='Stats'
           width="65"

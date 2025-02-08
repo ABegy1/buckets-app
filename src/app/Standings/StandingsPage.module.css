@@ -192,25 +192,6 @@
   padding: 10px 0;
 }
 
-/* Navbar styling */
-.navbar {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background-color: #264653; /* Darker color for better contrast */
-  color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-}
-
-.navbarTitle {
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 0;
-}
-
 /* Updated Sign Out button styling */
 .signOutButton {
   background-color: #c1121f; /* Darker color for better contrast */
@@ -221,20 +202,6 @@
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.navMenu {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.navItem {
-  background-color: transparent;
-  color: white;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
 }
 
 .playerNameColumn {
@@ -252,11 +219,6 @@
 .signOutButton:hover {
   background-color: #a11a1a;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-}
-.active {
-  /* inverted color due to needing to invert the logo */
-  border-bottom: 2px solid #000000; /* Highlight active tab */
-  font-weight: bold;
 }
 .signOutButton:active {
   background-color: #8b0000;

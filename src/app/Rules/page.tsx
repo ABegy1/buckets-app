@@ -7,15 +7,7 @@ import ReactMarkdown from 'react-markdown'; // Markdown rendering library
 // @ts-ignore
 import { usePathname, useRouter } from 'next/navigation'; // Navigation hooks from Next.js
 
-import Image from 'next/image'
-import bucketsLogo from "@/assets/images/buckets.png"
-import scoreLogo from "@/assets/images/add.png" 
-import standingsLogo from "@/assets/images/speedometer.png"
-import freeAgencyLogo from "@/assets/images/bench.png"
-import rulesLogo from "@/assets/images/document.png"
-import statsLogo from "@/assets/images/analytics.png"
-import userLogo from "@/assets/images/user.png" 
-import adminLogo from "@/assets/images/administrator.png" 
+import Header from '@/components/Header';
 /**
  * RulesPage Component
  * 
@@ -38,17 +30,6 @@ const RulesPage: React.FC = () => {
   // State variables
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the current season
-
-  const router = useRouter(); // Router hook for navigation
-  const pathname = usePathname(); // Pathname hook to determine the current page
-
-  /**
-   * Handles navigation between pages.
-   * @param page The target page to navigate to.
-   */
-  const handleNavigation = (page: string) => {
-    router.push(`/${page}`);
-  };
 
   /**
    * Fetches the rules and season name for the current active season.
@@ -94,69 +75,7 @@ const RulesPage: React.FC = () => {
   return (
     <div className={styles.userContainer}>
       {/* Header Section */}
-      <header className={styles.navbar}>
-      <div className={styles.navMenu}>
-        <Image className={`${styles.navItem} dark:invert`} 
-                  src={bucketsLogo}
-                  alt='Buckets!'
-                  width="75"
-                  height="75"
-        >
-        </Image>
-        <h1 className={`${styles.navbarTitle}`}>Buckets</h1>
-      </div>
-      <nav className={styles.navMenu}>
-        {/* Navigation Buttons */}
-        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
-          src={scoreLogo}
-          alt='Score'
-          width="65"
-          height="65"
-          onClick={() => handleNavigation('Admin')}>
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} dark:invert`} 
-          src={standingsLogo}
-          alt='Standings'
-          width="75"
-          height="75"
-          onClick={() => handleNavigation('Standings')}>
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} dark:invert`} 
-          src={freeAgencyLogo}
-          alt='Free Agency'
-          width="65"
-          height="65"
-          onClick={() => handleNavigation('FreeAgency')}>
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} dark:invert`} 
-          src={rulesLogo}
-          alt='Rules'
-          width="65"
-          height="65"
-          onClick={() => handleNavigation('Rules')}>
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} dark:invert`} 
-          src={statsLogo}
-          alt='Stats'
-          width="65"
-          height="65"
-          onClick={() => handleNavigation('Stats')}>
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} dark:invert`} 
-          src={userLogo}
-          alt='Stats'
-          width="65"
-          height="65">
-        </Image>
-        <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} dark:invert`} 
-          src={adminLogo}
-          alt='Stats'
-          width="65"
-          height="65"
-          onClick={() => handleNavigation('Admin')}>
-        </Image>
-      </nav>
-    </header>
+      <Header></Header>
 
       {/* Main Content Section */}
       <main className={styles.userContent}>

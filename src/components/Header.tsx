@@ -42,35 +42,55 @@ export default function Header() {
             </div>
             <nav className={styles.navMenu}>
                 {/* Navigation Buttons */}
-                <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`} 
-                    src={scoreLogo}
-                    alt='Score'
-                    width="65"
-                    height="65"
-                    onClick={() => handleNavigation('Admin')}>
-                </Image>
-                <Image className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} invert`} 
+                <div className="relative group">
+                    <Image
+                        data-tooltip="Score"
+                        className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`}
+                        src={scoreLogo}
+                        alt='Score'
+                        width="65"
+                        height="65"
+                        onClick={() => handleNavigation('Admin')}>
+                    </Image>
+                    {/* <span
+                        className="absolute z-50 whitespace-normal break-words rounded-lg bg-gray-800 py-1.5 px-3 font-sans text-sm font-normal text-white focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Score
+                    </span> */}
+                </div>
+                <Image 
+                    data-tooltip="Standings"
+                    data-tooltip-loc="left"
+                    className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} invert`} 
                     src={standingsLogo}
                     alt='Standings'
                     width="75"
                     height="75"
                     onClick={() => handleNavigation('Standings')}>
                 </Image>
-                <Image className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} invert`} 
+                <Image 
+                    data-tooltip="Free Agency"
+                    data-tooltip-loc="above"
+                    className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} invert`} 
                     src={freeAgencyLogo}
                     alt='Free Agency'
                     width="65"
                     height="65"
                     onClick={() => handleNavigation('FreeAgency')}>
                 </Image>
-                <Image className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} invert`} 
+                <Image 
+                    data-tooltip="Rules"
+                    data-tooltip-loc="below"
+                    className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} invert`} 
                     src={rulesLogo}
                     alt='Rules'
                     width="65"
                     height="65"
                     onClick={() => handleNavigation('Rules')}>
                 </Image>
-                <Image className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} invert`} 
+                <Image
+                    data-tooltip="Stats"
+                    data-tooltip-loc="right" 
+                    className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} invert`} 
                     src={statsLogo}
                     alt='Stats'
                     width="65"

@@ -1,7 +1,10 @@
 import React from 'react';
 import Link from 'next/link'; // Provides client-side navigation between routes
 import { Inter } from 'next/font/google'; // Imports the Inter font from Google Fonts
+
 import './globals.css'; // Global CSS styles for the application
+
+import TooltipProvider from "@/components/TooltipProvider";
 
 // Load the Inter font with Latin subset
 const inter = Inter({ subsets: ['latin'] });
@@ -44,6 +47,7 @@ export default function RootLayout({
          * - It is wrapped with padding for consistent spacing.
          */}
         <main className="p-4">
+          <TooltipProvider></TooltipProvider>
           {children}
         </main>
       </body>

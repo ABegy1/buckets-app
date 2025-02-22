@@ -31,6 +31,7 @@ export default function TooltipProvider() {
                                                           visible: false });
                                   
   const timeoutRef = useRef(null);
+  const timeoutDelay = 500; // Default delay before any tooltip becomes visible in milliseconds
 
   useEffect(() => {
     const handleMouseOver = (e: MouseEvent) => {
@@ -54,25 +55,21 @@ export default function TooltipProvider() {
                   left_edge = rect.left + rect.width / 2
                   top_edge = rect.bottom + tooltip_padding
                   xform = "translate(-50%, 0%)"
-                  console.log("moving cursor below")
               }
               if(tooltipLocation === "above"){
                   left_edge = rect.left + rect.width / 2
                   bottom_edge = window.innerHeight - rect.top - tooltip_padding
                   xform = "translate(-50%, 0%)"
-                  console.log("moving cursor above")
               }
               if(tooltipLocation === "left"){
                   right_edge = window.innerWidth - rect.left - tooltip_padding
                   top_edge = rect.top + rect.height / 2
                   xform = "translate(0%, -50%)"
-                  console.log("moving cursor left")
               }
               if(tooltipLocation === "right"){
                   left_edge = rect.right + tooltip_padding
                   top_edge = rect.top + rect.height / 2
                   xform = "translate(0%, -50%)"
-                  console.log("moving cursor right")
               }
 
           }
@@ -90,7 +87,7 @@ export default function TooltipProvider() {
           
           console.log(`left: ${left_edge}\n right: ${right_edge}\n top: ${top_edge}\n bottom: ${bottom_edge}`)
         }
-      }, 500);
+      }, timeoutDelay);
     };
 
     const handleMouseOut = () => {
@@ -116,14 +113,14 @@ export default function TooltipProvider() {
 
   return tooltip.visible ? (
     <div
-      className="absolute bg-gray-800 text-white text-sm px-3 py-1 rounded shadow-lg"
+      className="absolute bg-gray-500 text-white text-sm px-3 py-1 rounded shadow-lg"
       style={{
         left: `${tooltip.style.left}px`,
         right: `${tooltip.style.right}px`,
         top: `${tooltip.style.top}px`,
         bottom: `${tooltip.style.bottom}px`,
         transform: `${tooltip.style.transform}`,
-        whiteSpace: "nowrap",
+        whiteSpace: "wrap",
         zIndex:2
       }}
     >

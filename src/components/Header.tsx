@@ -45,6 +45,7 @@ export default function Header() {
                 <div className="relative group">
                     <Image
                         data-tooltip="Score"
+                        data-tooltip-loc="below"
                         className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`}
                         src={scoreLogo}
                         alt='Score'
@@ -52,24 +53,20 @@ export default function Header() {
                         height="65"
                         onClick={() => handleNavigation('Admin')}>
                     </Image>
-                    {/* <span
-                        className="absolute z-50 whitespace-normal break-words rounded-lg bg-gray-800 py-1.5 px-3 font-sans text-sm font-normal text-white focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Score
-                    </span> */}
                 </div>
                 <Image 
                     data-tooltip="Standings"
-                    data-tooltip-loc="left"
+                    data-tooltip-loc="below"
                     className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''} invert`} 
                     src={standingsLogo}
                     alt='Standings'
-                    width="75"
-                    height="75"
+                    width="65"
+                    height="65"
                     onClick={() => handleNavigation('Standings')}>
                 </Image>
                 <Image 
                     data-tooltip="Free Agency"
-                    data-tooltip-loc="above"
+                    data-tooltip-loc="below"
                     className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''} invert`} 
                     src={freeAgencyLogo}
                     alt='Free Agency'
@@ -89,7 +86,7 @@ export default function Header() {
                 </Image>
                 <Image
                     data-tooltip="Stats"
-                    data-tooltip-loc="right" 
+                    data-tooltip-loc="below" 
                     className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''} invert`} 
                     src={statsLogo}
                     alt='Stats'
@@ -97,15 +94,21 @@ export default function Header() {
                     height="65"
                     onClick={() => handleNavigation('Stats')}>
                 </Image>
-                <Image className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} invert`} 
+                {/* <Image 
+                    data-tooltip="User"
+                    data-tooltip-loc="below"
+                    className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} invert`} 
                     src={userLogo}
                     alt='Stats'
                     width="65"
                     height="65">
-                </Image>
-                <Image className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`} 
+                </Image> */}
+                <Image 
+                    data-tooltip="Admin"
+                    data-tooltip-loc="below"
+                    className={`${styles.navItem} ${pathname === '/Admin' ? styles.active : ''} invert`} 
                     src={adminLogo}
-                    alt='Stats'
+                    alt='Admin'
                     width="65"
                     height="65"
                     onClick={() => handleNavigation('Admin')}>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient'; 
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -32,39 +32,43 @@ const HomePage = () => {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  // Add user to database if needed
-  const checkAndAddUser = useCallback(async (user: User) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('email', user.email)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      setError(error.message);
-      return;
-    }
-
-    const userRole = data?.role ?? 'User';
-
-    if (!data) {
-      await supabase.from('users').insert([{ 
-        name: username || 'default', 
-        email: user.email, 
-        role: 'User', 
-        View: 'Standings' 
-      }]);
-    }
-
-    router.push(userRole === 'Admin' ? '/Admin' : '/Standings');
-  }, [router, username]);
-
-  // Run the user check when user logs in
+  // Handle user check and redirection
   useEffect(() => {
-    if (user) {
-      checkAndAddUser(user);
-    }
-  }, [user, checkAndAddUser]);
+    if (!user) return;
+
+    const checkAndRedirect = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('email', user.email)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          setError(error.message);
+          return;
+        }
+
+        const userRole = data?.role ?? 'User';
+
+        if (!data) {
+          await supabase.from('users').insert([{ 
+            name: username || 'default', 
+            email: user.email, 
+            role: 'User', 
+            View: 'Standings' 
+          }]);
+        }
+
+        router.replace(userRole === 'Admin' ? '/Admin' : '/Standings');
+      } catch (err) {
+        console.error('Error checking user:', err);
+        setError('Failed to check user role.');
+      }
+    };
+
+    checkAndRedirect();
+  }, [user, router, username]);
 
   // Sign in with email/password
   const handleAuth = async () => {

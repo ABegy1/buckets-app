@@ -1,174 +1,156 @@
-'use client'; // Required in Next.js App Router for client-side rendering
+'use client';
 
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient'; // Supabase client for authentication and database operations
-import type { User } from '@supabase/supabase-js'; // Supabase User type definition
-import { useRouter } from 'next/navigation'; // Next.js router for navigation
+import { supabase } from '@/supabaseClient'; 
+import type { User } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+import { Box, Typography, Stack, Button, TextField, CircularProgress, Alert, Divider } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 
-/**
- * Custom Hook: useUserRole
- * 
- * Fetches the role of a user based on their full name by making an API call.
- * Tracks the user's role using state.
- * 
- * @param {string | null} fullName - The full name of the user.
- * @returns {Object} - An object containing the user's role.
- */
-const useUserRole = (fullName: string | null) => {
-  const [role, setRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!fullName) return; // Skip fetching role if full name is not available
-
-    const fetchUserRole = async () => {
-      try {
-        console.log('Fetching user role for:', fullName);
-        const response = await fetch(`/api/addUser?full_name=${encodeURIComponent(fullName)}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch user role');
-        }
-        const data = await response.json();
-        setRole(data.role); // Set the fetched role in state
-      } catch (error) {
-        console.error('Error fetching user role:', error);
-      }
-    };
-
-    fetchUserRole();
-  }, [fullName]);
-
-  return { role }; // Return the user's role
-};
-
-/**
- * HomePage Component
- * 
- * The main entry point of the application. Handles user authentication,
- * role fetching, user addition to the database, and redirects based on user role.
- */
 const HomePage = () => {
-  const [user, setUser] = useState<User | null>(null); // Current authenticated user
-  const [loading, setLoading] = useState(true); // Tracks whether session is being checked
-  const [authChecked, setAuthChecked] = useState(false); // Tracks if authentication check is complete
-  const [userAdded, setUserAdded] = useState(false); // Tracks whether the user has been added to the database
-  const router = useRouter(); // Next.js router for navigation
+  const [user, setUser] = useState<User | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  // Fetch the user role using a custom hook
-  const { role } = useUserRole(user?.user_metadata.full_name ?? null);
-
-  /**
-   * Fetch the current user session and set up authentication state change listener.
-   */
+  // Fetch user session and listen for auth changes
   useEffect(() => {
-    const getUserSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error fetching session:', error);
-      } else {
-        setUser(session?.user ?? null); // Set the authenticated user
-      }
-      setLoading(false); // Authentication check is done
-      setAuthChecked(true);
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
 
-    getUserSession();
-
-    // Set up listener for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setUser(session.user ?? null); // Update user state when signed in
-      } else {
-        setUser(null); // Clear user state on sign-out
-        router.push('/'); // Redirect to homepage after sign-out
-      }
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
     });
 
-    return () => {
-      authListener.subscription.unsubscribe(); // Clean up listener on component unmount
-    };
-  }, [router]);
+    fetchSession();
+    return () => authListener.subscription.unsubscribe();
+  }, []);
 
-    /**
-   * Automatically sign in the user with email if running in dev. Google otherwise
-   */
+  // Handle user check and redirection
   useEffect(() => {
-    if (authChecked && !loading && !user) {
-      if(process.env.NODE_ENV == 'development'){
-        console.log("Running in dev mode, logging in with local account");
-        const signInWithEmail = async () => {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: 'admin@admin.com',
-            password: 'Bucketspass011!',
-          });
-          if (error) {
-            console.error('Error signing in with email:', error.message);
-          }
-          else {
-            console.log('User logged in: ', data);
-          }
-        };
+    if (!user) return;
 
-        signInWithEmail();
-      }
-      else{
-        console.log("Logging in with Google");
-        const signInWithGoogle = async () => {
-          const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-          });
-          if (error) console.error('Error signing in with Google:', error.message);
-        };
-
-        signInWithGoogle();
-      }
-    }
-  }, [authChecked, loading, user]);
-
-  /**
-   * Add the user to the database if they don't already exist.
-   */
-  useEffect(() => {
-    const addUserIfNotExists = async () => {
-      if (user && !userAdded) {
+    const checkAndRedirect = async () => {
+      try {
         const { data, error } = await supabase
           .from('users')
-          .select('email')
-          .eq('email', user.email);
+          .select('role')
+          .eq('email', user.email)
+          .single();
 
-        if (!data || data.length === 0) {
-          // User doesn't exist; add them to the database
-          console.log('User not found, adding to Supabase');
-          await supabase
-            .from('users')
-            .insert([{ name: user.user_metadata.full_name, email: user.email, role: 'User', View: 'Standings' }]);
-          setUserAdded(true);
-        } else {
-          console.log('User already exists in Supabase');
-          setUserAdded(true);
+        if (error && error.code !== 'PGRST116') {
+          setError(error.message);
+          return;
         }
+
+        const userRole = data?.role ?? 'User';
+
+        if (!data) {
+          await supabase.from('users').insert([{ 
+            name: username || 'default', 
+            email: user.email, 
+            role: 'User', 
+            View: 'Standings' 
+          }]);
+        }
+
+        router.replace(userRole === 'Admin' ? '/Admin' : '/Standings');
+      } catch (err) {
+        console.error('Error checking user:', err);
+        setError('Failed to check user role.');
       }
     };
 
-    if (user) {
-      addUserIfNotExists();
-    }
-  }, [user, userAdded]);
+    checkAndRedirect();
+  }, [user, router, username]);
 
-  /**
-   * Redirect the user based on their role after session and role checks are complete.
-   */
-  useEffect(() => {
-    if (user && role && userAdded) {
-      if (role === 'Admin') {
-        router.push('/Admin'); // Redirect admins to the admin page
+  // Sign in with email/password
+  const handleAuth = async () => {
+    setIsProcessing(true);
+    setError(null);
+  
+    try {
+      let response;
+      
+      if (isSignUpMode) {
+        response = await supabase.auth.signUp({ email, password });
       } else {
-        router.push('/Standings'); // Redirect standard users to the standings page
+        response = await supabase.auth.signInWithPassword({ email, password });
       }
+  
+      const { data, error } = response;
+  
+      if (error) {
+        setError(error.message);
+      } else {
+        setUser(data.user);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
     }
-  }, [user, role, router, userAdded]);
+  };
 
-  // Prevent rendering until authentication check is complete
-  return null; // Render nothing while processing authentication
+  // Sign in with Google
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) setError(error.message);
+  };
+
+  return (
+    <Box sx={{ width: 400, mx: 'auto', mt: 10, p: 4, borderRadius: 3, boxShadow: 3, bgcolor: 'background.paper' }}>
+      <Typography variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
+        {isSignUpMode ? 'Create an account' : 'Welcome back'}
+      </Typography>
+      <Typography variant="body2" color="textSecondary" textAlign="center" gutterBottom>
+        {isSignUpMode ? 'Please enter your details to sign up.' : 'Please enter your details to sign in.'}
+      </Typography>
+
+      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 2 }}>
+        <Button fullWidth variant="outlined" startIcon={<GoogleIcon />} onClick={signInWithGoogle}>
+          Sign in with Google
+        </Button>
+      </Stack>
+
+      <Divider sx={{ my: 2 }}>OR</Divider>
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <form
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault(); // Prevents form submission from reloading the page
+            handleAuth();
+          }
+        }}
+      >
+        {isSignUpMode && (
+          <TextField label="Username" fullWidth margin="dense" value={username} onChange={(e) => setUsername(e.target.value)} />
+        )}
+        <TextField label="E-Mail Address" type="email" fullWidth margin="dense" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextField label="Password" type="password" fullWidth margin="dense" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+        <Button fullWidth variant="contained" color="primary" sx={{ mt: 2, py: 1.5 }} onClick={handleAuth} disabled={isProcessing}>
+          {isProcessing ? <CircularProgress size={24} /> : isSignUpMode ? 'Sign up' : 'Sign in'}
+        </Button>
+      </form>
+
+      <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+        {isSignUpMode ? 'Already have an account?' : 'Don’t have an account yet?'} 
+        <Button variant="text" onClick={() => setIsSignUpMode(!isSignUpMode)}>
+          {isSignUpMode ? 'Sign in' : 'Sign up'}
+        </Button>
+      </Typography>
+    </Box>
+  );
 };
 
 export default HomePage;

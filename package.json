@@ -10,6 +10,10 @@
     "vercel-build": "next build"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.4",
+    "@mui/material": "^6.4.4",
     "@next/env": "^14.2.4",
     "@react-oauth/google": "^0.12.1",
     "@supabase/auth-helpers-react": "^0.5.0",

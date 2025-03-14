@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'; // Markdown rendering library
 // @ts-ignore
 import { usePathname, useRouter } from 'next/navigation'; // Navigation hooks from Next.js
 
+import Header from '@/components/Header';
 /**
  * RulesPage Component
  * 
@@ -29,17 +30,6 @@ const RulesPage: React.FC = () => {
   // State variables
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the current season
-
-  const router = useRouter(); // Router hook for navigation
-  const pathname = usePathname(); // Pathname hook to determine the current page
-
-  /**
-   * Handles navigation between pages.
-   * @param page The target page to navigate to.
-   */
-  const handleNavigation = (page: string) => {
-    router.push(`/${page}`);
-  };
 
   /**
    * Fetches the rules and season name for the current active season.
@@ -85,36 +75,7 @@ const RulesPage: React.FC = () => {
   return (
     <div className={styles.userContainer}>
       {/* Header Section */}
-      <header className={styles.navbar}>
-        <h1 className={styles.navbarTitle}>Buckets</h1>
-        <nav className={styles.navMenu}>
-          {/* Navigation buttons */}
-          <button
-            onClick={() => handleNavigation('Standings')}
-            className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-          >
-            Standings
-          </button>
-          <button
-            onClick={() => handleNavigation('FreeAgency')}
-            className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-          >
-            Free Agency
-          </button>
-          <button
-            onClick={() => handleNavigation('Rules')}
-            className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-          >
-            Rules
-          </button>
-          <button
-            onClick={() => handleNavigation('Stats')}
-            className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-          >
-            Stats
-          </button>
-        </nav>
-      </header>
+      <Header></Header>
 
       {/* Main Content Section */}
       <main className={styles.userContent}>

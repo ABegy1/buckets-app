@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'; // Next.js navigation 
 import { supabase } from '@/supabaseClient'; // Supabase client for database operations
 import PlayerTierStats from '@/components/PlayerTierStats'; // Component to display tier-specific stats for players
 
+import Header from '@/components/Header';
 /**
  * StatsPage Component
  *
@@ -19,8 +20,6 @@ import PlayerTierStats from '@/components/PlayerTierStats'; // Component to disp
  * - Displays player data sorted by total score in descending order.
  */
 const StatsPage: React.FC = () => {
-  const router = useRouter(); // Router instance for navigation
-  const pathname = usePathname(); // Current path for active link highlighting
   const [players, setPlayers] = useState<
     {
       player_id: number;
@@ -36,14 +35,6 @@ const StatsPage: React.FC = () => {
       points_per_shot: number;
     }[]
   >([]); // State to store combined player statistics
-
-  /**
-   * Navigates to the specified page.
-   * @param page The target page to navigate to.
-   */
-  const handleNavigation = (page: string) => {
-    router.push(`/${page}`);
-  };
 
   /**
    * Fetches and processes player statistics, combining data from multiple tables.
@@ -143,36 +134,7 @@ const StatsPage: React.FC = () => {
   return (
     <div className={styles.userContainer}>
       {/* Header Section */}
-      <header className={styles.navbar}>
-        <h1 className={styles.navbarTitle}>Buckets</h1>
-        <nav className={styles.navMenu}>
-          {/* Navigation Buttons */}
-          <button
-            onClick={() => handleNavigation('Standings')}
-            className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-          >
-            Standings
-          </button>
-          <button
-            onClick={() => handleNavigation('FreeAgency')}
-            className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-          >
-            Free Agency
-          </button>
-          <button
-            onClick={() => handleNavigation('Rules')}
-            className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-          >
-            Rules
-          </button>
-          <button
-            onClick={() => handleNavigation('Stats')}
-            className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-          >
-            Stats
-          </button>
-        </nav>
-      </header>
+      <Header></Header>
 
       {/* Main Content Section */}
       <main className={styles.userContent}>

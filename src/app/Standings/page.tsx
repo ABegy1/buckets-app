@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
@@ -7,7 +7,10 @@ import { FaSnowflake } from "react-icons/fa6";
 import { Howl } from 'howler';
 
 import { usePathname, useRouter } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
+
+import { stat } from 'fs';
+
+import Header from '@/components/Header';
 
 interface Team {
   team_id: number;
@@ -161,17 +164,9 @@ const StandingsPage: React.FC = () => {
  const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
  const [seasonRules, setSeasonRules] = useState<string>(''); // Rules of the current season
  const router = useRouter(); // Router for navigation
- const pathname = usePathname(); // Current pathname of the app
 
  // Initialize Howl for playing sound effects (memoized for performance)
  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
-  /**
-   * Navigates to the specified page.
-   * @param page The target page to navigate to.
-   */
-  const handleNavigation = (page: string) => {
-    router.push(`/${page}`);
-  };
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -318,6 +313,7 @@ const StandingsPage: React.FC = () => {
       console.error('Error fetching free agents and stats:', error);
     }
   };
+
  /**
    * Fetches the current user's view from the database.
    */
@@ -377,49 +373,7 @@ const StandingsPage: React.FC = () => {
 
  // Additional `useEffect` for managing real-time subscriptions based on `userView`
   useEffect(() => {
-    if (userView === 'FreeAgent') {
-      const fetchAndSetFreeAgents = async () => {
-        const freeAgents = await fetchFreeAgents();
-        setTeams([{
-          team_name: 'Free Agents', 
-          players: freeAgents?.map(player => ({
-            name: player.name,
-            shots_left: player.shots_left,
-            player_score: player.player_score, 
-            tier_color: player.tier_color,
-            shots_made_in_row: 0,
-            shots_missed_in_row: 0
-          })) ?? [],
-          total_shots: 0,
-          team_score: 0
-        }]);
-      };
-  
-      fetchAndSetFreeAgents();
-  
-      const playerInstanceChannel = supabase
-        .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchAndSetFreeAgents)
-        .subscribe();
 
-      const playerChannel = supabase
-        .channel('player-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchAndSetFreeAgents)
-        .subscribe();
-  
-      const shotChannel = supabase
-        .channel('shots-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchAndSetFreeAgents)
-        .subscribe();
-  
-      return () => {
-        supabase.removeChannel(playerInstanceChannel);
-        supabase.removeChannel(playerChannel);
-        supabase.removeChannel(shotChannel);
-      };
-    }
-
-    if (userView === 'Standings') {
       // Initial fetch and update
       fetchTeamsAndPlayers();
       updateTeamScores();
@@ -445,29 +399,29 @@ const StandingsPage: React.FC = () => {
 
       // **Shots** subscription: check new shot, if 3rd consecutive => play sound
       const shotChannel = supabase
-  .channel('shots-db-changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
-    async (payload) => {
-      try {
-        // Cast payload.new to a ShotsRow-like object
-        const newRow = payload.new as { result: number; instance_id: number };
+        .channel('shots-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
+          async (payload) => {
+            try {
+              // Cast payload.new to a ShotsRow-like object
+              const newRow = payload.new as { result: number; instance_id: number };
 
-        const { result, instance_id } = newRow;
-        // If it's a made shot (non-zero)
-        if (result !== 0) {
-          const newStreak = await calculateShotsMadeInRow(instance_id);
-          if (newStreak === 3) {
-            sound.play();
+              const { result, instance_id } = newRow;
+              // If it's a made shot (non-zero)
+              if (result !== 0) {
+                const newStreak = await calculateShotsMadeInRow(instance_id);
+                if (newStreak === 3) {
+                  sound.play();
+                }
+              }
+              await fetchTeamsAndPlayers();
+              await updateTeamScores();
+            } catch (error) {
+              console.error('Error processing shot change:', error);
+            }
           }
-        }
-        await fetchTeamsAndPlayers();
-        await updateTeamScores();
-      } catch (error) {
-        console.error('Error processing shot change:', error);
-      }
-    }
-  )
-  .subscribe();
+        )
+        .subscribe();
 
       return () => {
         supabase.removeChannel(playerInstanceChannel);
@@ -475,60 +429,15 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };
-    }
-
-    if (userView === 'Rules') {
-      fetchTeamsAndPlayers();
-
-      const seasonChannel = supabase
-        .channel('season-rules-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'seasons' }, fetchTeamsAndPlayers)
-        .subscribe();
-      
-      return () => {
-        supabase.removeChannel(seasonChannel);
-      };
-    }
   }, [userView,sound ]);
 
  return (
   <div className={styles.userContainer}>
-    {/* Header Section */}
-    <header className={styles.navbar}>
-      <h1 className={styles.navbarTitle}>Buckets</h1>
-      <nav className={styles.navMenu}>
-        {/* Navigation Buttons */}
-        <button
-          onClick={() => handleNavigation('Standings')}
-          className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-        >
-          Standings
-        </button>
-        <button
-          onClick={() => handleNavigation('FreeAgency')}
-          className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-        >
-          Free Agency
-        </button>
-        <button
-          onClick={() => handleNavigation('Rules')}
-          className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-        >
-          Rules
-        </button>
-        <button
-          onClick={() => handleNavigation('Stats')}
-          className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-        >
-          Stats
-        </button>
-      </nav>
-    </header>
+    <Header></Header>
 
     {/* Main Content Section */}
     <main className={styles.userContent}>
-      {userView === 'Standings' ? (
-        // Standings View
+        {/* Standings View*/}
         <div className={styles.container}>
           <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
           <div className={styles.teams}>
@@ -583,54 +492,6 @@ const StandingsPage: React.FC = () => {
             ))}
           </div>
         </div>
-      ) : userView === 'FreeAgent' ? (
-        // Free Agent View
-        <div className={styles.freeAgencyPage}>
-          <h2>{seasonName} Free Agents</h2>
-          <div className={styles.players}>
-            {/* Table Headers */}
-            <div className={styles.headerRow}>
-              <span className={styles.columnHeader}>Name</span>
-              <span className={styles.columnHeader}>Shots Left</span>
-              <span className={styles.columnHeader}>Total Points</span>
-            </div>
-            {teams[0]?.players.map((player, playerIndex) => (
-              <div
-                key={playerIndex}
-                className={styles.playerRow}
-                style={{ display: 'flex', justifyContent: 'space-between' }}
-              >
-                {/* Player Info */}
-                <span
-                  className={styles.playerName}
-                  style={{ color: player.tier_color, flex: 1, textAlign: 'center' }}
-                >
-                  {player.name}
-                </span>
-                <span
-                  className={styles.shotsLeft}
-                  style={{ flex: 1, textAlign: 'center' }}
-                >
-                  {player.shots_left}
-                </span>
-                <span
-                  className={styles.totalPoints}
-                  style={{ flex: 1, textAlign: 'center' }}
-                >
-                  {player.player_score}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : userView === 'Rules' ? (
-        // Rules View
-        <div className={styles.rulesPage}>
-          <h2>{seasonName} Rules</h2>
-          {/* Render Markdown Rules */}
-          <ReactMarkdown>{seasonRules}</ReactMarkdown>
-        </div>
-      ) : null}
     </main>
 
     {/* Footer Section */}

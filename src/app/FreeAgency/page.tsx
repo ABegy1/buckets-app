@@ -7,6 +7,7 @@ import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
 import { Howl } from 'howler';
 
+import Header from '@/components/Header';
 
 /**
  * FreeAgency Page
@@ -81,18 +82,8 @@ const FreeAgencyPage: React.FC = () => {
   // State variables to track page data and UI interactions
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
   const [freeAgents, setFreeAgents] = useState<any[]>([]); // List of free agents and their stats
-  const router = useRouter();
-  const pathname = usePathname();
   const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []); // Audio for streaks
   const previousFreeAgentsRef = useRef<any[]>([]); // Reference to previous free agent data for streak comparison
-
-   /**
-   * Navigates to a different page based on the provided route.
-   * @param page The route to navigate to.
-   */
-   const handleNavigation = (page: string) => {
-    router.push(`/${page}`);
-  };
 
   /**
    * Fetches free agents and their associated stats for the current season.
@@ -244,38 +235,7 @@ const FreeAgencyPage: React.FC = () => {
   return (
     <div className={styles.userContainer}>
        {/* Header Section */}
-
-      <header className={styles.navbar}>
-        <h1 className={styles.navbarTitle}>Buckets</h1>
-        <nav className={styles.navMenu}>
-          {/* Navigation buttons */}
-
-          <button
-            onClick={() => handleNavigation('Standings')}
-            className={`${styles.navItem} ${pathname === '/Standings' ? styles.active : ''}`}
-          >
-            Standings
-          </button>
-          <button
-            onClick={() => handleNavigation('FreeAgency')}
-            className={`${styles.navItem} ${pathname === '/FreeAgency' ? styles.active : ''}`}
-          >
-            Free Agency
-          </button>
-          <button
-            onClick={() => handleNavigation('Rules')}
-            className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''}`}
-          >
-            Rules
-          </button>
-          <button
-            onClick={() => handleNavigation('Stats')}
-            className={`${styles.navItem} ${pathname === '/Stats' ? styles.active : ''}`}
-          >
-            Stats
-          </button>
-        </nav>
-      </header>
+      <Header></Header>
       {/* Main Content */}
 
       <main className={styles.userContent}>

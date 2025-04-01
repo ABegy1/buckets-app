@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import './modal.css'; // Import CSS for modal styling
 import { supabase } from '@/supabaseClient'; // Supabase client for database interactions
 import { Howl } from 'howler'; // Audio library for sound effects
@@ -27,6 +27,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
+  const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
+  const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+
 
   /**
    * Resets the form to its initial state when the modal is closed.
@@ -39,7 +44,63 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setTierId(null);
     setShotsLeft(null);
   };
+  const calculateShotsMadeInRow = async (playerInstanceId: number) => {
+    try {
+      const { data: shots, error: shotsError } = await supabase
+        .from('shots')
+        .select('result')
+        .eq('instance_id', playerInstanceId)
+        .order('shot_date', { ascending: true });
+  
+      if (shotsError || !shots) throw shotsError;
+  
+      let currentStreak = 0;
+  
+      for (let i = shots.length - 1; i >= 0; i--) {
+        const result = Number(shots[i].result);
+        if (result !== 0) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+  
+      return currentStreak;
+    } catch (error) {
+      console.error('Error calculating shots made in a row:', error);
+      return 0;
+    }
+  };
+  
+  
 
+  const calculateShotsMissedInRow = async (playerInstanceId: number) => {
+    try {
+      const { data: shots, error: shotsError } = await supabase
+        .from('shots')
+        .select('result')
+        .eq('instance_id', playerInstanceId)
+        .order('shot_date', { ascending: true });
+  
+      if (shotsError || !shots) throw shotsError;
+  
+      let missStreak = 0;
+  
+      for (let i = shots.length - 1; i >= 0; i--) {
+        const result = Number(shots[i].result);
+        if (result === 0) {
+          missStreak++;
+        } else {
+          break;
+        }
+      }
+  
+      return missStreak;
+    } catch (error) {
+      return 0;
+    }
+  };
+  
   /**
    * Plays a notification sound when a shot is successfully recorded.
    */
@@ -139,24 +200,17 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
    */
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
-
+  
+    const shouldPlayNotification = (points === 1 || points === 2) && isMoneyball;
+  
     // Adjust points for Moneyball and Double scenarios
     let finalPoints = points;
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
-
-    // Generate a unique shot ID
-    const generateUniqueShotId = () => {
-      const timestamp = Date.now();
-      const randomNum = Math.floor(Math.random() * 1000);
-      const shotIdStr = `${timestamp}${randomNum}`;
-      return parseInt(shotIdStr.slice(-9), 10);
-    };
-
-    const shotId = generateUniqueShotId();
-
+  
+    const shotId = parseInt(`${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-9), 10);
+  
     try {
-      // Record the shot in the database
       const { error: shotError } = await supabase.from('shots').insert({
         instance_id: playerInstanceId,
         shot_date: new Date().toISOString(),
@@ -164,27 +218,45 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         tier_id: tierId,
         shot_id: shotId,
       });
-
+  
       if (shotError) {
         console.error('Error recording shot:', shotError);
         return;
       }
-
-      // Update player instance score and remaining shots
+  
       const newScore = currentScore + finalPoints;
       const newShotsLeft = (shotsLeft || 0) - 1;
-
+  
       const { error: updateScoreError } = await supabase
         .from('player_instance')
         .update({ score: newScore, shots_left: newShotsLeft })
         .eq('player_instance_id', playerInstanceId);
-
+  
       if (updateScoreError) {
-        console.error('Error updating player score and shots_left:', updateScoreError);
+        console.error('Error updating player:', updateScoreError);
         return;
       }
-
-      console.log('Score and shots_left updated successfully');
+  
+      const newStreak = await calculateShotsMadeInRow(playerInstanceId);
+      const missStreak = await calculateShotsMissedInRow(playerInstanceId);
+  
+      if (missStreak === 4) {
+        sadsound.play();
+      } else {
+        if (shouldPlayNotification && newStreak === 3) {
+          playNotification();
+          await delay(2000);
+          shotSound.play();
+        } else {
+          if (shouldPlayNotification) {
+            playNotification();
+          }
+          if (newStreak === 3) {
+            shotSound.play();
+          }
+        }
+      }
+  
       handleClose();
     } catch (error) {
       console.error('Unexpected error:', error);

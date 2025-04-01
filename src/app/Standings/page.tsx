@@ -4,7 +4,6 @@ import styles from './StandingsPage.module.css'; // Updated path for combined st
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-import { Howl } from 'howler';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -165,8 +164,6 @@ const StandingsPage: React.FC = () => {
  const [seasonRules, setSeasonRules] = useState<string>(''); // Rules of the current season
  const router = useRouter(); // Router for navigation
 
- // Initialize Howl for playing sound effects (memoized for performance)
- const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -230,7 +227,7 @@ const StandingsPage: React.FC = () => {
 
               const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
               const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
-  
+              console.log(shotsMadeInRow, shotsMissedInRow);
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
@@ -411,7 +408,7 @@ const StandingsPage: React.FC = () => {
               if (result !== 0) {
                 const newStreak = await calculateShotsMadeInRow(instance_id);
                 if (newStreak === 3) {
-                  sound.play();
+                  // sound.play();
                 }
               }
               await fetchTeamsAndPlayers();
@@ -429,7 +426,7 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };
-  }, [userView,sound ]);
+  }, [userView ]);
 
  return (
   <div className={styles.userContainer}>

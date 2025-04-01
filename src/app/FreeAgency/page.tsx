@@ -5,8 +5,6 @@ import { supabase } from '@/supabaseClient';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-import { Howl } from 'howler';
-
 import Header from '@/components/Header';
 
 /**
@@ -82,7 +80,6 @@ const FreeAgencyPage: React.FC = () => {
   // State variables to track page data and UI interactions
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
   const [freeAgents, setFreeAgents] = useState<any[]>([]); // List of free agents and their stats
-  const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []); // Audio for streaks
   const previousFreeAgentsRef = useRef<any[]>([]); // Reference to previous free agent data for streak comparison
 
   /**
@@ -222,15 +219,11 @@ const FreeAgencyPage: React.FC = () => {
         previousStreak = previousPlayer.current_streak;
       }
 
-      if (player.current_streak >= 3 && previousStreak < 3) {
-        // Play the sound when a player reaches a streak of 3 or more
-        sound.play();
-      }
     });
 
     // Update the previous freeAgents reference with the current state
     previousFreeAgentsRef.current = freeAgents;
-  }, [freeAgents, sound]);
+  }, [freeAgents]);
 
   return (
     <div className={styles.userContainer}>

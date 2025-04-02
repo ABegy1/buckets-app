@@ -42,24 +42,23 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
 
     if (shotsError || !shots) throw shotsError;
 
-    let shotsMadeInRow = 0;
-    let currentStreak = 0;
-
-    shots.forEach((shot: { result: number }) => {
-      if (shot.result !== 0) {
-        currentStreak++;
+    // Walk backwards from the most recent shot
+    let makeStreak = 0;
+    for (let i = shots.length - 1; i >= 0; i--) {
+      if (shots[i].result !== 0) {
+        makeStreak++;
       } else {
-        currentStreak = 0; // Reset streak if missed
+        break;
       }
-      shotsMadeInRow = currentStreak;
-    });
+    }
 
-    return shotsMadeInRow;
+    return makeStreak;
   } catch (error) {
     console.error('Error calculating shots made in a row:', error);
     return 0;
   }
 };
+
 
 // Function to calculate the current streak of consecutive missed shots
 const calculateShotsMissedInRow = async (playerInstanceId: number) => {
@@ -72,24 +71,23 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
 
     if (shotsError || !shots) throw shotsError;
 
-    let shotsMissedInRow = 0;
-    let currentMissStreak = 0;
-
-    shots.forEach((shot: { result: number }) => {
-      if (shot.result === 0) {
-        currentMissStreak++;
+    // Walk backwards from most recent shot
+    let missStreak = 0;
+    for (let i = shots.length - 1; i >= 0; i--) {
+      if (shots[i].result === 0) {
+        missStreak++;
       } else {
-        currentMissStreak = 0; // Reset streak if made
+        break;
       }
-      shotsMissedInRow = currentMissStreak;
-    });
+    }
 
-    return shotsMissedInRow;
+    return missStreak;
   } catch (error) {
     console.error('Error calculating shots missed in a row:', error);
     return 0;
   }
 };
+
 
 // Update each team's total score based on its players' scores for the active season
 const updateTeamScores = async () => {

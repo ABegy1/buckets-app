@@ -45,7 +45,9 @@ const RulesPage: React.FC = () => {
       if (seasonError || !activeSeason) throw seasonError;
 
       setSeasonName(activeSeason.season_name); // Set the season name
-      setSeasonRules(activeSeason.rules); // Set the markdown-formatted rules
+      //Replacing newlines so that the whitespace from the users input in the Admin page is preserved. Probably
+      //a better way to do this
+      setSeasonRules(activeSeason.rules.replace(/\n/g, '  \n&nbsp;')); // Set the markdown-formatted rules
     } catch (error) {
       console.error('Error fetching season rules:', error); // Log errors to the console
     }

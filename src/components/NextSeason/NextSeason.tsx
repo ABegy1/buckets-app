@@ -65,9 +65,24 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       else setPlayers(data || []);
     };
 
+    //Fetch the active season rules from the database
+    const fetchSeasonData = async () => {
+        const { data: activeSeason, error } = await supabase
+          .from('seasons')
+          .select('season_id, rules')
+          .is('end_date', null)
+          .single();
+        if (error || !activeSeason) {
+          console.error('Error fetching season data:', error);
+          return;
+        }
+        else setSeasonRules(activeSeason.rules); // Set the current rules
+    };
+
     fetchTeams();
     fetchTiers();
     fetchPlayers();
+    fetchSeasonData(); //overkill just for rules change TODO
 
     // Set up real-time subscriptions for teams, tiers, and players
     const teamChannel = supabase

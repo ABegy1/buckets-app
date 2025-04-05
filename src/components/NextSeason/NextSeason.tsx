@@ -82,7 +82,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     fetchTeams();
     fetchTiers();
     fetchPlayers();
-    fetchSeasonData(); //overkill just for rules change TODO
+    fetchSeasonData();
 
     // Set up real-time subscriptions for teams, tiers, and players
     const teamChannel = supabase

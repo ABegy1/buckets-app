@@ -23,6 +23,7 @@
     "@supabase/supabase-js": "^2.43.5",
     "@vercel/postgres": "^0.8.0",
     "axios": "^1.7.2",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.31.2",
     "howler": "^2.2.4",

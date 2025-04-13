@@ -46,7 +46,7 @@ export default function RootLayout({
          * - The `children` prop represents the content of the current page being rendered.
          * - It is wrapped with padding for consistent spacing.
          */}
-        <main className="p-4">
+        <main className="p-4 h-screen">
           <TooltipProvider></TooltipProvider>
           {children}
         </main>

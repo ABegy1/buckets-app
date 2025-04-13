@@ -2,7 +2,7 @@
 .userContainer {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
   width: 100%;
   padding: 0;
   background-color: #f0f0f0;
@@ -147,22 +147,7 @@
   font-size: 18px;
   color: blue;  /* Blue for the cold icon */
 }
-.freeAgencyPage {
-  padding: 20px;
-  background-color: #fff; /* White background for clean contrast */
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: 0 auto; /* Centering the content */
-}
 
-.freeAgencyPage h2 {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #264653; /* Darker shade for titles */
-  text-align: center;
-  margin-bottom: 20px;
-}
 /* Individual team card */
 .team {
   display: flex;
@@ -233,6 +218,39 @@
   padding: 10px 0;
   border-bottom: 1px solid #ddd;
 }
+
+
+/* Summary card */
+.summary {
+  /* display: flex;
+  flex-direction: column; */
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background-color: #fafafa;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Summary Row Styling */
+.summaryHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
+  justify-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-decoration-line: underline;
+}
+
+.totalStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
+  justify-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
 
 @media (max-width: 600px) {
   .navbarTitle {

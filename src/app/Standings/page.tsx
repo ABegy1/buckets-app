@@ -4,8 +4,6 @@ import styles from './StandingsPage.module.css'; // Updated path for combined st
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-import { Howl } from 'howler';
-import {eachDayOfInterval, startOfMonth, endOfMonth, isWeekend} from 'date-fns'
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -53,24 +51,23 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
 
     if (shotsError || !shots) throw shotsError;
 
-    let shotsMadeInRow = 0;
-    let currentStreak = 0;
-
-    shots.forEach((shot: { result: number }) => {
-      if (shot.result !== 0) {
-        currentStreak++;
+    // Walk backwards from the most recent shot
+    let makeStreak = 0;
+    for (let i = shots.length - 1; i >= 0; i--) {
+      if (shots[i].result !== 0) {
+        makeStreak++;
       } else {
-        currentStreak = 0; // Reset streak if missed
+        break;
       }
-      shotsMadeInRow = currentStreak;
-    });
+    }
 
-    return shotsMadeInRow;
+    return makeStreak;
   } catch (error) {
     console.error('Error calculating shots made in a row:', error);
     return 0;
   }
 };
+
 
 // Function to calculate the current streak of consecutive missed shots
 const calculateShotsMissedInRow = async (playerInstanceId: number) => {
@@ -83,24 +80,23 @@ const calculateShotsMissedInRow = async (playerInstanceId: number) => {
 
     if (shotsError || !shots) throw shotsError;
 
-    let shotsMissedInRow = 0;
-    let currentMissStreak = 0;
-
-    shots.forEach((shot: { result: number }) => {
-      if (shot.result === 0) {
-        currentMissStreak++;
+    // Walk backwards from most recent shot
+    let missStreak = 0;
+    for (let i = shots.length - 1; i >= 0; i--) {
+      if (shots[i].result === 0) {
+        missStreak++;
       } else {
-        currentMissStreak = 0; // Reset streak if made
+        break;
       }
-      shotsMissedInRow = currentMissStreak;
-    });
+    }
 
-    return shotsMissedInRow;
+    return missStreak;
   } catch (error) {
     console.error('Error calculating shots missed in a row:', error);
     return 0;
   }
 };
+
 
 // Update each team's total score based on its players' scores for the active season
 const updateTeamScores = async () => {
@@ -194,13 +190,6 @@ const StandingsPage: React.FC = () => {
  const [waiverWaterline, setWaiverWaterline] = useState<number>(0); // Remaining shooting days in season
  const router = useRouter(); // Router for navigation
 
- const [audioContext, setAudioContext] = useState(null);
- const [notificationSound, setNotificationSound] = useState(null);
-
-
- // Initialize Howl for playing sound effects (memoized for performance)
- const sound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
-
   /**
    * Signs out the current user and redirects to the home page.
    */
@@ -262,7 +251,7 @@ const StandingsPage: React.FC = () => {
 
               const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
               const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
-  
+              console.log(shotsMadeInRow, shotsMissedInRow);
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
@@ -425,7 +414,7 @@ const StandingsPage: React.FC = () => {
               if (result !== 0) {
                 const newStreak = await calculateShotsMadeInRow(instance_id);
                 if (newStreak === 3) {
-                  sound.play();
+                  // sound.play();
                 }
               }
               await fetchTeamsAndPlayers();
@@ -443,7 +432,7 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };
-  }, [userView,sound ]);
+  }, [userView ]);
 
 /**
  * Set up timers for updating the waiver waterline every day

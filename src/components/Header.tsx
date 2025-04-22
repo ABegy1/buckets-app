@@ -31,7 +31,7 @@ export default function Header() {
 
         <header className={styles.navbar}>
             <div className={styles.navMenu}>
-                <Image className={`${styles.navItem} dark:invert`} 
+                <Image className={`${styles.navItem} invert`} 
                             src={bucketsLogo}
                             alt='Buckets!'
                             width="75"

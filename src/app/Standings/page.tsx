@@ -31,6 +31,15 @@ interface TeamWithPlayers {
   team_score: number;
 }
 
+interface Season {
+  season_id: number;
+  season_name: string;
+  shot_total: number;
+  rules: string;
+}
+
+
+
 // Function to calculate the current streak of consecutive made shots
 const calculateShotsMadeInRow = async (playerInstanceId: number) => {
   try {
@@ -154,14 +163,32 @@ const updateTeamScores = async () => {
   }
 };
 
+//function to calculate the waiver waterline based on the number of valid shooting days in the month
+const calculateWaiverWaterline = (date: Date, shotTotal: number): number =>{
+  //get an array of dates containing the days left in the month
+  const daysInMonth = eachDayOfInterval({
+    start: date,
+    end: endOfMonth(date),
+  });
+
+  // get the number of business days remaining in the month. TODO: turn shotsPerDay and business day toggle into settings in a settings page
+  const remainingBusinessDays =  daysInMonth.filter(day => !isWeekend(day)).length;
+  const shotsPerDay = 4;
+  return remainingBusinessDays*shotsPerDay > shotTotal? shotTotal: remainingBusinessDays*shotsPerDay;
+}
+
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
  const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
- const [seasonName, setSeasonName] = useState<string>(''); // Name of the current season
- const [seasonRules, setSeasonRules] = useState<string>(''); // Rules of the current season
+ const [season, setSeason] = useState<Season>({
+  season_id: -1,
+  season_name: '',
+  shot_total: -1,
+  rules: ''
+ }); // Current season info
+ const [waiverWaterline, setWaiverWaterline] = useState<number>(0); // Remaining shooting days in season
  const router = useRouter(); // Router for navigation
-
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -185,15 +212,14 @@ const StandingsPage: React.FC = () => {
 
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, season_name, rules')
+        .select('season_id, season_name, shot_total, rules')
         .is('end_date', null)
         .single();
   
       if (seasonError || !activeSeason) throw seasonError;
   
       const activeSeasonId = activeSeason.season_id;
-      setSeasonName(activeSeason.season_name);
-      setSeasonRules(activeSeason.rules);
+      setSeason(activeSeason);
         // Fetch teams
 
       const { data: teamsData, error: teamsError } = await supabase
@@ -259,55 +285,38 @@ const StandingsPage: React.FC = () => {
       console.error('Error fetching teams, players, and season info:', error);
     }
   };
-  
-   /**
-   * Fetches free agents and their stats for the FreeAgent view.
-   */
-  const fetchFreeAgents = async () => {
-    try {
-      const { data: activeSeason, error: seasonError } = await supabase
-        .from('seasons')
-        .select('season_id')
-        .is('end_date', null)
-        .single();
-  
-      if (seasonError || !activeSeason) throw seasonError;
-      const activeSeasonId = activeSeason.season_id;
-  
-      const { data: freeAgents, error: freeAgentsError } = await supabase
-        .from('players')
-        .select('*, tiers(color)')
-        .eq('is_free_agent', true);
-  
-      if (freeAgentsError) throw freeAgentsError;
-  
-      const freeAgentsWithStats = await Promise.all(
-        freeAgents.map(async (player: any) => {
-          const { data: playerInstance, error: piError } = await supabase
-            .from('player_instance')
-            .select('shots_left, score')
-            .eq('player_id', player.player_id)
-            .eq('season_id', activeSeasonId)
-            .single();
-  
-          if (piError || !playerInstance) throw piError;
-  
-          return {
-            name: player.name,
-            shots_left: playerInstance.shots_left,
-            player_score: playerInstance.score,
-            tier_color: player.tiers?.color || '#000',
-            shots_made_in_row: 0, // default
-            shots_missed_in_row: 0, // default
-          };
-        })
-      );
-  
-      return freeAgentsWithStats;
-    } catch (error) {
-      console.error('Error fetching free agents and stats:', error);
-    }
-  };
+
+  useEffect(() => {
+    // Function to unlock and keep AudioContext alive
+    const initializeAudioContext = () => {
+      if (!audioContext) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // const ctx = new window.AudioContext()
+        setAudioContext(ctx);
+
+        // Create an inaudible oscillator to keep the context alive
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.frequency.value = 20; // Low frequency (inaudible)
+        gain.gain.value = 0.001; // Nearly silent
+        oscillator.start();
+
+        console.log("AudioContext initialized and kept alive!");
+
+        // Preload notification sound
+        // const sound = new Howl({
+        //   src: ["/sounds/notification.mp3"],
+        //   volume: 1.0,
+        // });
+        setNotificationSound(sound);
+      } else if (audioContext.state === "suspended") {
+        audioContext.resume().then(() => console.log("AudioContext resumed!"));
+      }
+    };
+    initializeAudioContext();
+  }, [audioContext, sound]);
 
  /**
    * Fetches the current user's view from the database.
@@ -366,7 +375,6 @@ const StandingsPage: React.FC = () => {
     subscribeToUserViewChanges();
   }, []);
 
- // Additional `useEffect` for managing real-time subscriptions based on `userView`
   useEffect(() => {
 
       // Initial fetch and update
@@ -426,6 +434,39 @@ const StandingsPage: React.FC = () => {
       };
   }, [userView ]);
 
+/**
+ * Set up timers for updating the waiver waterline every day
+ */
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0, 0, 0, 0
+    );
+    const timeUntilMidnight = midnight - now;
+
+    const timeout = setTimeout(() => {
+      //calculate waterline at the next midnight from mount
+      setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
+      console.log("Setting waterline on first midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+      // calculate waterline every day at midnight after first midnight from mount
+      const interval = setInterval(() => {
+        setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
+        console.log("Setting waterline every midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+      }, 24 * 60 * 60 * 1000); //every 24 hours
+
+      return () => clearInterval(interval);
+    }, timeUntilMidnight);
+
+    //calculate waterline on mount
+    setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
+    console.log("Setting waterline on mount to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+
+    return () => clearTimeout(timeout);
+  }, [season.shot_total]);
+
  return (
   <div className={styles.userContainer}>
     <Header></Header>
@@ -434,7 +475,7 @@ const StandingsPage: React.FC = () => {
     <main className={styles.userContent}>
         {/* Standings View*/}
         <div className={styles.container}>
-          <h2 className={styles.seasonTitle}>{seasonName} Standings</h2>
+          <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
           <div className={styles.teams}>
             {teams.map((team, index) => (
               <div key={index} className={styles.team}>
@@ -480,11 +521,23 @@ const StandingsPage: React.FC = () => {
                 ))}
                 {/* Team Stats */}
                 <div className={styles.teamStats}>
-                  <span>Total Shots Remaining: {team.total_shots}</span>
-                  <span>Total Score: {team.team_score}</span>
+                  <span>Team Shots Remaining: {team.total_shots}</span>
+                  <span>Team Score: {team.team_score}</span>
                 </div>
               </div>
             ))}
+          </div>
+          <div className={styles.summary}>
+            <div className={styles.summaryHeader}>
+              <span>Total Shots Remaining</span>
+              <span>Total Score</span>
+              <span>Waiver Waterline</span>
+            </div>
+            <div className={styles.totalStats}>
+              <span>{teams.reduce((a, index) => a + index.total_shots, 0)}</span>
+              <span>{teams.reduce((a, index) => a + index.team_score, 0)}</span>
+              <span>{waiverWaterline}</span>
+            </div>
           </div>
         </div>
     </main>

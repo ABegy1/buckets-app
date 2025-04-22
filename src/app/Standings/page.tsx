@@ -4,8 +4,9 @@ import styles from './StandingsPage.module.css'; // Updated path for combined st
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-
+import {eachDayOfInterval, startOfMonth, endOfMonth, isWeekend} from 'date-fns'
 import { usePathname, useRouter } from 'next/navigation';
+import { Howl } from 'howler';
 
 import { stat } from 'fs';
 
@@ -286,37 +287,37 @@ const StandingsPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // Function to unlock and keep AudioContext alive
-    const initializeAudioContext = () => {
-      if (!audioContext) {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        // const ctx = new window.AudioContext()
-        setAudioContext(ctx);
+  // useEffect(() => {
+  //   // Function to unlock and keep AudioContext alive
+  //   const initializeAudioContext = () => {
+  //     if (!audioContext) {
+  //       const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  //       // const ctx = new window.AudioContext()
+  //       setAudioContext(ctx);
 
-        // Create an inaudible oscillator to keep the context alive
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.frequency.value = 20; // Low frequency (inaudible)
-        gain.gain.value = 0.001; // Nearly silent
-        oscillator.start();
+  //       // Create an inaudible oscillator to keep the context alive
+  //       const oscillator = ctx.createOscillator();
+  //       const gain = ctx.createGain();
+  //       oscillator.connect(gain);
+  //       gain.connect(ctx.destination);
+  //       oscillator.frequency.value = 20; // Low frequency (inaudible)
+  //       gain.gain.value = 0.001; // Nearly silent
+  //       oscillator.start();
 
-        console.log("AudioContext initialized and kept alive!");
+  //       console.log("AudioContext initialized and kept alive!");
 
-        // Preload notification sound
-        // const sound = new Howl({
-        //   src: ["/sounds/notification.mp3"],
-        //   volume: 1.0,
-        // });
-        setNotificationSound(sound);
-      } else if (audioContext.state === "suspended") {
-        audioContext.resume().then(() => console.log("AudioContext resumed!"));
-      }
-    };
-    initializeAudioContext();
-  }, [audioContext, sound]);
+  //       // Preload notification sound
+  //       // const sound = new Howl({
+  //       //   src: ["/sounds/notification.mp3"],
+  //       //   volume: 1.0,
+  //       // });
+  //       setNotificationSound(sound);
+  //     } else if (audioContext.state === "suspended") {
+  //       audioContext.resume().then(() => console.log("AudioContext resumed!"));
+  //     }
+  //   };
+  //   initializeAudioContext();
+  // }, [audioContext, sound]);
 
  /**
    * Fetches the current user's view from the database.
@@ -439,13 +440,14 @@ const StandingsPage: React.FC = () => {
  */
   useEffect(() => {
     const now = new Date();
-    const midnight = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1,
-      0, 0, 0, 0
-    );
-    const timeUntilMidnight = midnight - now;
+const midnight = new Date(
+  now.getFullYear(),
+  now.getMonth(),
+  now.getDate() + 1,
+  0, 0, 0, 0
+);
+const timeUntilMidnight = midnight.getTime() - now.getTime(); 
+
 
     const timeout = setTimeout(() => {
       //calculate waterline at the next midnight from mount

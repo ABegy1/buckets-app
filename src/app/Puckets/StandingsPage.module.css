@@ -1,0 +1,267 @@
+/* General container styles for the entire user page */
+.userContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+/* Header styling */
+.userHeader {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: center;
+  background-color: #264653; /* Darker color for better contrast */
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.userHeader h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+/* Content area styling */
+.userContent {
+  width: 100%; 
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+/* Footer styling */
+.userFooter {
+  width: 100%;
+  padding: 5px;
+  text-align: center;
+  background-color: #264653; /* Darker color for better contrast */
+  color: #fff;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.userFooter p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Button styling */
+.btn {
+  background-color: #c1121f; /* Darker color for better contrast */
+  color: white;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #a11a1a;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
+  align-items: center; /* Ensure vertical alignment */
+  padding: 12px 2px;
+  font-size: 1.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.playerName{
+  display: inline-flex; /* Ensures the circle and name stay on the same line */
+  align-items: center;  /* Vertically aligns the circle and name */
+  flex-basis: 33%;
+}
+.shotsLeft,
+.totalPoints {
+  flex-basis: 33%; /* Ensure each column gets 33% of the width */
+  text-align: center;
+}
+
+/* Ensure that the columns are evenly spaced and aligned */
+.columnHeader {
+  flex-basis: 33%;
+  text-align: center;
+  font-weight: bold;
+}
+.players {
+  margin-top: 15px;
+}
+
+
+/* Adjust team stats to match the layout */
+.teamStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.3rem;
+  padding-top: 10px;
+  font-weight: bold;
+}
+
+/* Season standings section styling */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 100%;
+  margin-top: 20px;
+  box-sizing: border-box;
+}
+
+.seasonTitle {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #264653; /* Updated color for consistency */
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Teams container */
+.teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+.fireIcon {
+  margin-left: 5px;
+  font-size: 18px;
+  color: red;
+}
+
+.coldIcon {
+  margin-left: 5px;
+  font-size: 18px;
+  color: blue;  /* Blue for the cold icon */
+}
+
+/* Individual team card */
+.team {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #fafafa;
+  box-sizing: border-box;
+}
+
+/* Team title */
+.teamTitle {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Header row for player stats */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+  padding: 10px 0;
+}
+
+/* Updated Sign Out button styling */
+.signOutButton {
+  background-color: #c1121f; /* Darker color for better contrast */
+  color: white;
+  padding: 8px 16px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.playerNameColumn {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.colorCircle {
+  width: 10px !important; /* Ensure width is enforced */
+  height: 10px !important; /* Ensure height is enforced */
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.signOutButton:hover {
+  background-color: #a11a1a;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+.signOutButton:active {
+  background-color: #8b0000;
+  box-shadow: none;
+}
+
+/* Player row styling */
+.player {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+
+/* Summary card */
+.summary {
+  /* display: flex;
+  flex-direction: column; */
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background-color: #fafafa;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Summary Row Styling */
+.summaryHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
+  justify-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-decoration-line: underline;
+}
+
+.totalStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
+  justify-items: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+
+@media (max-width: 600px) {
+  .navbarTitle {
+    font-size: 1.5rem;
+  }
+
+  .seasonTitle {
+    font-size: 2rem;
+  }
+
+  .teamStats {
+    font-size: 1.2rem;
+  }
+}

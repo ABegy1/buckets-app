@@ -28,7 +28,6 @@ ALTER TABLE IF EXISTS public.players ALTER COLUMN tier_id DROP NOT NULL;
 ALTER TABLE IF EXISTS public.players DROP CONSTRAINT players_tier_id_tiers_tier_id_fk;
 ALTER TABLE IF EXISTS public.players ADD CONSTRAINT players_tier_id_tiers_tier_id_fk FOREIGN KEY (tier_id) REFERENCES public.tiers (tier_id) ON DELETE SET NULL ON UPDATE cascade;
 
-ALTER TABLE IF EXISTS public.shots ALTER COLUMN shot_date DROP NOT NULL;
 
 -- seasons
 ALTER TABLE IF EXISTS public.seasons ALTER COLUMN season_id DROP DEFAULT;
@@ -47,10 +46,13 @@ ALTER TABLE IF EXISTS public.shots ADD CONSTRAINT shots_instance_id_fkey FOREIGN
 
 ALTER TABLE IF EXISTS public.shots ALTER COLUMN shot_date DROP NOT NULL;
 
+ALTER TABLE IF EXISTS public.shots ALTER COLUMN result TYPE integer USING (result::integer);
 ALTER TABLE IF EXISTS public.shots ALTER COLUMN result SET DEFAULT 0;
 
 ALTER TABLE IF EXISTS public.shots DROP CONSTRAINT shots_tier_id_tiers_tier_id_fk;
 ALTER TABLE IF EXISTS public.shots ADD CONSTRAINT shots_tier_id_tiers_tier_id_fk FOREIGN KEY (tier_id) REFERENCES public.tiers (tier_id) ON DELETE SET NULL ON UPDATE cascade;
+
+ALTER TABLE IF EXISTS public.shots ALTER COLUMN shot_date DROP NOT NULL;
 
 -- -- teams
 ALTER TABLE IF EXISTS public.teams ADD COLUMN team_score integer;

@@ -1,4 +1,4 @@
-INSERT INTO players (name, tier_id, is_hidden, is_free_agent, team_id) VALUES
+INSERT INTO public.players (name, tier_id, is_hidden, is_free_agent, team_id) VALUES
     ('Riley Hernandez', 1, false, false, 1),
     ('Morgan Smith', 2, false, false, 1),
     ('Cameron Williams', 3, false, false, 1),

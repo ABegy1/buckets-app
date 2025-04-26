@@ -1,4 +1,4 @@
-INSERT INTO player_instance (player_id, season_id, shots_left, score)
+INSERT INTO public.player_instance (player_id, season_id, shots_left, score)
 VALUES  (1, 1, 40, 0),
         (2, 1, 40, 0),
         (3, 1, 40, 0),

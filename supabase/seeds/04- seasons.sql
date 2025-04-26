@@ -1,1 +1,0 @@
-INSERT INTO seasons (season_name, start_date, end_date, shot_total, rules) VALUES ('Test Season', '2025-01-08 18:44:26.991+00', NULL, 40, 'Do Good');

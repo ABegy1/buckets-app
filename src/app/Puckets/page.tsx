@@ -14,11 +14,11 @@ import Header from '@/components/Header';
 
 interface Match {
   players: {
-    id: number;
     name: string;
     rating: number;
     score: number;
   }[];
+  season_id: number;
   date: Date;
 }
 
@@ -100,71 +100,6 @@ interface PlayerWithStats {
 // };
 
 
-// Update each team's total score based on its players' scores for the active season
-const updateTeamScores = async () => {
-  try {
-    // Fetch the active season (where end_date is null)
-    const { data: activeSeason, error: seasonError } = await supabase
-      .from('seasons')
-      .select('season_id')
-      .is('end_date', null)
-      .single();
-
-    if (seasonError || !activeSeason) throw seasonError;
-    const activeSeasonId = activeSeason.season_id;
-
-    // Fetch all teams
-    const { data: teamsData, error: teamsError } = await supabase
-      .from('teams')
-      .select('team_id, team_score');
-
-    if (teamsError) throw teamsError;
-
-    await Promise.all(
-      teamsData.map(async (team: any) => {
-        // Fetch players for the current team
-        const { data: players, error: playersError } = await supabase
-          .from('players')
-          .select('player_id')
-          .eq('team_id', team.team_id);
-
-        if (playersError) throw playersError;
-
-        let teamScore = 0;
-        // Sum up the score for each player's instance in the active season
-        await Promise.all(
-          players.map(async (player: any) => {
-            const { data: playerInstances, error: piError } = await supabase
-              .from('player_instance')
-              .select('score')
-              .eq('player_id', player.player_id)
-              .eq('season_id', activeSeasonId);
-
-            if (piError) throw piError;
-
-            const playerTotalScore = playerInstances.reduce(
-              (acc: number, instance: any) => acc + instance.score,
-              0
-            );
-            teamScore += playerTotalScore;
-          })
-        );
-
-        // Update the team's total score
-        const { error: updateError } = await supabase
-          .from('teams')
-          .update({ team_score: teamScore })
-          .eq('team_id', team.team_id);
-
-        if (updateError) throw updateError;
-        console.log(`Team ${team.team_id} score updated to ${teamScore}`);
-      })
-    );
-  } catch (error) {
-    console.error('Error updating team scores:', error);
-  }
-};
-
 const PucketsPage: React.FC = () => {
  // State variables
  const [matches, setMatches] = useState<Match[]>([]); // Stores the list of matches
@@ -194,13 +129,14 @@ const PucketsPage: React.FC = () => {
    * Fetches matches and their players for the Standings view.
    * Includes player stats like wins, losses, rating
    */
-  const fetchMatchesAndPlayers = async () => {
+  const fetchMatches = async () => {
     try {
             // Fetch active season details
 
       const { data: activeSeason, error: seasonError } = await supabase
+        .schema('puckets')
         .from('seasons')
-        .select('season_id, season_name, shot_total, rules')
+        .select('season_id, season_name, rules')
         .is('end_date', null)
         .single();
   
@@ -210,101 +146,131 @@ const PucketsPage: React.FC = () => {
       setSeason(activeSeason);
         // Fetch teams
 
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('teams')
-        .select('team_name, team_score, team_id');
+      const { data: matchData, error: matchError } = await supabase
+        .schema('puckets')
+        .from('match_details')
+        .select('*')
+        .eq('season_id', activeSeasonId);
   
-      if (teamsError) throw teamsError;
+      if (matchError) throw matchError;
         // Enrich teams with their players and stats
 
-      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        teamsData.map(async (team: any) => {
-          const { data: players, error: playersError } = await supabase
-            .from('players')
-            .select('*, tiers(color)')
-            .eq('team_id', team.team_id);
-          if (playersError) throw playersError;
-  
-          const playersWithStats = await Promise.all(
-            players.map(async (player: any) => {
-              const { data: playerInstance, error: piError } = await supabase
-                .from('player_instance')
-                .select('player_instance_id, shots_left, score')
-                .eq('player_id', player.player_id)
-                .eq('season_id', activeSeasonId)
-                .single();
-  
-              if (piError || !playerInstance) throw piError;
-              // Calculate streaks
-
-              const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
-              const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
-              console.log(shotsMadeInRow, shotsMissedInRow);
+      const matches: Match[] = await Promise.all(
+        matchData.map(async (match: any) => {
               return {
-                name: player.name,
-                shots_left: playerInstance.shots_left,
-                player_score: playerInstance.score,
-                tier_color: player.tiers?.color || '#000',
-                shots_made_in_row: shotsMadeInRow,
-                shots_missed_in_row: shotsMissedInRow,
+                players: [
+                {
+                  name: match.player1_name,
+                  rating: match.rating,
+                  score: match.player1_score
+                },
+                {
+                  name: match.player2_name,
+                  rating: match.player2_rating,
+                  score: match.player2_score
+                }],
+                season_id: match.season_id,
+                date: new Date(match.match_date),
               };
             })
           );
   
-          // Sort players by their score, descending
-          playersWithStats.sort((a, b) => b.player_score - a.player_score);
-          // Calculate total shots left for the team
-
-          const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
-  
-          return {
-            team_name: team.team_name,
-            players: playersWithStats,
-            total_shots: totalShots,
-            team_score: team.team_score,
-          };
-        })
-      );
-  
       // Sort the teams by team_score in descending order
-      teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
-      setTeams(teamsWithPlayers);
+      // teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
+      setMatches(matches);
     } catch (error) {
-      console.error('Error fetching teams, players, and season info:', error);
+      console.error('Error fetching match info:', error);
     }
   };
 
-  // useEffect(() => {
-  //   // Function to unlock and keep AudioContext alive
-  //   const initializeAudioContext = () => {
-  //     if (!audioContext) {
-  //       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  //       // const ctx = new window.AudioContext()
-  //       setAudioContext(ctx);
+    /**
+   * Fetches player info for the Standings view.
+   * Includes player stats like wins, losses, rating
+   */
+    const fetchPlayers = async () => {
+      try {
+              // Fetch active season details
+  
+        const { data: activeSeason, error: seasonError } = await supabase
+          .from('puckets.seasons')
+          .select('season_id, season_name, rules')
+          .is('end_date', null)
+          .single();
+    
+        if (seasonError || !activeSeason) throw seasonError;
+    
+        const activeSeasonId = activeSeason.season_id;
+        setSeason(activeSeason);
+          // Fetch teams
+  
+        const { data: matchData, error: matchError } = await supabase
+          .from('puckets.matches')
+          .select('player1_instance_id, player1_rating, ' +
+                  'player2_instance_id, player2_rating, match_date, ' +
+                  'player1_score, player1_rating_result, player2_score, player2_rating_result')
+          .eq('season_id', activeSeasonId);
+    
+        if (matchError) throw matchError;
+          // Enrich teams with their players and stats
+  
+        const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
+          teamsData.map(async (team: any) => {
+            const { data: players, error: playersError } = await supabase
+              .from('players')
+              .select('*, tiers(color)')
+              .eq('team_id', team.team_id);
+            if (playersError) throw playersError;
+    
+            const playersWithStats = await Promise.all(
+              players.map(async (player: any) => {
+                const { data: playerInstance, error: piError } = await supabase
+                  .from('player_instance')
+                  .select('player_instance_id, shots_left, score')
+                  .eq('player_id', player.player_id)
+                  .eq('season_id', activeSeasonId)
+                  .single();
+    
+                if (piError || !playerInstance) throw piError;
+                // Calculate streaks
+  
+                const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
+                const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
+                console.log(shotsMadeInRow, shotsMissedInRow);
+                return {
+                  name: player.name,
+                  shots_left: playerInstance.shots_left,
+                  player_score: playerInstance.score,
+                  tier_color: player.tiers?.color || '#000',
+                  shots_made_in_row: shotsMadeInRow,
+                  shots_missed_in_row: shotsMissedInRow,
+                };
+              })
+            );
+    
+            // Sort players by their score, descending
+            playersWithStats.sort((a, b) => b.player_score - a.player_score);
+            // Calculate total shots left for the team
+  
+            const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
+    
+            return {
+              team_name: team.team_name,
+              players: playersWithStats,
+              total_shots: totalShots,
+              team_score: team.team_score,
+            };
+          })
+        );
+    
+        // Sort the teams by team_score in descending order
+        teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
+        setTeams(teamsWithPlayers);
+      } catch (error) {
+        console.error('Error fetching teams, players, and season info:', error);
+      }
+    };
 
-  //       // Create an inaudible oscillator to keep the context alive
-  //       const oscillator = ctx.createOscillator();
-  //       const gain = ctx.createGain();
-  //       oscillator.connect(gain);
-  //       gain.connect(ctx.destination);
-  //       oscillator.frequency.value = 20; // Low frequency (inaudible)
-  //       gain.gain.value = 0.001; // Nearly silent
-  //       oscillator.start();
 
-  //       console.log("AudioContext initialized and kept alive!");
-
-  //       // Preload notification sound
-  //       // const sound = new Howl({
-  //       //   src: ["/sounds/notification.mp3"],
-  //       //   volume: 1.0,
-  //       // });
-  //       setNotificationSound(sound);
-  //     } else if (audioContext.state === "suspended") {
-  //       audioContext.resume().then(() => console.log("AudioContext resumed!"));
-  //     }
-  //   };
-  //   initializeAudioContext();
-  // }, [audioContext, sound]);
 
  /**
    * Fetches the current user's view from the database.
@@ -366,60 +332,61 @@ const PucketsPage: React.FC = () => {
   useEffect(() => {
 
       // Initial fetch and update
-      fetchMatchesAndPlayers();
-      updateTeamScores();
+      fetchMatches();
+
+      // updateTeamScores();
 
       // Subscribe to changes in player_instance, team, player
-      const playerInstanceChannel = supabase
-        .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'puckets', table: 'player_instance' }, () => {
-          fetchMatchesAndPlayers();
-          updateTeamScores();
-        })
-        .subscribe();
+      // const playerInstanceChannel = supabase
+      //   .channel('player-instance-db-changes')
+      //   .on('postgres_changes', { event: '*', schema: 'puckets', table: 'player_instance' }, () => {
+      //     fetchMatchesAndPlayers();
+      //     updateTeamScores();
+      //   })
+      //   .subscribe();
 
-      const teamChannel = supabase
-        .channel('matches-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'puckets', table: 'teams' }, fetchMatchesAndPlayers)
-        .subscribe();
+      // const teamChannel = supabase
+      //   .channel('matches-db-changes')
+      //   .on('postgres_changes', { event: '*', schema: 'puckets', table: 'teams' }, fetchMatchesAndPlayers)
+      //   .subscribe();
 
-      const playerChannel = supabase
-        .channel('player-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
-        .subscribe();
+      // const playerChannel = supabase
+      //   .channel('player-db-changes')
+      //   .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
+      //   .subscribe();
 
       // **Shots** subscription: check new shot, if 3rd consecutive => play sound
-      const shotChannel = supabase
-        .channel('shots-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
-          async (payload) => {
-            try {
-              // Cast payload.new to a ShotsRow-like object
-              const newRow = payload.new as { result: number; instance_id: number };
+      // const shotChannel = supabase
+      //   .channel('shots-db-changes')
+      //   .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
+      //     async (payload) => {
+      //       try {
+      //         // Cast payload.new to a ShotsRow-like object
+      //         const newRow = payload.new as { result: number; instance_id: number };
 
-              const { result, instance_id } = newRow;
-              // If it's a made shot (non-zero)
-              if (result !== 0) {
-                const newStreak = await calculateShotsMadeInRow(instance_id);
-                if (newStreak === 3) {
-                  // sound.play();
-                }
-              }
-              await fetchTeamsAndPlayers();
-              await updateTeamScores();
-            } catch (error) {
-              console.error('Error processing shot change:', error);
-            }
-          }
-        )
-        .subscribe();
+      //         const { result, instance_id } = newRow;
+      //         // If it's a made shot (non-zero)
+      //         if (result !== 0) {
+      //           const newStreak = await calculateShotsMadeInRow(instance_id);
+      //           if (newStreak === 3) {
+      //             // sound.play();
+      //           }
+      //         }
+      //         await fetchTeamsAndPlayers();
+      //         await updateTeamScores();
+      //       } catch (error) {
+      //         console.error('Error processing shot change:', error);
+      //       }
+      //     }
+      //   )
+      //   .subscribe();
 
-      return () => {
-        supabase.removeChannel(playerInstanceChannel);
-        supabase.removeChannel(teamChannel);
-        supabase.removeChannel(playerChannel);
-        supabase.removeChannel(shotChannel);
-      };
+      // return () => {
+      //   supabase.removeChannel(playerInstanceChannel);
+      //   supabase.removeChannel(teamChannel);
+      //   supabase.removeChannel(playerChannel);
+      //   supabase.removeChannel(shotChannel);
+      // };
   }, [userView ]);
 
  return (
@@ -432,52 +399,22 @@ const PucketsPage: React.FC = () => {
         <div className={styles.container}>
           <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
           <div className={styles.teams}>
-            {teams.map((team, index) => (
-              <div key={index} className={styles.team}>
-                {/* Team Title */}
-                <h2 className={styles.teamTitle}>{team.team_name}</h2>
-                {/* Table Headers */}
-                <div className={styles.row}>
-                  <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Shots Left</span>
-                  <span className={styles.columnHeader}>Total Points</span>
-                </div>
-                {team.players.map((player, playerIndex) => (
-                  <div key={playerIndex} className={styles.row}>
-                    {/* Player Name and Icons */}
-                    <div className={styles.playerNameColumn}>
-                      <div className={styles.playerName}>
-                        {/* Tier Color Indicator */}
-                        <span
-                          className={styles.colorCircle}
-                          style={{ backgroundColor: player.tier_color }}
-                        />
-                        <span>{player.name}</span>
-                        
-                        {/* Fire Icon: 3+ Consecutive Makes */}
-                        {player.shots_made_in_row >= 3 && (
-                          <span className={styles.fireIcon}>
-                            <FaFireFlameCurved />
-                          </span>
-                        )}
-
-                        {/* Cold Icon: 4+ Consecutive Misses */}
-                        {player.shots_missed_in_row >= 4 && (
-                          <span className={styles.coldIcon}>
-                            <FaSnowflake />
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Player Stats */}
-                    <span className={styles.shotsLeft}>{player.shots_left}</span>
-                    <span className={styles.totalPoints}>{player.player_score}</span>
+            {/* Table Headers */}
+            <div className={styles.row}>
+              <span className={styles.columnHeader}>Name</span>
+              <span className={styles.columnHeader}>Shots Left</span>
+              <span className={styles.columnHeader}>Total Points</span>
+            </div>
+            {matches.map((match, matchIndex) => (
+              <div key={matchIndex} className={styles.row}>
+                {/* Player Name and Icons */}
+                <div className={styles.playerNameColumn}>
+                  <div className={styles.playerName}>
+                    <span>{match.players[0].name}</span>
+                    <span>{match.players[0].score}</span>
+                    <span>{match.players[1].name}</span>
+                    <span>{match.players[1].score}</span>
                   </div>
-                ))}
-                {/* Team Stats */}
-                <div className={styles.teamStats}>
-                  <span>Team Shots Remaining: {team.total_shots}</span>
-                  <span>Team Score: {team.team_score}</span>
                 </div>
               </div>
             ))}

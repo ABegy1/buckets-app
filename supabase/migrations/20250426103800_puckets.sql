@@ -48,6 +48,13 @@ CREATE TABLE IF NOT EXISTS puckets.player_instance
     player_id integer NOT NULL,
     season_id integer NOT NULL,
     rating integer NOT NULL,
+    wins integer DEFAULT 0,
+    losses integer DEFAULT 0,
+    draws integer DEFAULT 0,
+    highest_rating integer,
+    lowest_rating integer,
+    successive_wins integer DEFAULT 0,
+    successive_loss integer DEFAULT 0,
     CONSTRAINT player_instance_PK PRIMARY KEY (player_instance_id),
     CONSTRAINT player_instance_player_id_players_player_id_fk FOREIGN KEY (player_id)
         REFERENCES puckets.players (player_id) MATCH SIMPLE

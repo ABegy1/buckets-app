@@ -202,27 +202,26 @@ const PucketsPage: React.FC = () => {
     
         const activeSeasonId = activeSeason.season_id;
         setSeason(activeSeason);
-          // Fetch teams
+          // Fetch players
   
         const { data: playerData, error: playerError } = await supabase
           .schema('puckets')
           .from('player_instance')
-          .select('player_id, season_id, rating, players (name)')
+          .select('player_id, season_id, rating, losses, wins, successive_loss, successive_wins, players (name)')
           .eq('season_id', activeSeasonId);
     
         if (playerError) throw playerError;
-          // Enrich teams with their players and stats
-  
+        console.log("playerDate:\n", playerData);
         const playerStats: PlayerWithStats[] = await Promise.all(
           playerData.map(async (player: any) => {
                 return {
                   id: player.player_id,
-                  name: player.name,
+                  name: player.players.name,
                   rating: player.rating,
-                  wins: 0,
-                  losses: 0,
-                  successive_wins: 0,
-                  successive_losses: 0,
+                  wins: player.wins,
+                  losses: player.losses,
+                  successive_wins: player.successive_wins,
+                  successive_losses: player.successive_loss,
                   tier: 0,
                   is_hidden: false,
                   is_inactive: false
@@ -231,7 +230,7 @@ const PucketsPage: React.FC = () => {
             );
     
             // Sort players by their score, descending
-            // playersWithStats.sort((a, b) => b.player_score - a.player_score);
+            playerStats.sort((a, b) => b.rating - a.rating);
     
         setPlayers(playerStats);
       } catch (error) {
@@ -307,23 +306,25 @@ const PucketsPage: React.FC = () => {
       // updateTeamScores();
 
       // Subscribe to changes in player_instance, team, player
-      // const playerInstanceChannel = supabase
-      //   .channel('player-instance-db-changes')
-      //   .on('postgres_changes', { event: '*', schema: 'puckets', table: 'player_instance' }, () => {
-      //     fetchMatchesAndPlayers();
-      //     updateTeamScores();
-      //   })
-      //   .subscribe();
+      const playerInstanceChannel = supabase
+        .channel('player-instance-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'puckets', table: 'player_instance' }, () => {
+          fetchPlayers();
+        })
+        .subscribe();
 
-      // const teamChannel = supabase
-      //   .channel('matches-db-changes')
-      //   .on('postgres_changes', { event: '*', schema: 'puckets', table: 'teams' }, fetchMatchesAndPlayers)
-      //   .subscribe();
+      // Subscribe to changes in player_instance, team, player
+      const matchesChannel = supabase
+      .channel('matches-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'puckets', table: 'matches' }, () => {
+        fetchMatches();
+      })
+      .subscribe();
 
-      // const playerChannel = supabase
-      //   .channel('player-db-changes')
-      //   .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
-      //   .subscribe();
+      const playerChannel = supabase
+        .channel('player-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchPlayers)
+        .subscribe();
 
       // **Shots** subscription: check new shot, if 3rd consecutive => play sound
       // const shotChannel = supabase
@@ -351,12 +352,12 @@ const PucketsPage: React.FC = () => {
       //   )
       //   .subscribe();
 
-      // return () => {
-      //   supabase.removeChannel(playerInstanceChannel);
-      //   supabase.removeChannel(teamChannel);
-      //   supabase.removeChannel(playerChannel);
-      //   supabase.removeChannel(shotChannel);
-      // };
+      return () => {
+        supabase.removeChannel(playerInstanceChannel);
+        supabase.removeChannel(matchesChannel);
+        supabase.removeChannel(playerChannel);
+        // supabase.removeChannel(shotChannel);
+      };
   }, [userView ]);
 
  return (
@@ -378,18 +379,18 @@ const PucketsPage: React.FC = () => {
                   <span className={styles.columnHeader}>Rating</span>
                   <span className={styles.columnHeader}>W/L</span>
               </div>
-              {players.map((player, playerIndex) => (
-                <div key={playerIndex} className={styles.row}>
-                  {/* Player Name and Icons */}
-                  <div className={styles.match}>
-                    <div className={styles.playerDetails}>
-                      <span className='text-left w-full'>{player.name}</span>
-                      <span>{player.rating}</span>
-                      <span>{player.wins}</span>
+                {players.map((player, playerIndex) => (
+                  <div key={playerIndex} className={styles.row}>
+                    {/* Player Name and Icons */}
+                    <div className={styles.match}>
+                      <div className={styles.playerDetails}>
+                        <span className='text-left w-full'>{player.name}</span>
+                        <span>{player.rating}</span>
+                        <span>{player.wins + "-" + player.losses}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
             {/* Matches Card*/}
             <div className={styles.matchCard}>
@@ -400,23 +401,23 @@ const PucketsPage: React.FC = () => {
                   <span className={styles.columnHeader}>Rating</span>
                   <span className={styles.columnHeader}>Score</span>
               </div>
-              {matches.map((match, matchIndex) => (
-                <div key={matchIndex} className={styles.row}>
-                  {/* Player Name and Icons */}
-                  <div className={styles.match}>
-                    <div className={styles.playerDetails}>
-                      <span className='text-left w-full'>{match.players[0].name}</span>
-                      <span>{match.players[0].rating}</span>
-                      <span>{match.players[0].score}</span>
-                    </div>
-                    <div className={styles.playerDetails}>
-                      <span className='text-left w-full'>{match.players[1].name}</span>
-                      <span>{match.players[0].rating}</span>
-                      <span>{match.players[1].score}</span>
+                {matches.map((match, matchIndex) => (
+                  <div key={matchIndex} className={styles.row}>
+                    {/* Player Name and Icons */}
+                    <div className={styles.match}>
+                      <div className={styles.playerDetails}>
+                        <span className='text-left w-full'>{match.players[0].name}</span>
+                        <span>{match.players[0].rating}</span>
+                        <span>{match.players[0].score}</span>
+                      </div>
+                      <div className={styles.playerDetails}>
+                        <span className='text-left w-full'>{match.players[1].name}</span>
+                        <span>{match.players[0].rating}</span>
+                        <span>{match.players[1].score}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>

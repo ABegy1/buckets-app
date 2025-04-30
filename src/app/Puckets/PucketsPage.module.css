@@ -69,12 +69,12 @@
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
+  /* display: grid; */
+  /* grid-template-columns: 1fr 1fr 1fr; Two fractions for name, one each for shots and points */
   align-items: center; /* Ensure vertical alignment */
-  padding: 12px 2px;
-  font-size: 1.5rem;
-  border-bottom: 1px solid #ddd;
+  padding: 5px 2px;
+  /* font-size: 1.5rem; */
+  /* border-bottom: 1px solid #ddd; */
 }
 
 .playerName{
@@ -129,8 +129,8 @@
   margin-bottom: 20px;
 }
 
-/* Teams container */
-.teams {
+/* Matches container */
+.matches {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 10px;
@@ -148,8 +148,9 @@
   color: blue;  /* Blue for the cold icon */
 }
 
-/* Individual team card */
-.team {
+/* Matches and Rankings cards */
+.rankingCard,
+.matchCard {
   display: flex;
   flex-direction: column;
   border: 1px solid #ddd;
@@ -159,12 +160,31 @@
   box-sizing: border-box;
 }
 
-/* Team title */
-.teamTitle {
+/* Title for both Matches and Rankings tables */
+.tableTitle {
   text-align: center;
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 10px;
+}
+
+/* Individual match */
+.match {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #fafafa;
+  box-sizing: border-box;
+}
+
+.playerDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
+  justify-items: center;
+  font-size: 1.3rem;
+  /* font-weight: bold; */
 }
 
 /* Header row for player stats */

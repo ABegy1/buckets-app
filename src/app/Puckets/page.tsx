@@ -1,6 +1,6 @@
 'use client'; // Required in Next.js App Router
 import React, { use, useEffect, useMemo, useState } from 'react';
-import styles from './StandingsPage.module.css'; // Updated path for combined styles
+import styles from './PucketsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
@@ -161,7 +161,7 @@ const PucketsPage: React.FC = () => {
                 players: [
                 {
                   name: match.player1_name,
-                  rating: match.rating,
+                  rating: match.player1_rating,
                   score: match.player1_score
                 },
                 {
@@ -191,11 +191,12 @@ const PucketsPage: React.FC = () => {
       try {
               // Fetch active season details
   
-        const { data: activeSeason, error: seasonError } = await supabase
-          .from('puckets.seasons')
-          .select('season_id, season_name, rules')
-          .is('end_date', null)
-          .single();
+              const { data: activeSeason, error: seasonError } = await supabase
+              .schema('puckets')
+              .from('seasons')
+              .select('season_id, season_name, rules')
+              .is('end_date', null)
+              .single();
     
         if (seasonError || !activeSeason) throw seasonError;
     
@@ -203,68 +204,36 @@ const PucketsPage: React.FC = () => {
         setSeason(activeSeason);
           // Fetch teams
   
-        const { data: matchData, error: matchError } = await supabase
-          .from('puckets.matches')
-          .select('player1_instance_id, player1_rating, ' +
-                  'player2_instance_id, player2_rating, match_date, ' +
-                  'player1_score, player1_rating_result, player2_score, player2_rating_result')
+        const { data: playerData, error: playerError } = await supabase
+          .schema('puckets')
+          .from('player_instance')
+          .select('player_id, season_id, rating, players (name)')
           .eq('season_id', activeSeasonId);
     
-        if (matchError) throw matchError;
+        if (playerError) throw playerError;
           // Enrich teams with their players and stats
   
-        const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-          teamsData.map(async (team: any) => {
-            const { data: players, error: playersError } = await supabase
-              .from('players')
-              .select('*, tiers(color)')
-              .eq('team_id', team.team_id);
-            if (playersError) throw playersError;
-    
-            const playersWithStats = await Promise.all(
-              players.map(async (player: any) => {
-                const { data: playerInstance, error: piError } = await supabase
-                  .from('player_instance')
-                  .select('player_instance_id, shots_left, score')
-                  .eq('player_id', player.player_id)
-                  .eq('season_id', activeSeasonId)
-                  .single();
-    
-                if (piError || !playerInstance) throw piError;
-                // Calculate streaks
-  
-                const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
-                const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
-                console.log(shotsMadeInRow, shotsMissedInRow);
+        const playerStats: PlayerWithStats[] = await Promise.all(
+          playerData.map(async (player: any) => {
                 return {
+                  id: player.player_id,
                   name: player.name,
-                  shots_left: playerInstance.shots_left,
-                  player_score: playerInstance.score,
-                  tier_color: player.tiers?.color || '#000',
-                  shots_made_in_row: shotsMadeInRow,
-                  shots_missed_in_row: shotsMissedInRow,
+                  rating: player.rating,
+                  wins: 0,
+                  losses: 0,
+                  successive_wins: 0,
+                  successive_losses: 0,
+                  tier: 0,
+                  is_hidden: false,
+                  is_inactive: false
                 };
               })
             );
     
             // Sort players by their score, descending
-            playersWithStats.sort((a, b) => b.player_score - a.player_score);
-            // Calculate total shots left for the team
-  
-            const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
+            // playersWithStats.sort((a, b) => b.player_score - a.player_score);
     
-            return {
-              team_name: team.team_name,
-              players: playersWithStats,
-              total_shots: totalShots,
-              team_score: team.team_score,
-            };
-          })
-        );
-    
-        // Sort the teams by team_score in descending order
-        teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
-        setTeams(teamsWithPlayers);
+        setPlayers(playerStats);
       } catch (error) {
         console.error('Error fetching teams, players, and season info:', error);
       }
@@ -333,6 +302,7 @@ const PucketsPage: React.FC = () => {
 
       // Initial fetch and update
       fetchMatches();
+      fetchPlayers();
 
       // updateTeamScores();
 
@@ -398,26 +368,56 @@ const PucketsPage: React.FC = () => {
         {/* Standings View*/}
         <div className={styles.container}>
           <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
-          <div className={styles.teams}>
-            {/* Table Headers */}
-            <div className={styles.row}>
-              <span className={styles.columnHeader}>Name</span>
-              <span className={styles.columnHeader}>Shots Left</span>
-              <span className={styles.columnHeader}>Total Points</span>
-            </div>
-            {matches.map((match, matchIndex) => (
-              <div key={matchIndex} className={styles.row}>
-                {/* Player Name and Icons */}
-                <div className={styles.playerNameColumn}>
-                  <div className={styles.playerName}>
-                    <span>{match.players[0].name}</span>
-                    <span>{match.players[0].score}</span>
-                    <span>{match.players[1].name}</span>
-                    <span>{match.players[1].score}</span>
+          <div className='grid grid-cols-2 w-full'>
+            {/* Rankings Card*/}
+            <div className={styles.rankingCard}>
+              {/* Table Headers */}
+              <span className={styles.tableTitle}>Rankings</span>
+              <div className={styles.headerRow}>
+                  <span className={styles.columnHeader}>Name</span>
+                  <span className={styles.columnHeader}>Rating</span>
+                  <span className={styles.columnHeader}>W/L</span>
+              </div>
+              {players.map((player, playerIndex) => (
+                <div key={playerIndex} className={styles.row}>
+                  {/* Player Name and Icons */}
+                  <div className={styles.match}>
+                    <div className={styles.playerDetails}>
+                      <span className='text-left w-full'>{player.name}</span>
+                      <span>{player.rating}</span>
+                      <span>{player.wins}</span>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            {/* Matches Card*/}
+            <div className={styles.matchCard}>
+              {/* Table Headers */}
+              <span className={styles.tableTitle}>Matches</span>
+              <div className={styles.headerRow}>
+                  <span className={styles.columnHeader}>Name</span>
+                  <span className={styles.columnHeader}>Rating</span>
+                  <span className={styles.columnHeader}>Score</span>
               </div>
-            ))}
+              {matches.map((match, matchIndex) => (
+                <div key={matchIndex} className={styles.row}>
+                  {/* Player Name and Icons */}
+                  <div className={styles.match}>
+                    <div className={styles.playerDetails}>
+                      <span className='text-left w-full'>{match.players[0].name}</span>
+                      <span>{match.players[0].rating}</span>
+                      <span>{match.players[0].score}</span>
+                    </div>
+                    <div className={styles.playerDetails}>
+                      <span className='text-left w-full'>{match.players[1].name}</span>
+                      <span>{match.players[0].rating}</span>
+                      <span>{match.players[1].score}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
     </main>

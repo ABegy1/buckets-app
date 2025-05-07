@@ -12,12 +12,19 @@ import { stat } from 'fs';
 
 import Header from '@/components/Header';
 
-interface Match {
-  players: {
+export interface Match {
+  player1: {
+    instance_id: number;
     name: string;
     rating: number;
     score: number;
-  }[];
+  };
+  player2: {
+    instance_id: number;
+    name: string;
+    rating: number;
+    score: number;
+  };
   season_id: number;
   date: Date;
 }
@@ -28,8 +35,8 @@ interface Season {
   rules: string;
 }
 
-interface PlayerWithStats {
-  id: number;
+export interface PucketsPlayerWithStats {
+  instance_id: number;
   name: string;
   rating: number;
   wins: number;
@@ -103,7 +110,7 @@ interface PlayerWithStats {
 const PucketsPage: React.FC = () => {
  // State variables
  const [matches, setMatches] = useState<Match[]>([]); // Stores the list of matches
- const [players, setPlayers] = useState<PlayerWithStats[]>([]); // Stores the list of players with their current stats
+ const [players, setPlayers] = useState<PucketsPlayerWithStats[]>([]); // Stores the list of players with their current stats
  const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
  const [season, setSeason] = useState<Season>({
   season_id: -1,
@@ -158,17 +165,20 @@ const PucketsPage: React.FC = () => {
       const matches: Match[] = await Promise.all(
         matchData.map(async (match: any) => {
               return {
-                players: [
+                player1:
                 {
+                  instance_id: match.player_instance_id,
                   name: match.player1_name,
                   rating: match.player1_rating,
                   score: match.player1_score
                 },
+                player2:
                 {
+                  instance_id: match.player_instance_id,
                   name: match.player2_name,
                   rating: match.player2_rating,
                   score: match.player2_score
-                }],
+                },
                 season_id: match.season_id,
                 date: new Date(match.match_date),
               };
@@ -207,15 +217,15 @@ const PucketsPage: React.FC = () => {
         const { data: playerData, error: playerError } = await supabase
           .schema('puckets')
           .from('player_instance')
-          .select('player_id, season_id, rating, losses, wins, successive_loss, successive_wins, players (name)')
+          .select('player_instance_id, season_id, rating, losses, wins, successive_loss, successive_wins, players (name)')
           .eq('season_id', activeSeasonId);
     
         if (playerError) throw playerError;
         console.log("playerDate:\n", playerData);
-        const playerStats: PlayerWithStats[] = await Promise.all(
+        const playerStats: PucketsPlayerWithStats[] = await Promise.all(
           playerData.map(async (player: any) => {
                 return {
-                  id: player.player_id,
+                  instance_id: player.player_instance_id,
                   name: player.players.name,
                   rating: player.rating,
                   wins: player.wins,
@@ -406,14 +416,14 @@ const PucketsPage: React.FC = () => {
                     {/* Player Name and Icons */}
                     <div className={styles.match}>
                       <div className={styles.playerDetails}>
-                        <span className='text-left w-full'>{match.players[0].name}</span>
-                        <span>{match.players[0].rating}</span>
-                        <span>{match.players[0].score}</span>
+                        <span className='text-left w-full'>{match.player1.name}</span>
+                        <span>{match.player1.rating}</span>
+                        <span>{match.player1.score}</span>
                       </div>
                       <div className={styles.playerDetails}>
-                        <span className='text-left w-full'>{match.players[1].name}</span>
-                        <span>{match.players[0].rating}</span>
-                        <span>{match.players[1].score}</span>
+                        <span className='text-left w-full'>{match.player2.name}</span>
+                        <span>{match.player2.rating}</span>
+                        <span>{match.player2.score}</span>
                       </div>
                     </div>
                   </div>

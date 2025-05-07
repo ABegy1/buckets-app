@@ -1,0 +1,84 @@
+
+
+.pucketsMatchModal {
+  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.pucketsMatchModalOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modalContent {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: none;
+  font-size: 1rem;
+  text-align: center;
+  flex: 1;
+}
+
+.tabActive {
+  background: #f0f0f0;
+  font-weight: bold;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  border-top: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+/* Add new styles for the close button at the bottom */
+.bottomBar {
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+}
+
+.closeBtn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease;
+}
+
+.closeBtn:hover {
+  background-color: #0056b3;
+}
+

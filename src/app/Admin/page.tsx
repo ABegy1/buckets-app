@@ -6,6 +6,7 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
+import PucketsMatchModal from '@/components/PucketsMatch/PucketsMatchModal'
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
 
@@ -36,6 +37,7 @@ const AdminPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar visibility
   const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false); // Current season modal visibility
   const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false); // Next season modal visibility
+  const [isPucketsMatchModalOpen, setIsPucketsMatchModalOpen] = useState(false); // Puckets match modal visibility
   const [loading, setLoading] = useState(true); // Page loading state
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
@@ -221,6 +223,17 @@ const AdminPage = () => {
     setIsNextSeasonModalOpen(false);
   };
 
+
+   // PucketsMatchModal handlers
+   const handleOpenPucketsMatchModal = () => {
+    setIsPucketsMatchModalOpen(true);
+    setIsSidebarOpen(false);
+  };
+
+  const handleClosePucketsMatchModal = () => {
+    setIsPucketsMatchModalOpen(false);
+  };
+
   // SignOut handler
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -256,6 +269,9 @@ const AdminPage = () => {
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>
               Settings
+            </button>
+            <button className={styles.button} onClick={handleOpenPucketsMatchModal}>
+              Puckets Match
             </button>
 
             {/* Dropdown for Page Options */}
@@ -315,6 +331,10 @@ const AdminPage = () => {
           isOpen={isNextSeasonModalOpen}
           onClose={handleCloseNextSeasonModal}
           onStartSeason={handleStartSeason}
+        />
+        <PucketsMatchModal
+          isOpen={isPucketsMatchModalOpen}
+          onClose={handleClosePucketsMatchModal}
         />
       </main>
 

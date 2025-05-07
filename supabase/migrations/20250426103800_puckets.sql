@@ -127,20 +127,23 @@ CREATE TABLE IF NOT EXISTS puckets.player_stats
 
 -- View: puckets.match_details
 -- Combines the match table with player names from the players tabls
-CREATE VIEW puckets.match_details AS
-	SELECT 	m.match_id, 
-			m.season_id,
-			pl1.name AS player1_name,
-			m.player1_rating, 
-			pl2.name AS player2_name,
-			m.player2_rating, 
-			m.match_date, 
-			m.player1_score, 
-			m.player1_rating_result, 
-			m.player2_score, 
-			m.player2_rating_result
-	FROM puckets.matches AS m
-	JOIN puckets.player_instance AS pi1 ON m.player1_instance_id = pi1.player_instance_id
-	JOIN puckets.players AS pl1 ON pi1.player_instance_id = pl1.player_id
-	JOIN puckets.player_instance AS pi2 ON m.player2_instance_id = pi2.player_instance_id
-	JOIN puckets.players AS pl2 ON pi2.player_instance_id = pl2.player_id;
+CREATE OR REPLACE VIEW puckets.match_details
+ AS
+ SELECT m.match_id,
+    m.season_id,
+	pi1.player_instance_id as player1_instance_id,
+    pl1.name AS player1_name,
+    m.player1_rating,
+	pi2.player_instance_id as player2_instance_id,
+    pl2.name AS player2_name,
+    m.player2_rating,
+    m.match_date,
+    m.player1_score,
+    m.player1_rating_result,
+    m.player2_score,
+    m.player2_rating_result
+   FROM puckets.matches m
+     JOIN puckets.player_instance pi1 ON m.player1_instance_id = pi1.player_instance_id
+     JOIN puckets.players pl1 ON pi1.player_instance_id = pl1.player_id
+     JOIN puckets.player_instance pi2 ON m.player2_instance_id = pi2.player_instance_id
+     JOIN puckets.players pl2 ON pi2.player_instance_id = pl2.player_id;

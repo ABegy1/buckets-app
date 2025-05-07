@@ -1,0 +1,72 @@
+.recordMatch {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.recordMatch h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.recordMatch p {
+  text-align: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.recordMatch .table-container {
+  max-height: 400px; /* Set the max height for the scroll area */
+  overflow-y: auto; /* Allow vertical scrolling */
+  display: grid;
+  justify-items: center;
+}
+
+.recordMatch table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures that columns have a fixed width */
+}
+
+.recordMatch thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.recordMatch th,
+.recordMatch td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.recordMatch tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.recordMatch button {
+  padding: 6px 12px;
+  margin: 5px;
+  border: none;
+  background-color: #007BFF;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.recordMatch button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.recordMatch button:hover:not(:disabled) {
+  background-color: #0056b3;
+}

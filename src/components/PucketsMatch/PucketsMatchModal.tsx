@@ -6,7 +6,7 @@ import AdjustScores from '../AdjustScores'; // Component for modifying scores
 import AdjustTiers from '../AdjustTier'; // Component for adjusting tiers
 import AddPlayers from '../AddPlayers'; // Component for adding new players
 import AdjustRules from '../AdjustRules'; // Component for updating rules
-import RecordMatch from './RecordMatch';
+import RecordMatch from './RecordMatchForm';
 
 // Type definition for the component's props
 interface PucketsMatchModalProps {

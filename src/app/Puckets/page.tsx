@@ -7,46 +7,11 @@ import { FaSnowflake } from "react-icons/fa6";
 import {eachDayOfInterval, startOfMonth, endOfMonth, isWeekend} from 'date-fns'
 import { usePathname, useRouter } from 'next/navigation';
 import { Howl } from 'howler';
+import { Match, PucketsPlayerWithStats, Season } from './types'; // Import types for matches and players
 
 import { stat } from 'fs';
 
 import Header from '@/components/Header';
-
-export interface Match {
-  player1: {
-    instance_id: number;
-    name: string;
-    rating: number;
-    score: number;
-  };
-  player2: {
-    instance_id: number;
-    name: string;
-    rating: number;
-    score: number;
-  };
-  season_id: number;
-  date: Date;
-}
-
-interface Season {
-  season_id: number;
-  season_name: string;
-  rules: string;
-}
-
-export interface PucketsPlayerWithStats {
-  instance_id: number;
-  name: string;
-  rating: number;
-  wins: number;
-  losses: number;
-  successive_wins: number;
-  successive_losses: number;
-  tier: number;
-  is_hidden: boolean;
-  is_inactive: boolean;
-}
 
 
 // Function to calculate the current streak of consecutive made shots

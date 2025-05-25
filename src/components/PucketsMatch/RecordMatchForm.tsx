@@ -14,7 +14,7 @@
 import React, { useActionState, useEffect, useState } from 'react';
 import { supabase } from '@/supabaseClient'; // Supabase client import
 import styles from './RecordMatchForm.module.css'; // CSS module for styling
-import { PucketsPlayerWithStats, Match } from '@/app/Puckets/page';
+import { PucketsPlayerWithStats, Match } from '@/app/Puckets/types'; // Importing types for player and match data
 import { recordMatch } from './RecordMatch';
 
 interface RecordMatchProps {
@@ -27,8 +27,6 @@ const RecordMatch: React.FC<RecordMatchProps> = ({ isOpen }) => {
   const [loading, setLoading] = useState(true); // Loading state for data fetching
   const [season, setSeason] = useState<number>(); // Current season info
   const [submitState, formAction, pending] = useActionState(recordMatch, null); //Status string for the match submit request
-
-
 
 
   /**
@@ -114,29 +112,50 @@ const RecordMatch: React.FC<RecordMatchProps> = ({ isOpen }) => {
           <form action={formAction}>
             <fieldset>
               <div style={{fontSize: '14px', color: 'black'}}>
-                Debug: {JSON.stringify(submitState?.values)}
+                Debug: {JSON.stringify(submitState)}
               </div>
-              <select name="player1.instance_id" defaultValue={Number(submitState?.values?.player1?.instance_id) ?? 0}>
-                <option value="">Select a player</option>
-                {players.map((player) => (
-                  <option 
-                    key = {player.instance_id} 
-                    value={player.instance_id}
-                  >
-                      {player.name}
-                  </option>
+              <select name="player1.instance_id" 
+                defaultValue={submitState?.values?.player1?.instance_id ?? 0} 
+                key={submitState?.values?.player1?.instance_id ?? 0}
+                >
+                  <option value="">Select a player</option>
+                  {players.map((player) => (
+                    <option 
+                      key = {player.instance_id} 
+                      value={player.instance_id}
+                    >
+                        {player.name}
+                    </option>
                 ))}
               </select>
-              <input type="number" name="player1.score" max={21} min={0} defaultValue={submitState?.values?.player1?.score ?? 0}></input>
+              <input 
+                type="number" 
+                name="player1.score" 
+                max={21} 
+                min={0} 
+                defaultValue={submitState?.values?.player1?.score ?? 0}
+              >
+              </input>
               {submitState?.errors && <p aria-live="polite">{submitState.errors}</p>}
             </fieldset>
             <fieldset>
-              <select name="player2.instance_id">
+              <select name="player2.instance_id"
+                defaultValue={submitState?.values?.player2?.instance_id ?? 0} 
+                key={submitState?.values?.player2?.instance_id ?? 0}
+              >
+                <option value="">Select a player</option>
                 {players.map((player) => (
                   <option key = {player.instance_id} value={player.instance_id}>{player.name}</option>
                 ))}
               </select>
-              <input type="number" name="player2.score" max={21} min={0}></input>
+              <input 
+                type="number" 
+                name="player2.score" 
+                max={21} 
+                min={0}
+                defaultValue={submitState?.values?.player2?.score ?? 0}
+              >
+              </input>
             </fieldset>
             {submitState?.success && <p aria-live='polite'>Match Submitted Successfully</p>}
             <button type='submit' disabled={pending}>Submit</button>

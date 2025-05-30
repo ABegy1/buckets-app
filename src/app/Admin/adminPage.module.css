@@ -148,22 +148,26 @@
 .players {
   grid-column: span 4;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
   margin-bottom: 20px;
 }
+
 
 /* Column for players */
 .column {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
-  align-items: start;
-  justify-items: center;
+  width: 100%; /* Use full available width */
+  max-width: 300px; /* Adjust this value as needed */
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-color: white;
 }
+
 
 .header {
   grid-column: 1 / -1;
@@ -182,6 +186,7 @@
   transition: background-color 0.3s ease;
   background-color: #fafafa;
 }
+
 
 .box:hover {
   background-color: #f0f0f0;

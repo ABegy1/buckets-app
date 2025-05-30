@@ -274,23 +274,26 @@ const AdminPage = () => {
 
           {/* 5. Display only players where is_hidden === false */}
           <div className={styles.players}>
-            {tiers.map((tier) => (
-              <div key={tier.tier_name} className={styles.column}>
-                <div className={styles.header}>{tier.tier_name}</div>
-                {tier.players
-                  .filter((player) => !player.is_hidden) // only show players who are NOT hidden
-                  .map((player) => (
-                    <div
-                      key={player.player_id}
-                      className={styles.box}
-                      onClick={() => handleOpenModal(player.player_id, player.name)}
-                      style={{ color: tier.color }} // Apply tier color to player name
-                    >
-                      {player.name}
-                    </div>
-                  ))}
-              </div>
-            ))}
+           {tiers
+  .filter((tier) => tier.players.some((player) => !player.is_hidden))
+  .map((tier) => (
+    <div key={tier.tier_name} className={styles.column}>
+      <div className={styles.header}>{tier.tier_name}</div>
+      {tier.players
+        .filter((player) => !player.is_hidden)
+        .map((player) => (
+          <div
+            key={player.player_id}
+            className={styles.box}
+            onClick={() => handleOpenModal(player.player_id, player.name)}
+            style={{ color: tier.color }}
+          >
+            {player.name}
+          </div>
+        ))}
+    </div>
+))}
+
           </div>
         </div>
 

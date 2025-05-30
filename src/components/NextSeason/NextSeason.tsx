@@ -242,17 +242,19 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
     const { data: highestScoringTeam, error: highestTeamError } = await supabase
-      .from('teams')
-      .select('team_id')
-      .order('team_score', { ascending: false })
-      .limit(1)
-      .single();
+  .from('teams')
+  .select('team_id')
+  .gt('team_score', 0) // Only consider teams that scored
+  .order('team_score', { ascending: false })
+  .limit(1)
+  .maybeSingle(); // Avoid crash if no teams scored
+
   
     if (highestTeamError) handleError(highestTeamError, 'Failed to retrieve highest scoring team');
   
-    if (!highestScoringTeam) {
-      console.warn('No highest scoring team found.');
-    } else {
+    if (!highestScoringTeam || highestScoringTeam.team_id === null) {
+  console.warn('No winning team found this season — skipping team_wins increment.');
+} else {
       // Get player IDs on the winning team
       const { data: teamPlayers, error: teamPlayersError } = await supabase
         .from('players')
@@ -270,12 +272,13 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             .from('stats')
             .select('team_wins')
             .eq('player_id', player.player_id)
-            .single();
+            .maybeSingle();
   
           if (playerStatsError) handleError(playerStatsError, 'Failed to retrieve player stats');
-          if (!playerStats) {
-            handleError(null, `Player stats not found for player ID ${player.player_id}`);
-          } else {
+         if (!playerStats) {
+            console.warn(`No stats found for player ID ${player.player_id} — skipping team_wins increment.`);
+            continue; // go to next player
+} else {
             const currentTeamWins = playerStats.team_wins || 0;
             const newTeamWins = currentTeamWins + 1;
   
@@ -314,6 +317,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       if (mvpStatsError) handleError(mvpStatsError, 'Failed to retrieve MVP stats');
       if (!mvpStats) {
         handleError(null, `MVP stats not found for player ID ${topScoringPlayer.player_id}`);
+        
       } else {
         const currentMvpAwards = mvpStats.mvp_awards || 0;
         const newMvpAwards = currentMvpAwards + 1;

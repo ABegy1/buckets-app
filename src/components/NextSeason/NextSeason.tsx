@@ -527,7 +527,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .select('season_id, end_date')
         .order('start_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
   
       if (currentSeasonError) handleError(currentSeasonError, 'Failed to retrieve current season');
       if (!currentSeason) throw new Error('Current season data is null');

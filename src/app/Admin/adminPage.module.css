@@ -146,7 +146,6 @@
 }
 
 .players {
-  grid-column: span 4;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -155,17 +154,20 @@
 }
 
 
+
 /* Column for players */
 .column {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
-  width: 100%; /* Use full available width */
-  max-width: 300px; /* Adjust this value as needed */
+  width: auto;
+  min-width: 260px;     /* Ensures a usable starting width */
+  max-width: 300px;     /* Limits it from growing too much */
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-color: white;
+  flex: 1 1 300px;      /* Allows responsive flex sizing */
 }
 
 
@@ -181,11 +183,11 @@
   border: 1px solid #ccc;
   padding: 10px;
   border-radius: 8px;
-  width: 100%;
   text-align: center;
-  transition: background-color 0.3s ease;
   background-color: #fafafa;
+  transition: background-color 0.3s ease;
 }
+
 
 
 .box:hover {

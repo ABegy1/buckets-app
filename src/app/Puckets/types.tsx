@@ -3,29 +3,29 @@
 
 export interface Match {
   player1: {
-    instance_id: number;
+    instance_id: string;
     name: string;
     rating: number;
     score: number;
   };
   player2: {
-    instance_id: number;
+    instance_id: string;
     name: string;
     rating: number;
     score: number;
   };
-  season_id: number;
+  season_id: string;
   date: Date;
 }
 
 export interface Season {
-  season_id: number;
+  season_id: string;
   season_name: string;
   rules: string;
 }
 
 export interface PucketsPlayerWithStats {
-  instance_id: number;
+  instance_id: string;
   name: string;
   rating: number;
   wins: number;

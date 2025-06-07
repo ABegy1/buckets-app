@@ -12,7 +12,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA puckets GRANT ALL ON SEQUEN
 -- Table: puckets.tiers
 CREATE TABLE IF NOT EXISTS puckets.tiers
 (
-    tier_id integer NOT NULL,
+    tier_id uuid DEFAULT uuid_generate_v4(),
     tier_name text NOT NULL,
     tier_rating integer NOT NULL,
     color text NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS puckets.tiers
 -- Table: puckets.players
 CREATE TABLE IF NOT EXISTS puckets.players
 (
-    player_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    player_id uuid DEFAULT uuid_generate_v4(),
     name text NOT NULL,
     is_hidden boolean DEFAULT false,
     is_inactive boolean DEFAULT false,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS puckets.players
 -- Table: puckets.seasons
 CREATE TABLE IF NOT EXISTS puckets.seasons
 (
-    season_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    season_id uuid DEFAULT uuid_generate_v4(),
     season_name text NOT NULL,
     start_date timestamp with time zone NOT NULL,
     end_date timestamp with time zone,
@@ -44,9 +44,9 @@ CREATE TABLE IF NOT EXISTS puckets.seasons
 -- Table: puckets.player_instance
 CREATE TABLE IF NOT EXISTS puckets.player_instance
 (
-    player_instance_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    player_id integer NOT NULL,
-    season_id integer NOT NULL,
+    player_instance_id uuid DEFAULT uuid_generate_v4(),
+    player_id uuid NOT NULL,
+    season_id uuid NOT NULL,
     rating integer NOT NULL,
     wins integer DEFAULT 0,
     losses integer DEFAULT 0,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS puckets.users
 (
     email text NOT NULL,
     role text NOT NULL DEFAULT 'General'::text,
-    id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+    id uuid DEFAULT uuid_generate_v4(),
     name text NOT NULL,
     "View" text NOT NULL DEFAULT 'Standings'::text,
     CONSTRAINT users_PK PRIMARY KEY (id),
@@ -81,11 +81,11 @@ CREATE TABLE IF NOT EXISTS puckets.users
 -- Table: puckets.shots
 CREATE TABLE IF NOT EXISTS puckets.matches
 (
-    match_id integer NOT NULL,
-    season_id integer NOT NULL,
-    player1_instance_id integer NOT NULL,
+    match_id uuid DEFAULT uuid_generate_v4(),
+    season_id uuid NOT NULL,
+    player1_instance_id uuid NOT NULL,
     player1_rating integer NOT NULL,
-    player2_instance_id integer NOT NULL,
+    player2_instance_id uuid NOT NULL,
     player2_rating integer NOT NULL,
     match_date timestamp without time zone,
     player1_score integer NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS puckets.matches
 -- Table: puckets.stats
 CREATE TABLE IF NOT EXISTS puckets.player_stats
 (
-    player_id integer,
+    player_id uuid NOT NULL,
     wins integer DEFAULT 0,
     losses integer DEFAULT 0,
     draws integer DEFAULT 0,
@@ -144,6 +144,6 @@ CREATE OR REPLACE VIEW puckets.match_details
     m.player2_rating_result
    FROM puckets.matches m
      JOIN puckets.player_instance pi1 ON m.player1_instance_id = pi1.player_instance_id
-     JOIN puckets.players pl1 ON pi1.player_instance_id = pl1.player_id
+     JOIN puckets.players pl1 ON pi1.player_id = pl1.player_id
      JOIN puckets.player_instance pi2 ON m.player2_instance_id = pi2.player_instance_id
-     JOIN puckets.players pl2 ON pi2.player_instance_id = pl2.player_id;
+     JOIN puckets.players pl2 ON pi2.player_id = pl2.player_id;

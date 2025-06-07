@@ -1,2 +1,2 @@
-INSERT INTO puckets.seasons (season_name, start_date, end_date, rules) 
-VALUES ('Test Puckets Season', '2025-04-01 18:44:26.991+00', NULL, 'Do Good');
+INSERT INTO puckets.seasons (season_id, season_name, start_date, end_date, rules) 
+VALUES ('fc608f2e-a400-4176-b97c-e35e2827d7d6', 'Test Puckets Season', '2025-04-01 18:44:26.991+00', NULL, 'Do Good');

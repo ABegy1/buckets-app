@@ -78,7 +78,7 @@ const PucketsPage: React.FC = () => {
  const [players, setPlayers] = useState<PucketsPlayerWithStats[]>([]); // Stores the list of players with their current stats
  const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
  const [season, setSeason] = useState<Season>({
-  season_id: -1,
+  season_id: '',
   season_name: '',
   rules: ''
  }); // Current season info
@@ -152,6 +152,7 @@ const PucketsPage: React.FC = () => {
   
       // Sort the teams by team_score in descending order
       // teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
+      console.log("matches:\n", matches);
       setMatches(matches);
     } catch (error) {
       console.error('Error fetching match info:', error);

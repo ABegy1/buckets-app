@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import styles from './FreeAgency.module.css';
 import { supabase } from '@/supabaseClient';
+import { calculateCurrentShotStreak } from '@/utils/shotStreak';
 import { usePathname, useRouter } from 'next/navigation';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
@@ -13,37 +14,6 @@ import Header from '@/components/Header';
  * This component serves as the Free Agency dashboard 
  * It displays all the free agents within the current season and their associated statistics
  */
-
-export const calculateCurrentShotStreak = async (playerInstanceId: number) => {
-  try {
-    // Fetch all shots for the given player_instance_id, ordered by shot_date to maintain sequence
-    const { data: shots, error: shotsError } = await supabase
-      .from('shots')
-      .select('result')
-      .eq('instance_id', playerInstanceId)
-      .order('shot_date', { ascending: true });  // Make sure shots are in chronological order
-
-    if (shotsError || !shots) throw shotsError;
-
-    let currentStreak = 0;
-
-    // Loop through the shots in order and count current consecutive made shots
-    for (const shot of shots) {
-      if (shot.result !== 0) {
-        // Increment the streak if the shot was made
-        currentStreak++;
-      } else {
-        // Reset the streak if a shot was missed
-        currentStreak = 0;
-      }
-    }
-
-    return currentStreak;  // Return the current streak of consecutive made shots
-  } catch (error) {
-    console.error('Error calculating current shot streak:', error);
-    return 0;  // Return 0 if an error occurs or streak is broken
-  }
-};
 const calculateCurrentMissStreak = async (playerInstanceId: number) => {
   try {
     // Fetch all shots for the given player_instance_id, ordered by shot_date to maintain sequence

@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculateCurrentShotStreak } from './page';
+import { calculateCurrentShotStreak } from '@/utils/shotStreak';
 import { supabase } from '@/supabaseClient';
 import { render } from '@testing-library/react';
 

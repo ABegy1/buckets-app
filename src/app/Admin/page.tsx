@@ -6,6 +6,7 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
+import Header from '@/components/Header';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
 
@@ -240,17 +241,11 @@ const AdminPage = () => {
   }
 
   return (
-    <div className={styles.adminContainer}>
-      {/* Header */}
-      <header className={styles.navbar}>
-        <h1 className={styles.navbarTitle}>Admin Dashboard</h1>
-        <button className={styles.signOutButton} onClick={handleSignOut}>
-          Sign Out
-        </button>
-      </header>
+    <div className={styles.userContainer}>
+      <Header />
 
       {/* Main Content */}
-      <main className={styles.adminContent}>
+      <main className={styles.userContent}>
         <div className={styles.container}>
           <h2>{seasonName} Standings</h2>
           <div className={styles.secondaryScreenOptions}>
@@ -322,8 +317,11 @@ const AdminPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className={styles.adminFooter}>
+      <footer className={styles.userFooter}>
         <p>&copy; 2025 Buckets Game. Admin Panel. All rights reserved.</p>
+        <button className={styles.signOutButton} onClick={handleSignOut}>
+          Sign Out
+        </button>
       </footer>
     </div>
   );

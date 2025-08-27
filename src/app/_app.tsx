@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AuthProvider } from '../components/useAuth'; // Context provider for authentication
+import { SettingsProvider } from '../components/useSettings'; // Context provider for gameplay settings
 import RootLayout from './layout'; // Root layout component for consistent page structure
 import '../styles/globals.css'; // Global CSS styles
 
@@ -34,19 +35,21 @@ const App = ({
      * - Ensures any component or page can access authentication state and methods.
      */
     <AuthProvider>
-      {/**
-       * RootLayout:
-       * - Wraps the entire application with a consistent layout structure.
-       * - Typically includes common elements like header, footer, or side navigation.
-       */}
-      <RootLayout>
+      <SettingsProvider>
         {/**
-         * Component:
-         * - The specific page being rendered (e.g., Home, About, etc.).
-         * - Spread `pageProps` are passed to ensure the page receives its required props.
+         * RootLayout:
+         * - Wraps the entire application with a consistent layout structure.
+         * - Typically includes common elements like header, footer, or side navigation.
          */}
-        <Component {...pageProps} />
-      </RootLayout>
+        <RootLayout>
+          {/**
+           * Component:
+           * - The specific page being rendered (e.g., Home, About, etc.).
+           * - Spread `pageProps` are passed to ensure the page receives its required props.
+           */}
+          <Component {...pageProps} />
+        </RootLayout>
+      </SettingsProvider>
     </AuthProvider>
   );
 };

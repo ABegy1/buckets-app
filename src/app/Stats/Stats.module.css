@@ -1,18 +1,27 @@
   .statsContainer {
     padding: 20px;
   }
-  
-  .statsList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+
+  .tableWrapper {
+    width: 100%;
+    overflow-x: auto;
   }
-  
-  .playerStat {
+
+  .statsTable {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .statsTable th,
+  .statsTable td {
     border: 1px solid #ccc;
-    padding: 15px;
-    width: 250px;
-    background-color: #f9f9f9;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .statsTable th {
+    background-color: #264653;
+    color: #fff;
   }
   
   .navbarTitle {

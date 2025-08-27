@@ -14,7 +14,7 @@ import Header from '@/components/Header';
  * It displays all the free agents within the current season and their associated statistics
  */
 
-const calculateCurrentShotStreak = async (playerInstanceId: number) => {
+export const calculateCurrentShotStreak = async (playerInstanceId: number) => {
   try {
     // Fetch all shots for the given player_instance_id, ordered by shot_date to maintain sequence
     const { data: shots, error: shotsError } = await supabase

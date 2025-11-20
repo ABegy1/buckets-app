@@ -300,7 +300,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .eq('season_id', seasonId)
       .order('score', { ascending: false })
       .limit(1)
-      .maybeSingle();
+      .single();
   
     if (topPlayerError) handleError(topPlayerError, 'Failed to retrieve top scoring player');
   
@@ -309,34 +309,27 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     } else {
       // Fetch current mvp_awards
       const { data: mvpStats, error: mvpStatsError } = await supabase
-  .from('stats')
-  .select('mvp_awards')
-  .eq('player_id', topScoringPlayer.player_id)
-  .maybeSingle(); // 👈 changed from .single()
-
-if (mvpStatsError) {
-  // Real Supabase error (network, DB, etc.) – still fatal
-  handleError(mvpStatsError, 'Failed to retrieve MVP stats');
-}
-
-if (!mvpStats) {
-  // No stats row yet for this player – log and skip increment instead of crashing
-  console.warn(
-    `MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP awards increment.`
-  );
-} else {
-  const currentMvpAwards = mvpStats.mvp_awards || 0;
-  const newMvpAwards = currentMvpAwards + 1;
-
-  const { error: updateMvpError } = await supabase
-    .from('stats')
-    .update({ mvp_awards: newMvpAwards })
-    .eq('player_id', topScoringPlayer.player_id);
-
-  if (updateMvpError) {
-    handleError(updateMvpError, 'Failed to update MVP awards');
-  }
-}
+        .from('stats')
+        .select('mvp_awards')
+        .eq('player_id', topScoringPlayer.player_id)
+        .single();
+  
+      if (mvpStatsError) handleError(mvpStatsError, 'Failed to retrieve MVP stats');
+      if (!mvpStats) {
+        handleError(null, `MVP stats not found for player ID ${topScoringPlayer.player_id}`);
+        
+      } else {
+        const currentMvpAwards = mvpStats.mvp_awards || 0;
+        const newMvpAwards = currentMvpAwards + 1;
+  
+        const { error: updateMvpError } = await supabase
+          .from('stats')
+          .update({ mvp_awards: newMvpAwards })
+          .eq('player_id', topScoringPlayer.player_id);
+  
+        if (updateMvpError) handleError(updateMvpError, 'Failed to update MVP awards');
+      }
+    }
   
     // Update seasons_played, high, low, total_score, and total_shots for each player
     const { data: playerStatsList, error: playerStatsError } = await supabase

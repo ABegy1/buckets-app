@@ -1,7 +1,6 @@
 'use client'; // Required in Next.js App Router for client-side rendering
 import React, { useEffect, useState, useCallback } from 'react';
 import styles from './Stats.module.css'; // CSS module for styling
-import { usePathname, useRouter } from 'next/navigation'; // Next.js navigation hooks
 import { supabase } from '@/supabaseClient'; // Supabase client for database operations
 import PlayerTierStats from '@/components/PlayerTierStats'; // Component to display tier-specific stats for players
 
@@ -33,6 +32,7 @@ const StatsPage: React.FC = () => {
       low: number;
       average_score: number;
       points_per_shot: number;
+      shot_percentage: number;
     }[]
   >([]); // State to store combined player statistics
 
@@ -98,13 +98,15 @@ const StatsPage: React.FC = () => {
         // Calculate derived stats
         const high = playerStats?.high || 0;
         const low = playerStats?.low || 0;
-        const averageScore = (high + low) / 2;
+        const seasonsPlayed = playerStats?.seasons_played || 0;
+        const averageScore = seasonsPlayed > 0 ? totalScore / seasonsPlayed : 0;
         const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
+        const shotPercentage = totalShots > 0 ? (totalScore / (totalShots * 3)) * 100 : 0;
 
         return {
           player_id: player.player_id,
           name: player.name,
-          seasons_played: playerStats?.seasons_played || 0,
+          seasons_played: seasonsPlayed,
           mvp_awards: playerStats?.mvp_awards || 0,
           team_wins: playerStats?.team_wins || 0,
           total_shots: totalShots,
@@ -113,6 +115,7 @@ const StatsPage: React.FC = () => {
           low,
           average_score: averageScore,
           points_per_shot: pointsPerShot,
+          shot_percentage: shotPercentage,
         };
       });
 
@@ -126,9 +129,27 @@ const StatsPage: React.FC = () => {
     }
   }, []);
 
-  // Fetch player stats on component mount
+  // Fetch player stats on component mount and subscribe to changes
   useEffect(() => {
     fetchPlayerStats();
+
+    const channel = supabase
+      .channel('player-stats')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'player_instance' },
+        fetchPlayerStats
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stats' },
+        fetchPlayerStats
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchPlayerStats]);
 
   return (
@@ -141,25 +162,48 @@ const StatsPage: React.FC = () => {
         <div className={styles.container}>
           <h2 className={styles.pageTitle}>Player Stats</h2>
           <div className={styles.statsContainer}>
-            <div className={styles.statsList}>
-              {/* Render Player Statistics */}
-              {players.map((player) => (
-                <div key={player.player_id} className={styles.playerStat}>
-                  <h2>{player.name}</h2>
-                  <p>Seasons Played: {player.seasons_played}</p>
-                  <p>MVP Awards: {player.mvp_awards}</p>
-                  <p>Team Wins: {player.team_wins}</p>
-                  <p>Total Shots: {player.total_shots}</p>
-                  <p>Total Score: {player.total_score}</p>
-                  <p>High Score: {player.high}</p>
-                  <p>Low Score: {player.low}</p>
-                  <p>Average Score: {player.average_score.toFixed(2)}</p>
-                  <p>Points Per Shot: {player.points_per_shot.toFixed(2)}</p>
-
-                  {/* Render tier-specific stats using a separate component */}
-                  <PlayerTierStats playerId={player.player_id} />
-                </div>
-              ))}
+            <div className={styles.tableWrapper}>
+              <table className={styles.statsTable}>
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Seasons</th>
+                    <th>MVPs</th>
+                    <th>Team Wins</th>
+                    <th>Total Shots</th>
+                    <th>Total Score</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Avg Score</th>
+                    <th>Pts/Shot</th>
+                    <th>Shot %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map((player) => (
+                    <React.Fragment key={player.player_id}>
+                      <tr>
+                        <td>{player.name}</td>
+                        <td>{player.seasons_played}</td>
+                        <td>{player.mvp_awards}</td>
+                        <td>{player.team_wins}</td>
+                        <td>{player.total_shots}</td>
+                        <td>{player.total_score}</td>
+                        <td>{player.high}</td>
+                        <td>{player.low}</td>
+                        <td>{player.average_score.toFixed(2)}</td>
+                        <td>{player.points_per_shot.toFixed(2)}</td>
+                        <td>{player.shot_percentage.toFixed(2)}%</td>
+                      </tr>
+                      <tr>
+                        <td colSpan={11}>
+                          <PlayerTierStats playerId={player.player_id} />
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

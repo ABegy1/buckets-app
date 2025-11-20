@@ -318,8 +318,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
       if (mvpStatsError) handleError(mvpStatsError, 'Failed to retrieve MVP stats');
       if (!mvpStats) {
-        handleError(null, `MVP stats not found for player ID ${topScoringPlayer.player_id}`);
-
+        console.warn(`MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP update.`);
       } else {
         const currentMvpAwards = mvpStats.mvp_awards || 0;
         const newMvpAwards = currentMvpAwards + 1;

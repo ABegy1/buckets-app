@@ -14,7 +14,7 @@ interface NextSeasonModalProps {
 }
 /**
  * NextSeasonModal Component
- * 
+ *
  * This component manages the settings and data for the next season, including
  * teams, tiers, players, and rules. It also handles advanced stats and database updates.
  */
@@ -191,16 +191,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       console.error('No available tiers to assign to the player.');
       return;
     }
-  
+
     const { error } = await supabase
       .from('players')
-      .insert([{ 
-        name: `Player ${players.length + 1}`, 
-        tier_id: tiers[0]?.tier_id || 1,  
-        team_id: isFreeAgent ? null : teams[0]?.team_id || null, 
-        is_free_agent: isFreeAgent 
+      .insert([{
+        name: `Player ${players.length + 1}`,
+        tier_id: tiers[0]?.tier_id || 1,
+        team_id: isFreeAgent ? null : teams[0]?.team_id || null,
+        is_free_agent: isFreeAgent
       }]);
-  
+
     if (error) {
       console.error('Error adding player:', error);
     }
@@ -227,40 +227,39 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const closeOutCurrentSeason = async (seasonId: number) => {
     console.log('Closing out season ID:', seasonId);
-  
+
     // Retrieve the season shot total for calculating shots taken
     const { data: currentSeason, error: seasonError } = await supabase
       .from('seasons')
       .select('shot_total')
       .eq('season_id', seasonId)
       .single();
-  
+
     if (seasonError) handleError(seasonError, 'Failed to retrieve current season');
     if (!currentSeason) handleError(null, 'Current season data is null');
     const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
-  
+
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
     const { data: highestScoringTeam, error: highestTeamError } = await supabase
-  .from('teams')
-  .select('team_id')
-  .gt('team_score', 0) // Only consider teams that scored
-  .order('team_score', { ascending: false })
-  .limit(1)
-  .maybeSingle(); // Avoid crash if no teams scored
+      .from('teams')
+      .select('team_id')
+      .gt('team_score', 0) // Only consider teams that scored
+      .order('team_score', { ascending: false })
+      .limit(1)
+      .maybeSingle(); // Avoid crash if no teams scored
 
-  
     if (highestTeamError) handleError(highestTeamError, 'Failed to retrieve highest scoring team');
-  
+
     if (!highestScoringTeam || highestScoringTeam.team_id === null) {
-  console.warn('No winning team found this season — skipping team_wins increment.');
-} else {
+      console.warn('No winning team found this season — skipping team_wins increment.');
+    } else {
       // Get player IDs on the winning team
       const { data: teamPlayers, error: teamPlayersError } = await supabase
         .from('players')
         .select('player_id')
         .eq('team_id', highestScoringTeam.team_id);
-  
+
       if (teamPlayersError) handleError(teamPlayersError, 'Failed to retrieve team players');
       if (!teamPlayers || teamPlayers.length === 0) {
         console.warn('No players found for the highest scoring team.');
@@ -273,26 +272,26 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             .select('team_wins')
             .eq('player_id', player.player_id)
             .maybeSingle();
-  
+
           if (playerStatsError) handleError(playerStatsError, 'Failed to retrieve player stats');
-         if (!playerStats) {
+          if (!playerStats) {
             console.warn(`No stats found for player ID ${player.player_id} — skipping team_wins increment.`);
             continue; // go to next player
-} else {
+          } else {
             const currentTeamWins = playerStats.team_wins || 0;
             const newTeamWins = currentTeamWins + 1;
-  
+
             const { error: updateError } = await supabase
               .from('stats')
               .update({ team_wins: newTeamWins })
               .eq('player_id', player.player_id);
-  
+
             if (updateError) handleError(updateError, 'Failed to update team wins');
           }
         }
       }
     }
-  
+
     // Find the player with the highest score and increment their MVP awards
     const { data: topScoringPlayer, error: topPlayerError } = await supabase
       .from('player_instance')
@@ -301,60 +300,60 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .order('score', { ascending: false })
       .limit(1)
       .maybeSingle();
-  
+
     if (topPlayerError) handleError(topPlayerError, 'Failed to retrieve top scoring player');
-  
+
     if (!topScoringPlayer) {
       console.warn('No top scoring player found for this season.');
     } else {
       // Fetch current mvp_awards
       const { data: mvpStats, error: mvpStatsError } = await supabase
-  .from('stats')
-  .select('mvp_awards')
-  .eq('player_id', topScoringPlayer.player_id)
-  .maybeSingle(); // 👈 changed from .single()
+        .from('stats')
+        .select('mvp_awards')
+        .eq('player_id', topScoringPlayer.player_id)
+        .maybeSingle(); // 👈 changed from .single()
 
-if (mvpStatsError) {
-  // Real Supabase error (network, DB, etc.) – still fatal
-  handleError(mvpStatsError, 'Failed to retrieve MVP stats');
-}
+      if (mvpStatsError) {
+        // Real Supabase error (network, DB, etc.) – still fatal
+        handleError(mvpStatsError, 'Failed to retrieve MVP stats');
+      }
 
-if (!mvpStats) {
-  // No stats row yet for this player – log and skip increment instead of crashing
-  console.warn(
-    `MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP awards increment.`
-  );
-} else {
-  const currentMvpAwards = mvpStats.mvp_awards || 0;
-  const newMvpAwards = currentMvpAwards + 1;
+      if (!mvpStats) {
+        // No stats row yet for this player – log and skip increment instead of crashing
+        console.warn(
+          `MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP awards increment.`
+        );
+      } else {
+        const currentMvpAwards = mvpStats.mvp_awards || 0;
+        const newMvpAwards = currentMvpAwards + 1;
 
-  const { error: updateMvpError } = await supabase
-    .from('stats')
-    .update({ mvp_awards: newMvpAwards })
-    .eq('player_id', topScoringPlayer.player_id);
+        const { error: updateMvpError } = await supabase
+          .from('stats')
+          .update({ mvp_awards: newMvpAwards })
+          .eq('player_id', topScoringPlayer.player_id);
 
-  if (updateMvpError) {
-    handleError(updateMvpError, 'Failed to update MVP awards');
-  }
-}
-  
+        if (updateMvpError) {
+          handleError(updateMvpError, 'Failed to update MVP awards');
+        }
+      }
+
     // Update seasons_played, high, low, total_score, and total_shots for each player
     const { data: playerStatsList, error: playerStatsError } = await supabase
       .from('stats')
       .select('player_id, seasons_played, high, low, total_score, total_shots');
-  
+
     if (playerStatsError) handleError(playerStatsError, 'Failed to retrieve player stats');
     if (!playerStatsList) handleError(null, 'Player stats list is null');
-  
+
     // Fetch player instances for the season
     const { data: playerInstances, error: playerInstancesError } = await supabase
       .from('player_instance')
       .select('player_id, player_instance_id, score, shots_left')
       .eq('season_id', seasonId);
-  
+
     if (playerInstancesError) handleError(playerInstancesError, 'Failed to retrieve player instances');
     if (!playerInstances) handleError(null, 'Player instances data is null');
-  
+
     // Calculate stats per player
     const statsByPlayer: Record<number, any> = {};
     if (!playerInstances) {
@@ -378,16 +377,16 @@ if (!mvpStats) {
       );
       statsByPlayer[playerId].instanceIds.push(instance.player_instance_id);
     }
-  
+
     // Update player stats
     if (!playerStatsList) return;
     for (const playerStat of playerStatsList) {
       const playerId = playerStat.player_id;
       const stats = statsByPlayer[playerId];
-  
+
       if (stats) {
         const shotsTaken = seasonShotTotal - stats.shotsLeft;
-  
+
         const newTotalScore = (playerStat.total_score || 0) + stats.seasonScore;
         const newHigh =
           playerStat.high !== null && playerStat.high !== undefined
@@ -400,7 +399,7 @@ if (!mvpStats) {
         const newSeasonsPlayed = (playerStat.seasons_played || 0) + 1;
         const newTotalShots = (playerStat.total_shots || 0) + shotsTaken;
         console.log(shotsTaken)
-  
+
         const { error: updateStatsError } = await supabase
           .from('stats')
           .update({
@@ -411,10 +410,10 @@ if (!mvpStats) {
             total_shots: newTotalShots,
           })
           .eq('player_id', playerId);
-  
+
         if (updateStatsError)
           handleError(updateStatsError, `Failed to update stats for player ${playerId}`);
-  
+
         // Update tier stats
         const instanceIds = stats.instanceIds;
         if (instanceIds.length > 0) {
@@ -422,7 +421,7 @@ if (!mvpStats) {
             .from('shots')
             .select('tier_id, result')
             .in('instance_id', instanceIds);
-  
+
           if (shotsError) handleError(shotsError, `Failed to retrieve shots for player ${playerId}`);
           if (!playerShots) {
             handleError(null, `Player shots data is null for player ID ${playerId}`);
@@ -435,24 +434,24 @@ if (!mvpStats) {
               tierScores[shot.tier_id].total_score += shot.result;
               tierScores[shot.tier_id].total_shots += 1;
             }
-  
+
             // Update tier_stats
             for (const [tierIdStr, tierData] of Object.entries(tierScores)) {
               const tierId = parseInt(tierIdStr, 10);
-  
+
               // Fetch current tier stats
               const { data: tierStat, error: tierStatError } = await supabase
               .from('tier_stats')
               .select('total_score, total_shots')
               .eq('player_id', playerId)
               .eq('tier_id', tierId)
-              .maybeSingle(); 
+              .maybeSingle();
               if (tierStatError) {
                 // This means the request truly failed, not just "no rows returned"
                 handleError(tierStatError, `Failed to retrieve tier stats for player ${playerId}, tier ${tierId}`);
               } else if (!tierStat) {
                 // No row found => either create one or skip
-              
+
                 // (Optional) if you want to create new row if not found:
                 const { error: insertTierStatsError } = await supabase
                   .from('tier_stats')
@@ -462,14 +461,14 @@ if (!mvpStats) {
                     total_score: tierData.total_score,
                     total_shots: tierData.total_shots,
                   });
-              
+
                 if (insertTierStatsError) {
                   handleError(insertTierStatsError, `Failed to insert new tier_stats row for player ${playerId}, tier ${tierId}`);
                 }
               } else {
                 const newTotalScore = (tierStat.total_score || 0) + tierData.total_score;
                 const newTotalShots = (tierStat.total_shots || 0) + tierData.total_shots;
-  
+
                 const { error: updateTierStatsError } = await supabase
                   .from('tier_stats')
                   .update({
@@ -478,7 +477,7 @@ if (!mvpStats) {
                   })
                   .eq('player_id', playerId)
                   .eq('tier_id', tierId);
-  
+
                 if (updateTierStatsError)
                   handleError(
                     updateTierStatsError,
@@ -494,21 +493,21 @@ if (!mvpStats) {
         console.warn(`No stats found for player ${playerId} in this season.`);
       }
     }
-  
+
     // Step 2: Set the end date for the current season
     const currentDate = new Date().toISOString();
     const { error: closeSeasonError } = await supabase
       .from('seasons')
       .update({ end_date: currentDate })
       .eq('season_id', seasonId);
-  
+
     if (closeSeasonError) handleError(closeSeasonError, 'Failed to close the current season');
   };
-  
+
   // Function to create a new season
   const createNewSeason = async (): Promise<number | null> => {
     const currentDate = new Date();
-  
+
     const { data: seasonData, error: seasonError } = await supabase
       .from('seasons')
       .insert({
@@ -519,16 +518,16 @@ if (!mvpStats) {
         rules: seasonRules || 'Default Rules',
       })
       .select();
-  
+
     if (seasonError) handleError(seasonError, 'Failed to start a new season');
     if (!seasonData || seasonData.length === 0) {
       handleError(null, 'Season data is null or empty after insertion');
       return null;
     }
-  
+
     return seasonData[0].season_id;
   };
-  
+
   // Handle the submission to close out the current season and start a new one
   const handleSubmit = async () => {
     try {
@@ -539,37 +538,37 @@ if (!mvpStats) {
         .order('start_date', { ascending: false })
         .limit(1)
         .maybeSingle();
-  
+
       if (currentSeasonError) handleError(currentSeasonError, 'Failed to retrieve current season');
       if (!currentSeason) throw new Error('Current season data is null');
       if (currentSeason.end_date) throw new Error('No active season to close out.');
-  
+
       const seasonId = currentSeason.season_id;
-  
+
       // Step 1: Close out the current season
       await closeOutCurrentSeason(seasonId);
-  
+
       // Step 2: Create a new season
       const newSeasonId = await createNewSeason();
       if (!newSeasonId) throw new Error('Failed to start a new season.');
-  
+
       // Step 3: Create new player instances for the new season in bulk
       if (!players || players.length === 0) {
         throw new Error('No players available to create new instances.');
       }
-  
+
       const playerInstances = players.map((player) => ({
         player_id: player.player_id,
         season_id: newSeasonId,
         shots_left: shotCount,
         score: 0,
       }));
-  
+
       const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
-  
+
       if (playerInstanceError)
         handleError(playerInstanceError, 'Failed to create player instances for the new season');
-  
+
       // Close modal and notify parent component
       onClose();
       onStartSeason();

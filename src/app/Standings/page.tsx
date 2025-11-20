@@ -11,6 +11,7 @@ import { Howl } from 'howler';
 import { stat } from 'fs';
 
 import Header from '@/components/Header';
+import { useSettings } from '@/components/useSettings';
 
 interface Team {
   team_id: number;
@@ -165,16 +166,15 @@ const updateTeamScores = async () => {
 };
 
 //function to calculate the waiver waterline based on the number of valid shooting days in the month
-const calculateWaiverWaterline = (date: Date, shotTotal: number): number =>{
+const calculateWaiverWaterline = (date: Date, shotTotal: number, shotsPerDay: number): number =>{
   //get an array of dates containing the days left in the month
   const daysInMonth = eachDayOfInterval({
     start: date,
     end: endOfMonth(date),
   });
 
-  // get the number of business days remaining in the month. TODO: turn shotsPerDay and business day toggle into settings in a settings page
+  // get the number of business days remaining in the month. shotsPerDay is configurable via the Settings page
   const remainingBusinessDays =  daysInMonth.filter(day => !isWeekend(day)).length;
-  const shotsPerDay = 4;
   return remainingBusinessDays*shotsPerDay > shotTotal? shotTotal: remainingBusinessDays*shotsPerDay;
 }
 
@@ -190,6 +190,7 @@ const StandingsPage: React.FC = () => {
  }); // Current season info
  const [waiverWaterline, setWaiverWaterline] = useState<number>(0); // Remaining shooting days in season
  const router = useRouter(); // Router for navigation
+ const { shotsPerDay } = useSettings();
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -451,23 +452,23 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
 
     const timeout = setTimeout(() => {
       //calculate waterline at the next midnight from mount
-      setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-      console.log("Setting waterline on first midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+      setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
+      console.log("Setting waterline on first midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
       // calculate waterline every day at midnight after first midnight from mount
       const interval = setInterval(() => {
-        setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-        console.log("Setting waterline every midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+        setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
+        console.log("Setting waterline every midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
       }, 24 * 60 * 60 * 1000); //every 24 hours
 
       return () => clearInterval(interval);
     }, timeUntilMidnight);
 
     //calculate waterline on mount
-    setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-    console.log("Setting waterline on mount to : ", calculateWaiverWaterline(new Date(), season.shot_total));
+    setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
+    console.log("Setting waterline on mount to : ", calculateWaiverWaterline(new Date(), season.shot_total, shotsPerDay));
 
     return () => clearTimeout(timeout);
-  }, [season.shot_total]);
+  }, [season.shot_total, shotsPerDay]);
 
  return (
   <div className={styles.userContainer}>

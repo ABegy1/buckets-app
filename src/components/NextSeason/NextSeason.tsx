@@ -71,12 +71,14 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           .from('seasons')
           .select('season_id, rules')
           .is('end_date', null)
-          .single();
-        if (error || !activeSeason) {
+          .maybeSingle();
+        if (error) {
           console.error('Error fetching season data:', error);
           return;
         }
-        else setSeasonRules(activeSeason.rules); // Set the current rules
+        if (activeSeason) {
+          setSeasonRules(activeSeason.rules); // Set the current rules
+        }
     };
 
     fetchTeams();
@@ -233,8 +235,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .from('seasons')
       .select('shot_total')
       .eq('season_id', seasonId)
-      .single();
-  
+      .maybeSingle();
+
     if (seasonError) handleError(seasonError, 'Failed to retrieve current season');
     if (!currentSeason) handleError(null, 'Current season data is null');
     const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
@@ -300,10 +302,10 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .eq('season_id', seasonId)
       .order('score', { ascending: false })
       .limit(1)
-      .single();
-  
+      .maybeSingle();
+
     if (topPlayerError) handleError(topPlayerError, 'Failed to retrieve top scoring player');
-  
+
     if (!topScoringPlayer) {
       console.warn('No top scoring player found for this season.');
     } else {
@@ -312,21 +314,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .from('stats')
         .select('mvp_awards')
         .eq('player_id', topScoringPlayer.player_id)
-        .single();
-  
+        .maybeSingle();
+
       if (mvpStatsError) handleError(mvpStatsError, 'Failed to retrieve MVP stats');
       if (!mvpStats) {
-        handleError(null, `MVP stats not found for player ID ${topScoringPlayer.player_id}`);
-        
+        console.warn(`MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP update.`);
       } else {
         const currentMvpAwards = mvpStats.mvp_awards || 0;
         const newMvpAwards = currentMvpAwards + 1;
-  
+
         const { error: updateMvpError } = await supabase
           .from('stats')
           .update({ mvp_awards: newMvpAwards })
           .eq('player_id', topScoringPlayer.player_id);
-  
+
         if (updateMvpError) handleError(updateMvpError, 'Failed to update MVP awards');
       }
     }

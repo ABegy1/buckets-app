@@ -56,6 +56,7 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
           .select(`
             player_id,
             shots_left,
+            player_instance_id,
             players (name)
           `)
           .eq('season_id', activeSeasonId); // Filter by the active season ID
@@ -96,14 +97,63 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     // Find the updated player
     const playerToUpdate = updatedPlayers.find((p) => p.player_id === playerId);
 
+    if (!playerToUpdate) {
+      console.error('Player not found when adjusting shots');
+      return;
+    }
+
     // Update the player's shot count in the database
     const { error } = await supabase
       .from('player_instance')
       .update({ shots_left: playerToUpdate.shots_left })
-      .eq('player_id', playerId);
+      .eq('player_instance_id', playerToUpdate.player_instance_id);
 
     if (error) {
       console.error('Error updating shots left:', error);
+      return;
+    }
+
+    // If the admin is giving shots back, remove the most recent shots from today
+    if (adjustment > 0 && playerToUpdate?.player_instance_id) {
+      await removeTodaysShots(playerToUpdate.player_instance_id, adjustment);
+    }
+  };
+
+  /**
+   * Removes the most recent shots logged today for a player when shots are refunded.
+   */
+  const removeTodaysShots = async (playerInstanceId: number, shotsToRemove: number) => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfNextDay = new Date(startOfDay);
+    startOfNextDay.setDate(startOfNextDay.getDate() + 1);
+
+    const { data: todaysShots, error: fetchError } = await supabase
+      .from('shots')
+      .select('shot_id')
+      .eq('instance_id', playerInstanceId)
+      .gte('shot_date', startOfDay.toISOString())
+      .lt('shot_date', startOfNextDay.toISOString())
+      .order('shot_date', { ascending: false })
+      .limit(shotsToRemove);
+
+    if (fetchError) {
+      console.error('Error fetching today\'s shots for removal:', fetchError);
+      return;
+    }
+
+    if (!todaysShots || todaysShots.length === 0) return;
+
+    const shotIdsToDelete = todaysShots.map((shot) => shot.shot_id);
+
+    const { error: deleteError } = await supabase
+      .from('shots')
+      .delete()
+      .in('shot_id', shotIdsToDelete);
+
+    if (deleteError) {
+      console.error('Error deleting today\'s shots:', deleteError);
     }
   };
 

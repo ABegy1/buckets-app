@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { use, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
@@ -29,6 +29,7 @@ interface TeamWithPlayers {
     shots_left: number;
     player_score: number;
     pps: number;
+    reached_score_at: string | null;
   }[];
   team_pps: number;
   total_shots: number;
@@ -73,31 +74,58 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
 };
 
 
-// Function to calculate the current streak of consecutive missed shots
-const calculateShotsMissedInRow = async (playerInstanceId: number) => {
+const calculateShotDetails = async (
+  playerInstanceId: number,
+  targetScore: number,
+) => {
   try {
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('result')
+      .select('result, shot_date')
       .eq('instance_id', playerInstanceId)
       .order('shot_date', { ascending: true });
 
     if (shotsError || !shots) throw shotsError;
 
-    // Walk backwards from most recent shot
+    let makeStreak = 0;
     let missStreak = 0;
+    let cumulativeScore = 0;
+    let reachedScoreAt: string | null = null;
+
     for (let i = shots.length - 1; i >= 0; i--) {
-      if (shots[i].result === 0) {
+      const shotResult = Number(shots[i].result) || 0;
+      if (shotResult !== 0) {
+        makeStreak++;
+      } else {
+        break;
+      }
+    }
+
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const shotResult = Number(shots[i].result) || 0;
+      if (shotResult === 0) {
         missStreak++;
       } else {
         break;
       }
     }
 
-    return missStreak;
+    shots.forEach((shot) => {
+      const shotResult = Number(shot.result) || 0;
+      cumulativeScore += shotResult;
+      if (!reachedScoreAt && cumulativeScore >= targetScore) {
+        reachedScoreAt = shot.shot_date;
+      }
+    });
+
+    return {
+      shotsMadeInRow: makeStreak,
+      shotsMissedInRow: missStreak,
+      reachedScoreAt,
+    };
   } catch (error) {
-    console.error('Error calculating shots missed in a row:', error);
-    return 0;
+    console.error('Error calculating shot details:', error);
+    return { shotsMadeInRow: 0, shotsMissedInRow: 0, reachedScoreAt: null };
   }
 };
 
@@ -253,8 +281,10 @@ const StandingsPage: React.FC = () => {
               if (piError || !playerInstance) throw piError;
               // Calculate streaks
 
-              const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
-              const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
+              const { shotsMadeInRow, shotsMissedInRow, reachedScoreAt } = await calculateShotDetails(
+                playerInstance.player_instance_id,
+                playerInstance.score,
+              );
               console.log(shotsMadeInRow, shotsMissedInRow);
               const shotsTaken = Math.max(0, activeSeason.shot_total - playerInstance.shots_left);
               return {
@@ -266,11 +296,12 @@ const StandingsPage: React.FC = () => {
                 tier_color: player.tiers?.color || '#000',
                 shots_made_in_row: shotsMadeInRow,
                 shots_missed_in_row: shotsMissedInRow,
+                reached_score_at: reachedScoreAt,
               };
             })
           );
-  
-          // Sort players by their score, descending. Break ties with PPS so higher efficiency ranks above.
+
+          // Sort players by their score, descending. Break ties with PPS and then by who reached the score first.
           playersWithStats.sort((a, b) => {
             if (b.player_score !== a.player_score) {
               return b.player_score - a.player_score;
@@ -278,6 +309,13 @@ const StandingsPage: React.FC = () => {
 
             if (b.pps !== a.pps) {
               return b.pps - a.pps;
+            }
+
+            const aReachedScoreAt = a.reached_score_at ? new Date(a.reached_score_at).getTime() : Infinity;
+            const bReachedScoreAt = b.reached_score_at ? new Date(b.reached_score_at).getTime() : Infinity;
+
+            if (aReachedScoreAt !== bReachedScoreAt) {
+              return aReachedScoreAt - bReachedScoreAt;
             }
 
             return a.name.localeCompare(b.name);

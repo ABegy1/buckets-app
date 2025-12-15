@@ -70,7 +70,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* Two fractions for name, one each for shots and points */
+  grid-template-columns: 2fr 1fr 1fr 1fr; /* Name gets more space than stats */
   align-items: center; /* Ensure vertical alignment */
   padding: 12px 2px;
   font-size: 1.5rem;
@@ -83,14 +83,15 @@
   flex-basis: 33%;
 }
 .shotsLeft,
-.totalPoints {
-  flex-basis: 33%; /* Ensure each column gets 33% of the width */
+.totalPoints,
+.pps {
+  flex-basis: 25%; /* Ensure each column gets equal width */
   text-align: center;
 }
 
 /* Ensure that the columns are evenly spaced and aligned */
 .columnHeader {
-  flex-basis: 33%;
+  flex-basis: 25%;
   text-align: center;
   font-weight: bold;
 }

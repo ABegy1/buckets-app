@@ -27,6 +27,7 @@ interface TeamWithPlayers {
     name: string;
     shots_left: number;
     player_score: number;
+    pps: number;
   }[];
   total_shots: number;
   team_score: number;
@@ -246,17 +247,19 @@ const StandingsPage: React.FC = () => {
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
-  
+
               if (piError || !playerInstance) throw piError;
               // Calculate streaks
 
               const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
               const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
               console.log(shotsMadeInRow, shotsMissedInRow);
+              const shotsTaken = Math.max(0, activeSeason.shot_total - playerInstance.shots_left);
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
                 player_score: playerInstance.score,
+                pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
                 tier_color: player.tiers?.color || '#000',
                 shots_made_in_row: shotsMadeInRow,
                 shots_missed_in_row: shotsMissedInRow,
@@ -488,6 +491,7 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                   <span className={styles.columnHeader}>Name</span>
                   <span className={styles.columnHeader}>Shots Left</span>
                   <span className={styles.columnHeader}>Total Points</span>
+                  <span className={styles.columnHeader}>PPS</span>
                 </div>
                 {team.players.map((player, playerIndex) => (
                   <div key={playerIndex} className={styles.row}>
@@ -519,6 +523,7 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                     {/* Player Stats */}
                     <span className={styles.shotsLeft}>{player.shots_left}</span>
                     <span className={styles.totalPoints}>{player.player_score}</span>
+                    <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                   </div>
                 ))}
                 {/* Team Stats */}

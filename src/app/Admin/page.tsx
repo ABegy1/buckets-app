@@ -12,7 +12,8 @@ import { User } from '@supabase/supabase-js';
 interface Player {
   player_id: number;
   name: string;
-  is_hidden: boolean; 
+  is_hidden: boolean;
+  has_asterisk?: boolean;
 }
 
 interface TierWithPlayers {
@@ -62,6 +63,7 @@ const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
   const [userView, setUserView] = useState<string>(''); // User's current view setting
+  const [isAsteriskMode, setIsAsteriskMode] = useState<boolean>(false);
 
   const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
 
@@ -116,7 +118,8 @@ const AdminPage = () => {
           players (
             player_id,
             name,
-            is_hidden
+            is_hidden,
+            has_asterisk
           )
         `);
 
@@ -182,6 +185,30 @@ const AdminPage = () => {
     setSelectedName(name);
     setSelectedPlayerId(playerId);
     setIsModalOpen(true);
+  };
+
+  const handleToggleAsteriskMode = () => {
+    setIsAsteriskMode((prev) => !prev);
+  };
+
+  const handleTogglePlayerAsterisk = async (
+    playerId: number,
+    currentHasAsterisk: boolean | undefined,
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('players')
+        .update({ has_asterisk: !currentHasAsterisk })
+        .eq('player_id', playerId);
+
+      if (error) {
+        console.error('Error updating asterisk status:', error);
+      }
+    } catch (err) {
+      console.error('Unexpected error toggling asterisk:', err);
+    } finally {
+      setIsAsteriskMode(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -284,6 +311,16 @@ const AdminPage = () => {
             <button className={styles.button} onClick={handleOpenSidebar}>
               Settings
             </button>
+            <button
+              className={`${styles.button} ${styles.asteriskButton} ${
+                isAsteriskMode ? styles.asteriskButtonActive : ''
+              }`}
+              onClick={handleToggleAsteriskMode}
+              aria-pressed={isAsteriskMode}
+              aria-label="Toggle asterisk selection mode"
+            >
+              *
+            </button>
 
             {/* Dropdown for Page Options */}
             <select
@@ -312,7 +349,11 @@ const AdminPage = () => {
           <div
             key={player.player_id}
             className={styles.box}
-            onClick={() => handleOpenModal(player.player_id, player.name)}
+            onClick={() =>
+              isAsteriskMode
+                ? handleTogglePlayerAsterisk(player.player_id, player.has_asterisk)
+                : handleOpenModal(player.player_id, player.name)
+            }
             style={{ color: tier.color }}
           >
             {player.name}

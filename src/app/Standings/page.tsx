@@ -30,6 +30,7 @@ interface TeamWithPlayers {
     player_score: number;
     pps: number;
     reached_score_at: string | null;
+    has_asterisk?: boolean;
   }[];
   team_pps: number;
   total_shots: number;
@@ -297,6 +298,7 @@ const StandingsPage: React.FC = () => {
                 shots_made_in_row: shotsMadeInRow,
                 shots_missed_in_row: shotsMissedInRow,
                 reached_score_at: reachedScoreAt,
+                has_asterisk: player.has_asterisk,
               };
             })
           );
@@ -589,8 +591,11 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                       </div>
                     </div>
                     {/* Player Stats */}
-                    <span className={styles.shotsLeft}>{player.shots_left}</span>
-                  <span className={styles.totalPoints}>{player.player_score}</span>
+                  <span className={styles.shotsLeft}>{player.shots_left}</span>
+                  <span className={styles.totalPoints}>
+                    {player.player_score}
+                    {player.has_asterisk ? '*' : ''}
+                  </span>
                   <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
               ))}

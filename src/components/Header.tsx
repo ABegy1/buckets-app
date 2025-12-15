@@ -4,7 +4,6 @@ import styles from "./Header.module.css"
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image'
 import bucketsLogo from "@/assets/images/buckets.png"
-import { nblLogoDataUri } from "@/assets/images/nblLogoDataUri"
 import scoreLogo from "@/assets/images/add.png" 
 import standingsLogo from "@/assets/images/speedometer.png"
 import freeAgencyLogo from "@/assets/images/bench.png"
@@ -32,9 +31,9 @@ export default function Header() {
 
         <header className={styles.navbar}>
             <div className={styles.navMenu}>
-                <Image className={`${styles.navItem} invert`}
-                            src={pathname === '/Standings' ? nblLogoDataUri : bucketsLogo}
-                            alt={pathname === '/Standings' ? 'National Buckets League' : 'Buckets!'}
+                <Image className={`${styles.navItem} invert`} 
+                            src={bucketsLogo}
+                            alt='Buckets!'
                             width="75"
                             height="75"
                 >

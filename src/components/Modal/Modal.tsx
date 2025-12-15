@@ -27,6 +27,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
   const [shotsTakenToday, setShotsTakenToday] = useState<number | null>(null); // Shots taken in the current calendar day
+  const [hasAsterisk, setHasAsterisk] = useState<boolean>(false); // Whether the player's score is flagged with an asterisk
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
   const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
   const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
@@ -45,6 +46,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setTierId(null);
     setShotsLeft(null);
     setShotsTakenToday(null);
+    setHasAsterisk(false);
   };
   const calculateShotsMadeInRow = async (playerInstanceId: number) => {
     try {
@@ -169,7 +171,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Fetch player instance details
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score, shots_left')
+        .select('player_instance_id, score, shots_left, has_asterisk')
         .eq('player_id', playerId)
         .eq('season_id', currentSeason.season_id)
         .single();
@@ -183,6 +185,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       setPlayerInstanceId(playerInstance.player_instance_id);
       setCurrentScore(playerInstance.score);
       setShotsLeft(playerInstance.shots_left);
+      setHasAsterisk(Boolean(playerInstance.has_asterisk));
       fetchShotsTakenToday(playerInstance.player_instance_id);
 
       // Fetch the player's tier ID
@@ -299,6 +302,31 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     }
   };
 
+  /**
+   * Toggles the asterisk flag for the player's score.
+   */
+  const handleToggleAsterisk = async () => {
+    if (!playerInstanceId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('player_instance')
+        .update({ has_asterisk: !hasAsterisk })
+        .eq('player_instance_id', playerInstanceId)
+        .select('has_asterisk')
+        .single();
+
+      if (error) {
+        console.error('Error updating asterisk flag:', error);
+        return;
+      }
+
+      setHasAsterisk(Boolean(data?.has_asterisk));
+    } catch (error) {
+      console.error('Unexpected error toggling asterisk:', error);
+    }
+  };
+
   // Render nothing if the modal is not open
   if (!isOpen) return null;
 
@@ -323,6 +351,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           <p>
             Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
           </p>
+          <div className="asterisk-row">
+            <span>Asterisk on score:</span>
+            <button className={hasAsterisk ? 'selected' : ''} onClick={handleToggleAsterisk}>
+              {hasAsterisk ? 'Remove Asterisk' : 'Add Asterisk'}
+            </button>
+          </div>
           {shotsTakenToday === 3 && (
             <p className="waiver-disclaimer">
               <strong>

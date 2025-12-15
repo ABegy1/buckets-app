@@ -89,6 +89,12 @@
   text-align: center;
 }
 
+.asterisk {
+  margin-left: 4px;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
 /* Ensure that the columns are evenly spaced and aligned */
 .columnHeader {
   flex-basis: 25%;

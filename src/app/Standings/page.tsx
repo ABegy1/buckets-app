@@ -28,6 +28,7 @@ interface TeamWithPlayers {
     name: string;
     shots_left: number;
     player_score: number;
+    has_asterisk?: boolean;
     pps: number;
     reached_score_at: string | null;
   }[];
@@ -273,7 +274,7 @@ const StandingsPage: React.FC = () => {
             players.map(async (player: any) => {
               const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
-                .select('player_instance_id, shots_left, score')
+                .select('player_instance_id, shots_left, score, has_asterisk')
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
@@ -291,6 +292,7 @@ const StandingsPage: React.FC = () => {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
                 player_score: playerInstance.score,
+                has_asterisk: playerInstance.has_asterisk,
                 shots_taken: shotsTaken,
                 pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
                 tier_color: player.tiers?.color || '#000',
@@ -590,7 +592,10 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                     </div>
                     {/* Player Stats */}
                     <span className={styles.shotsLeft}>{player.shots_left}</span>
-                  <span className={styles.totalPoints}>{player.player_score}</span>
+                  <span className={styles.totalPoints}>
+                    {player.player_score}
+                    {player.has_asterisk && <span className={styles.asterisk}>*</span>}
+                  </span>
                   <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
               ))}

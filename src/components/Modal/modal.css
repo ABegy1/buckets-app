@@ -35,6 +35,8 @@
   border-radius: 8px;
   text-align: center;
   color: black;
+  width: 520px;
+  max-width: 95%;
 }
 
 .highlight-modal-border {

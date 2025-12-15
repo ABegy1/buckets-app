@@ -26,6 +26,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [currentScore, setCurrentScore] = useState<number>(0); // Current score of the player
   const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
+  const [shotsTakenToday, setShotsTakenToday] = useState<number | null>(null); // Shots taken in the current calendar day
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
   const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
   const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
@@ -43,6 +44,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setPlayerInstanceId(null);
     setTierId(null);
     setShotsLeft(null);
+    setShotsTakenToday(null);
   };
   const calculateShotsMadeInRow = async (playerInstanceId: number) => {
     try {
@@ -109,6 +111,37 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   };
 
   /**
+   * Fetches the number of shots taken by the player during the current calendar day.
+   */
+  const fetchShotsTakenToday = useCallback(async (instanceId: number) => {
+    try {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const startOfNextDay = new Date(startOfDay);
+      startOfNextDay.setDate(startOfNextDay.getDate() + 1);
+
+      const { data, error } = await supabase
+        .from('shots')
+        .select('shot_id')
+        .eq('instance_id', instanceId)
+        .gte('shot_date', startOfDay.toISOString())
+        .lt('shot_date', startOfNextDay.toISOString());
+
+      if (error) {
+        console.error('Error fetching today\'s shots:', error);
+        setShotsTakenToday(null);
+        return;
+      }
+
+      setShotsTakenToday(data?.length ?? 0);
+    } catch (error) {
+      console.error('Unexpected error fetching today\'s shots:', error);
+      setShotsTakenToday(null);
+    }
+  }, []);
+
+  /**
    * Handles closing the modal and resetting its state.
    */
   const handleClose = () => {
@@ -150,6 +183,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       setPlayerInstanceId(playerInstance.player_instance_id);
       setCurrentScore(playerInstance.score);
       setShotsLeft(playerInstance.shots_left);
+      fetchShotsTakenToday(playerInstance.player_instance_id);
 
       // Fetch the player's tier ID
       const { data: player, error: playerError } = await supabase
@@ -167,7 +201,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     } catch (error) {
       console.error('Unexpected error:', error);
     }
-  }, [playerId]);
+  }, [fetchShotsTakenToday, playerId]);
 
   /**
    * Fetch data when the modal is opened and set up real-time updates for player instance changes.
@@ -256,7 +290,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           }
         }
       }
-  
+
+      setShotsTakenToday((prev) => (prev !== null ? prev + 1 : null));
+
       handleClose();
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -283,6 +319,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         <div className="modal-body">
           <p className={isMoneyball ? 'highlight-moneyball' : ''}>
             Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
+          </p>
+          <p>
+            Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
           </p>
           <div className="points">
             <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>

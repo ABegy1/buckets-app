@@ -37,8 +37,20 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
 
   return (
     // Modal container with dynamic class based on `isOpen` prop
-    <div className={`${styles.currentSeasonModal} ${isOpen ? styles.currentSeasonModalOpen : ''}`}>
+    <div
+      className={`${styles.currentSeasonModal} ${isOpen ? styles.currentSeasonModalOpen : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Manage current season"
+    >
       <div className={styles.modalContent}>
+        <button
+          className={styles.topCloseBtn}
+          onClick={onClose}
+          aria-label="Close current season controls"
+        >
+          ×
+        </button>
         {/* Tabs for navigating between sections */}
         <div className={styles.tabs}>
           {/* Tab: Adjust Shots */}

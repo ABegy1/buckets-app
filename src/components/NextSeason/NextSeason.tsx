@@ -576,7 +576,13 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
+    <div
+      className={styles.modalBackdrop}
+      aria-modal="true"
+      role="dialog"
+      tabIndex={-1}
+      aria-label="Plan next season"
+    >
       <div className={styles.modal}>
         {/* Close button to close the modal */}
         <button onClick={onClose} className={styles.closeButton}>X</button>

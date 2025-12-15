@@ -1,11 +1,64 @@
 'use client'; // Required in Next.js App Router for client-side rendering
 import React, { useEffect, useState, useCallback } from 'react';
 import styles from './Stats.module.css'; // CSS module for styling
-import { usePathname, useRouter } from 'next/navigation'; // Next.js navigation hooks
 import { supabase } from '@/supabaseClient'; // Supabase client for database operations
-import PlayerTierStats from '@/components/PlayerTierStats'; // Component to display tier-specific stats for players
-
 import Header from '@/components/Header';
+
+type PlayerStats = {
+  player_id: number;
+  name: string;
+  seasons_played: number;
+  mvp_awards: number;
+  team_wins: number;
+  total_shots: number;
+  total_score: number;
+  high: number;
+  low: number;
+  average_score: number;
+  points_per_shot: number;
+};
+
+type SortKey = keyof PlayerStats;
+
+const getSortableLastName = (name: string) => {
+  const trimmedName = name.trim();
+  const nameParts = trimmedName.split(/\s+/);
+
+  if (nameParts.length === 1) return trimmedName;
+
+  return nameParts[nameParts.length - 1];
+};
+
+const sortPlayers = (playerList: PlayerStats[], key: SortKey, direction: 'asc' | 'desc') => {
+  const sortedPlayers = [...playerList].sort((a, b) => {
+    if (key === 'name') {
+      const lastNameComparison = getSortableLastName(a.name).localeCompare(
+        getSortableLastName(b.name),
+        undefined,
+        { sensitivity: 'base' },
+      );
+
+      if (lastNameComparison !== 0) return lastNameComparison;
+
+      return a.name.localeCompare(b.name);
+    }
+
+    const valueA = a[key];
+    const valueB = b[key];
+
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return valueA - valueB;
+    }
+
+    return String(valueA).localeCompare(String(valueB), undefined, { sensitivity: 'base' });
+  });
+
+  if (direction === 'desc') {
+    sortedPlayers.reverse();
+  }
+
+  return sortedPlayers;
+};
 /**
  * StatsPage Component
  *
@@ -17,24 +70,16 @@ import Header from '@/components/Header';
  * - Combines data from `players`, `stats`, and `player_instance` tables.
  * - Filters out hidden players.
  * - Calculates derived statistics like points per shot and average score.
- * - Displays player data sorted by total score in descending order.
+ * - Displays player data in a sortable table (defaulted to alphabetical by last name).
  */
 const StatsPage: React.FC = () => {
-  const [players, setPlayers] = useState<
+  const [players, setPlayers] = useState<PlayerStats[]>([]); // State to store combined player statistics
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>(
     {
-      player_id: number;
-      name: string;
-      seasons_played: number;
-      mvp_awards: number;
-      team_wins: number;
-      total_shots: number;
-      total_score: number;
-      high: number;
-      low: number;
-      average_score: number;
-      points_per_shot: number;
-    }[]
-  >([]); // State to store combined player statistics
+      key: 'name',
+      direction: 'asc',
+    },
+  );
 
   /**
    * Fetches and processes player statistics, combining data from multiple tables.
@@ -89,7 +134,7 @@ const StatsPage: React.FC = () => {
         const shotsLeft = currentInstance?.shots_left || 0;
 
         // Calculate current season shots taken
-        const currentSeasonShots = seasonShotTotal - shotsLeft;
+        const currentSeasonShots = Math.max(0, seasonShotTotal - shotsLeft);
 
         // Calculate total shots and total score
         const totalShots = (playerStats?.total_shots || 0) + currentSeasonShots;
@@ -116,15 +161,23 @@ const StatsPage: React.FC = () => {
         };
       });
 
-      // Sort players by total score in descending order
-      combinedData.sort((a, b) => b.total_score - a.total_score);
+      // Sort players by last name alphabetically by default
+      const sortedPlayers = sortPlayers(combinedData, 'name', 'asc');
 
       // Update the state with combined player statistics
-      setPlayers(combinedData);
+      setPlayers(sortedPlayers);
     } catch (error) {
       console.error('Error fetching player stats:', error); // Log errors to the console
     }
   }, []);
+
+  const handleSort = (key: SortKey) => {
+    const isSameKey = sortConfig.key === key;
+    const direction = isSameKey && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+
+    setSortConfig({ key, direction });
+    setPlayers((prevPlayers) => sortPlayers(prevPlayers, key, direction));
+  };
 
   // Fetch player stats on component mount
   useEffect(() => {
@@ -140,27 +193,83 @@ const StatsPage: React.FC = () => {
       <main className={styles.userContent}>
         <div className={styles.container}>
           <h2 className={styles.pageTitle}>Player Stats</h2>
-          <div className={styles.statsContainer}>
-            <div className={styles.statsList}>
-              {/* Render Player Statistics */}
-              {players.map((player) => (
-                <div key={player.player_id} className={styles.playerStat}>
-                  <h2>{player.name}</h2>
-                  <p>Seasons Played: {player.seasons_played}</p>
-                  <p>MVP Awards: {player.mvp_awards}</p>
-                  <p>Team Wins: {player.team_wins}</p>
-                  <p>Total Shots: {player.total_shots}</p>
-                  <p>Total Score: {player.total_score}</p>
-                  <p>High Score: {player.high}</p>
-                  <p>Low Score: {player.low}</p>
-                  <p>Average Score: {player.average_score.toFixed(2)}</p>
-                  <p>Points Per Shot: {player.points_per_shot.toFixed(2)}</p>
-
-                  {/* Render tier-specific stats using a separate component */}
-                  <PlayerTierStats playerId={player.player_id} />
-                </div>
-              ))}
-            </div>
+          <div className={styles.tableWrapper}>
+            <table className={styles.statsTable}>
+              <thead>
+                <tr>
+                  <th>
+                    <button type="button" onClick={() => handleSort('name')} className={styles.sortButton}>
+                      Player
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      type="button"
+                      onClick={() => handleSort('seasons_played')}
+                      className={styles.sortButton}
+                    >
+                      Seasons Played
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('mvp_awards')} className={styles.sortButton}>
+                      MVP Awards
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('team_wins')} className={styles.sortButton}>
+                      Team Wins
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('total_shots')} className={styles.sortButton}>
+                      Total Shots
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('total_score')} className={styles.sortButton}>
+                      Total Score
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('high')} className={styles.sortButton}>
+                      High Score
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('low')} className={styles.sortButton}>
+                      Low Score
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('average_score')} className={styles.sortButton}>
+                      Average Score
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('points_per_shot')} className={styles.sortButton}>
+                      Points / Shot
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((player) => (
+                  <tr key={player.player_id}>
+                    <td className={styles.playerName}>{player.name}</td>
+                    <td>{player.seasons_played}</td>
+                    <td>{player.mvp_awards}</td>
+                    <td>{player.team_wins}</td>
+                    <td>{player.total_shots}</td>
+                    <td>{player.total_score}</td>
+                    <td>{player.high}</td>
+                    <td>{player.low}</td>
+                    <td>{player.average_score.toFixed(2)}</td>
+                    <td>{player.points_per_shot.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>

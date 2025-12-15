@@ -172,13 +172,6 @@ button.selected:hover {
   margin: 10px;
 }
 
-.asterisk-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 12px 0;
-}
-
 .waiver-disclaimer {
   margin: 12px 0;
   color: #b00020;

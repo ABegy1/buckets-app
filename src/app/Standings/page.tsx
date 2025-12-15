@@ -479,60 +479,82 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
   }, [season.shot_total]);
 
  return (
-  <div className={styles.userContainer}>
-    <Header></Header>
+    <div className={styles.userContainer}>
+      <Header></Header>
 
-    {/* Main Content Section */}
-    <main className={styles.userContent}>
-        {/* Standings View*/}
+      {/* Main Content Section */}
+      <main className={styles.userContent}>
+        <div className={styles.hero}> 
+          <div>
+            <p className={styles.heroKicker}>Live Standings</p>
+            <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
+            <p className={styles.heroSubtext}>Built for the TV wall with real-time updates so everyone stays in the game.</p>
+          </div>
+          <div className={styles.heroStats}>
+            <div className={styles.heroStatCard}>
+              <span className={styles.statLabel}>Total Score</span>
+              <strong className={styles.heroNumber}>{teams.reduce((a, index) => a + index.team_score, 0)}</strong>
+            </div>
+            <div className={styles.heroStatCard}>
+              <span className={styles.statLabel}>Shots Remaining</span>
+              <strong className={styles.heroNumber}>{teams.reduce((a, index) => a + index.total_shots, 0)}</strong>
+            </div>
+            <div className={styles.heroStatCard}>
+              <span className={styles.statLabel}>Waiver Waterline</span>
+              <strong className={styles.heroNumber}>{waiverWaterline}</strong>
+            </div>
+          </div>
+        </div>
+
         <div className={styles.container}>
-          <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
-          <div className={styles.teams}>
+          <div className={styles.teams}> 
             {teams.map((team, index) => (
-              <div key={index} className={styles.team}>
-                {/* Team Title */}
-                <h2 className={styles.teamTitle}>{team.team_name}</h2>
+              <div key={index} className={styles.teamCard}>
+                <div className={styles.teamHeader}>
+                  <div className={styles.teamRank}>#{index + 1}</div>
+                  <div>
+                    <h3 className={styles.teamTitle}>{team.team_name}</h3>
+                    <p className={styles.teamSubtext}>{team.players.length} players • {team.total_shots} shots left</p>
+                  </div>
+                  <div className={styles.scorePill}>{team.team_score} pts</div>
+                </div>
+
                 <div className={styles.teamStatsGrid}>
                   <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Total Score</span>
+                    <span className={styles.statLabel}>Avg Pts / Shot</span>
+                    <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
+                  </div>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Team Score</span>
                     <span className={styles.statValue}>{team.team_score}</span>
                   </div>
                   <div className={styles.statBox}>
                     <span className={styles.statLabel}>Shots Remaining</span>
                     <span className={styles.statValue}>{team.total_shots}</span>
                   </div>
-                  <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Avg Pts / Shot</span>
-                    <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
-                  </div>
                 </div>
-                {/* Table Headers */}
-                <div className={styles.row}>
-                  <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Shots Left</span>
-                  <span className={styles.columnHeader}>Total Points</span>
-                  <span className={styles.columnHeader}>PPS</span>
+
+                <div className={styles.tableHeader}>
+                  <span>Player</span>
+                  <span>Shots Left</span>
+                  <span>Total Points</span>
+                  <span>PPS</span>
                 </div>
+
                 {team.players.map((player, playerIndex) => (
-                  <div key={playerIndex} className={styles.row}>
-                    {/* Player Name and Icons */}
+                  <div key={playerIndex} className={styles.row}> 
                     <div className={styles.playerNameColumn}>
-                      <div className={styles.playerName}>
-                        {/* Tier Color Indicator */}
+                      <div className={styles.playerName}> 
                         <span
                           className={styles.colorCircle}
                           style={{ backgroundColor: player.tier_color }}
                         />
                         <span>{player.name}</span>
-                        
-                        {/* Fire Icon: 3+ Consecutive Makes */}
                         {player.shots_made_in_row >= 3 && (
                           <span className={styles.fireIcon}>
                             <FaFireFlameCurved />
                           </span>
                         )}
-
-                        {/* Cold Icon: 4+ Consecutive Misses */}
                         {player.shots_missed_in_row >= 4 && (
                           <span className={styles.coldIcon}>
                             <FaSnowflake />
@@ -540,39 +562,41 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                         )}
                       </div>
                     </div>
-                    {/* Player Stats */}
                     <span className={styles.shotsLeft}>{player.shots_left}</span>
-                  <span className={styles.totalPoints}>{player.player_score}</span>
-                  <span className={styles.pps}>{player.pps.toFixed(2)}</span>
-                </div>
-              ))}
+                    <span className={styles.totalPoints}>{player.player_score}</span>
+                    <span className={styles.pps}>{player.pps.toFixed(2)}</span>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-          <div className={styles.summary}>
-            <div className={styles.summaryHeader}>
-              <span>Total Shots Remaining</span>
-              <span>Total Score</span>
-              <span>Waiver Waterline</span>
+
+          <div className={styles.summaryPanel}>
+            <div>
+              <p className={styles.summaryLabel}>Total Shots Remaining</p>
+              <p className={styles.summaryValue}>{teams.reduce((a, index) => a + index.total_shots, 0)}</p>
             </div>
-            <div className={styles.totalStats}>
-              <span>{teams.reduce((a, index) => a + index.total_shots, 0)}</span>
-              <span>{teams.reduce((a, index) => a + index.team_score, 0)}</span>
-              <span>{waiverWaterline}</span>
+            <div>
+              <p className={styles.summaryLabel}>Total Score</p>
+              <p className={styles.summaryValue}>{teams.reduce((a, index) => a + index.team_score, 0)}</p>
+            </div>
+            <div>
+              <p className={styles.summaryLabel}>Waiver Waterline</p>
+              <p className={styles.summaryValue}>{waiverWaterline}</p>
             </div>
           </div>
         </div>
-    </main>
+      </main>
 
-    {/* Footer Section */}
-    <footer className={styles.userFooter}>
-      <p>&copy; 2025 Buckets Game. All rights reserved.</p>
-      <button className={styles.signOutButton} onClick={handleSignOut}>
-        Sign Out
-      </button>
-    </footer>
-  </div>
-);
+      {/* Footer Section */}
+      <footer className={styles.userFooter}>
+        <p>&copy; 2025 Buckets Game. All rights reserved.</p>
+        <button className={styles.signOutButton} onClick={handleSignOut}>
+          Sign Out
+        </button>
+      </footer>
+    </div>
+  );
 };
 
 export default StandingsPage;

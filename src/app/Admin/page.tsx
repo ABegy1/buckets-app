@@ -21,8 +21,27 @@ interface TierWithPlayers {
   players: Player[];
 }
 
+const getSortableLastName = (name: string) => {
+  const trimmedName = name.trim();
+  const nameParts = trimmedName.split(/\s+/);
+
+  if (nameParts.length === 1) return trimmedName;
+
+  return nameParts[nameParts.length - 1];
+};
+
 const sortPlayersByName = (players: Player[] = []) =>
-  [...players].sort((a, b) => a.name.localeCompare(b.name));
+  [...players].sort((a, b) => {
+    const lastNameComparison = getSortableLastName(a.name).localeCompare(
+      getSortableLastName(b.name),
+      undefined,
+      { sensitivity: 'base' },
+    );
+
+    if (lastNameComparison !== 0) return lastNameComparison;
+
+    return a.name.localeCompare(b.name);
+  });
 /**
  * AdminPage Component
  *

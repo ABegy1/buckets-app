@@ -268,9 +268,11 @@ const StandingsPage: React.FC = () => {
             .select('*, tiers(color)')
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
-  
+
+          const visiblePlayers = players.filter((player: any) => !player.is_standings_hidden);
+
           const playersWithStats = await Promise.all(
-            players.map(async (player: any) => {
+            visiblePlayers.map(async (player: any) => {
               const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
                 .select('player_instance_id, shots_left, score')

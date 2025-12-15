@@ -3,7 +3,7 @@
  *
  * This component provides an interface to manage teams and players. Administrators can:
  * - Edit player names, assign players to teams, or mark players as free agents.
- * - Toggle player visibility (`is_hidden`).
+ * - Toggle player visibility for the admin and standings views.
  * - Edit team names.
  * - View all players and teams in a table format.
  *
@@ -27,7 +27,7 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
 
   /**
    * Fetch players and teams when the component is opened.
-   * - Players include `player_id`, `name`, `team_id`, and `is_hidden`.
+ * - Players include `player_id`, `name`, `team_id`, `is_admin_hidden`, and `is_standings_hidden`.
    * - Teams include all available team data.
    */
   useEffect(() => {
@@ -39,7 +39,7 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
         // Fetch players
         const { data: playerData, error: playerError } = await supabase
           .from('players')
-          .select('player_id, name, team_id, is_hidden');
+          .select('player_id, name, team_id, is_admin_hidden, is_standings_hidden');
 
         if (playerError) {
           console.error('Error fetching players:', playerError);
@@ -138,22 +138,27 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   };
 
   /**
-   * Toggles a player's visibility (`is_hidden`).
+   * Toggles a player's visibility for the admin or standings views.
    *
    * @param playerId - The ID of the player being updated.
-   * @param newIsHidden - The new visibility status.
+   * @param field - The column to update.
+   * @param value - The new visibility status.
    */
-  const handleIsHiddenChange = async (playerId: number, newIsHidden: boolean) => {
+  const handleVisibilityChange = async (
+    playerId: number,
+    field: 'is_admin_hidden' | 'is_standings_hidden',
+    value: boolean,
+  ) => {
     // Update players locally
     const updatedPlayers = players.map((player) =>
-      player.player_id === playerId ? { ...player, is_hidden: newIsHidden } : player
+      player.player_id === playerId ? { ...player, [field]: value } : player
     );
     setPlayers(updatedPlayers);
 
     // Update the backend
     const { error } = await supabase
       .from('players')
-      .update({ is_hidden: newIsHidden })
+      .update({ [field]: value })
       .eq('player_id', playerId);
 
     if (error) {
@@ -201,7 +206,8 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                 <tr>
                   <th>Player</th>
                   <th>Team</th>
-                  <th>Hidden?</th>
+                  <th>Admin Hidden?</th>
+                  <th>Standings Hidden?</th>
                 </tr>
               </thead>
               <tbody>
@@ -234,20 +240,38 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                         </select>
                       </td>
                       <td>
-                        <label>
+                        <label className={styles.checkboxLabel}>
                           <input
                             type="checkbox"
-                            checked={player.is_hidden || false}
-                            onChange={(e) => handleIsHiddenChange(player.player_id, e.target.checked)}
+                            checked={player.is_admin_hidden || false}
+                            onChange={(e) =>
+                              handleVisibilityChange(player.player_id, 'is_admin_hidden', e.target.checked)
+                            }
                           />
-                          Hidden
+                          Admin
+                        </label>
+                      </td>
+                      <td>
+                        <label className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={player.is_standings_hidden || false}
+                            onChange={(e) =>
+                              handleVisibilityChange(
+                                player.player_id,
+                                'is_standings_hidden',
+                                e.target.checked,
+                              )
+                            }
+                          />
+                          Standings
                         </label>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3}>No players found</td>
+                    <td colSpan={4}>No players found</td>
                   </tr>
                 )}
               </tbody>
@@ -256,22 +280,27 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
 
           {/* Edit Team Names Section */}
           <div className={styles['team-edit-container']}>
-            <h3>Edit Team Names</h3>
-            {teams.length > 0 ? (
-              teams.map((team) => (
-                <div key={team.team_id} className={styles.teamRow}>
-                  <label htmlFor={`team-${team.team_id}`}>{team.team_name}</label>
-                  <input
-                    id={`team-${team.team_id}`}
-                    type="text"
-                    value={team.team_name || 'Unknown Team'}
-                    onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
-                  />
-                </div>
-              ))
-            ) : (
-              <p>No teams available to edit.</p>
-            )}
+            <div className={styles.teamEditHeader}>
+              <h3>Edit Team Names</h3>
+              <p className={styles.helperText}>Rename teams quickly. Changes save automatically.</p>
+            </div>
+            <div className={styles.teamEditGrid}>
+              {teams.length > 0 ? (
+                teams.map((team) => (
+                  <div key={team.team_id} className={styles.teamRow}>
+                    <label htmlFor={`team-${team.team_id}`}>{team.team_name}</label>
+                    <input
+                      id={`team-${team.team_id}`}
+                      type="text"
+                      value={team.team_name || 'Unknown Team'}
+                      onChange={(e) => handleTeamNameChange(team.team_id, e.target.value)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p>No teams available to edit.</p>
+              )}
+            </div>
           </div>
         </div>
       )}

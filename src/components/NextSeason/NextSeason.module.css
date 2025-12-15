@@ -226,12 +226,6 @@
   margin-right: 10px;
 }
 
-.checkboxGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 /* Scrollable lists in modal */
 .scrollableList {
   max-height: 150px; /* Set a reasonable max height */

@@ -35,8 +35,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
   const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id); // Player's tier
   const [teamId, setTeamId] = useState<number>(player?.team_id || teams[0]?.team_id); // Player's team
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(player?.is_free_agent || false); // Free agent status
-  const [isAdminHidden, setIsAdminHidden] = useState<boolean>(player?.is_admin_hidden || false); // Admin hidden status
-  const [isStandingsHidden, setIsStandingsHidden] = useState<boolean>(player?.is_standings_hidden || false); // Standings hidden status
+  const [isHidden, setIsHidden] = useState<boolean>(player?.is_hidden || false); // Hidden status
 
   /**
    * Effect: Initialize player details when the player prop changes.
@@ -47,8 +46,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
       setTierId(player.tier_id);
       setTeamId(player.team_id);
       setIsFreeAgent(player.is_free_agent);
-      setIsAdminHidden(player.is_admin_hidden);
-      setIsStandingsHidden(player.is_standings_hidden);
+      setIsHidden(player.is_hidden);
     }
   }, [player, teams]);
 
@@ -64,8 +62,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
         tier_id: tierId,
         team_id: isFreeAgent ? null : teamId, // Set team_id to null if player is a free agent
         is_free_agent: isFreeAgent,
-        is_admin_hidden: isAdminHidden,
-        is_standings_hidden: isStandingsHidden,
+        is_hidden: isHidden, // Update hidden status
       })
       .eq('player_id', player.player_id);
 
@@ -80,8 +77,7 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
       tier_id: tierId,
       team_id: isFreeAgent ? null : teamId,
       is_free_agent: isFreeAgent,
-      is_admin_hidden: isAdminHidden,
-      is_standings_hidden: isStandingsHidden,
+      is_hidden: isHidden,
     });
 
     onClose(); // Close the modal after saving
@@ -150,23 +146,15 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
             </label>
           </div>
 
-          {/* Hidden Player Checkboxes */}
-          <div className={styles.checkboxGroup}>
+          {/* Hidden Player Checkbox */}
+          <div>
             <label>
               <input
                 type="checkbox"
-                checked={isAdminHidden}
-                onChange={() => setIsAdminHidden(!isAdminHidden)}
+                checked={isHidden}
+                onChange={() => setIsHidden(!isHidden)}
               />
-              Hide from Admin
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={isStandingsHidden}
-                onChange={() => setIsStandingsHidden(!isStandingsHidden)}
-              />
-              Hide from Standings
+              Hide Player
             </label>
           </div>
 

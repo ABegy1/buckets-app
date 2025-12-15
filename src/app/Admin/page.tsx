@@ -12,7 +12,7 @@ import { User } from '@supabase/supabase-js';
 interface Player {
   player_id: number;
   name: string;
-  is_admin_hidden: boolean;
+  is_hidden: boolean; 
 }
 
 interface TierWithPlayers {
@@ -105,7 +105,7 @@ const AdminPage = () => {
     };
   }, [router]);
 
-  // 2. Fetch tiers and players (and include hidden flags in the select)
+  // 2. Fetch tiers and players (and include is_hidden in the select)
   useEffect(() => {
     const fetchTiersAndPlayers = async () => {
       const { data: tiersData, error: tiersError } = await supabase
@@ -116,7 +116,7 @@ const AdminPage = () => {
           players (
             player_id,
             name,
-            is_admin_hidden
+            is_hidden
           )
         `);
 
@@ -299,15 +299,15 @@ const AdminPage = () => {
             </select>
           </div>
 
-          {/* 5. Display only players where is_admin_hidden === false */}
+          {/* 5. Display only players where is_hidden === false */}
           <div className={styles.players}>
            {tiers
-  .filter((tier) => tier.players.some((player) => !player.is_admin_hidden))
+  .filter((tier) => tier.players.some((player) => !player.is_hidden))
   .map((tier) => (
     <div key={tier.tier_name} className={styles.column}>
       <div className={styles.header}>{tier.tier_name}</div>
       {tier.players
-        .filter((player) => !player.is_admin_hidden)
+        .filter((player) => !player.is_hidden)
         .map((player) => (
           <div
             key={player.player_id}

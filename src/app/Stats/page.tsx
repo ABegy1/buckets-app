@@ -89,13 +89,13 @@ const StatsPage: React.FC = () => {
       // Step 1: Fetch player data (including hidden status)
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('player_id, name, is_standings_hidden');
+        .select('player_id, name, is_hidden');
 
       if (playersError) throw playersError;
       if (!playersData) return;
 
-      // Step 2: Filter out hidden players for the standings view
-      const visiblePlayersData = playersData.filter((p) => !p.is_standings_hidden);
+      // Step 2: Filter out hidden players
+      const visiblePlayersData = playersData.filter((p) => !p.is_hidden);
 
       // Step 3: Fetch additional stats from the `stats` table
       const { data: statsData, error: statsError } = await supabase

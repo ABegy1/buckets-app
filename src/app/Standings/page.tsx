@@ -21,6 +21,7 @@ interface Team {
 interface TeamWithPlayers {
   team_name: string;
   players: {
+    shots_taken: number;
     shots_made_in_row: number;
     shots_missed_in_row: number;
     tier_color: string | undefined;
@@ -29,6 +30,7 @@ interface TeamWithPlayers {
     player_score: number;
     pps: number;
   }[];
+  team_pps: number;
   total_shots: number;
   team_score: number;
 }
@@ -259,6 +261,7 @@ const StandingsPage: React.FC = () => {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
                 player_score: playerInstance.score,
+                shots_taken: shotsTaken,
                 pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
                 tier_color: player.tiers?.color || '#000',
                 shots_made_in_row: shotsMadeInRow,
@@ -272,10 +275,13 @@ const StandingsPage: React.FC = () => {
           // Calculate total shots left for the team
 
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
-  
+          const totalShotsTaken = playersWithStats.reduce((acc, player) => acc + player.shots_taken, 0);
+          const teamPointsPerShot = totalShotsTaken > 0 ? team.team_score / totalShotsTaken : 0;
+
           return {
             team_name: team.team_name,
             players: playersWithStats,
+            team_pps: teamPointsPerShot,
             total_shots: totalShots,
             team_score: team.team_score,
           };
@@ -486,6 +492,20 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
               <div key={index} className={styles.team}>
                 {/* Team Title */}
                 <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                <div className={styles.teamStatsGrid}>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Total Score</span>
+                    <span className={styles.statValue}>{team.team_score}</span>
+                  </div>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Shots Remaining</span>
+                    <span className={styles.statValue}>{team.total_shots}</span>
+                  </div>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Avg Pts / Shot</span>
+                    <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
+                  </div>
+                </div>
                 {/* Table Headers */}
                 <div className={styles.row}>
                   <span className={styles.columnHeader}>Name</span>
@@ -522,15 +542,10 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                     </div>
                     {/* Player Stats */}
                     <span className={styles.shotsLeft}>{player.shots_left}</span>
-                    <span className={styles.totalPoints}>{player.player_score}</span>
-                    <span className={styles.pps}>{player.pps.toFixed(2)}</span>
-                  </div>
-                ))}
-                {/* Team Stats */}
-                <div className={styles.teamStats}>
-                  <span>Team Shots Remaining: {team.total_shots}</span>
-                  <span>Team Score: {team.team_score}</span>
+                  <span className={styles.totalPoints}>{player.player_score}</span>
+                  <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
+              ))}
               </div>
             ))}
           </div>

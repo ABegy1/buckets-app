@@ -171,3 +171,10 @@ button.selected:hover {
 .actions button {
   margin: 10px;
 }
+
+.waiver-disclaimer {
+  margin: 12px 0;
+  color: #b00020;
+  font-weight: 700;
+  line-height: 1.5;
+}

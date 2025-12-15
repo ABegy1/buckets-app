@@ -323,6 +323,14 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           <p>
             Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
           </p>
+          {shotsTakenToday === 3 && (
+            <p className="waiver-disclaimer">
+              <strong>
+                You are logging your 4th shot, any additional shots today will be waiver attempts. For a waiver
+                attempt you get only one die to roll, no practice shot, and you sacrifice your second attempt.
+              </strong>
+            </p>
+          )}
           <div className="points">
             <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>
             <button className={points === 1 ? 'selected' : ''} onClick={() => setPoints(1)}>1</button>

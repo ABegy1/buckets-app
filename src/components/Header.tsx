@@ -74,10 +74,10 @@ export default function Header() {
                     height="65"
                     onClick={() => handleNavigation('FreeAgency')}>
                 </Image>
-                <Image 
+                <Image
                     data-tooltip="Rules"
                     data-tooltip-loc="below"
-                    className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} invert`} 
+                    className={`${styles.navItem} ${pathname === '/Rules' ? styles.active : ''} invert`}
                     src={rulesLogo}
                     alt='Rules'
                     width="65"
@@ -94,10 +94,15 @@ export default function Header() {
                     height="65"
                     onClick={() => handleNavigation('Stats')}>
                 </Image>
-                {/* <Image 
+                <button
+                    className={`${styles.navItem} ${styles.navTextLink} ${pathname === '/BucketsBracket' ? styles.active : ''}`}
+                    onClick={() => handleNavigation('BucketsBracket')}>
+                    Buckets Bracket
+                </button>
+                {/* <Image
                     data-tooltip="User"
                     data-tooltip-loc="below"
-                    className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} invert`} 
+                    className={`${styles.navItem} ${pathname === '/User' ? styles.active : ''} invert`}
                     src={userLogo}
                     alt='Stats'
                     width="65"

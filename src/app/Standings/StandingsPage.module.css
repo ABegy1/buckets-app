@@ -113,6 +113,28 @@
   box-sizing: border-box;
 }
 
+.bracketLinkRow {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.bracketLink {
+  background-color: #264653;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.bracketLink:hover {
+  background-color: #1d3557;
+  transform: translateY(-1px);
+}
+
 .seasonTitle {
   font-size: 3rem;
   font-weight: bold;

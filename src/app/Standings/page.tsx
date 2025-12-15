@@ -486,6 +486,9 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
     <main className={styles.userContent}>
         {/* Standings View*/}
         <div className={styles.container}>
+          <div className={styles.bracketLinkRow}>
+            <a className={styles.bracketLink} href="/BucketsBracket">Buckets Bracket</a>
+          </div>
           <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
           <div className={styles.teams}>
             {teams.map((team, index) => (

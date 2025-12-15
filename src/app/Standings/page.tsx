@@ -270,8 +270,18 @@ const StandingsPage: React.FC = () => {
             })
           );
   
-          // Sort players by their score, descending
-          playersWithStats.sort((a, b) => b.player_score - a.player_score);
+          // Sort players by their score, descending. Break ties with PPS so higher efficiency ranks above.
+          playersWithStats.sort((a, b) => {
+            if (b.player_score !== a.player_score) {
+              return b.player_score - a.player_score;
+            }
+
+            if (b.pps !== a.pps) {
+              return b.pps - a.pps;
+            }
+
+            return a.name.localeCompare(b.name);
+          });
           // Calculate total shots left for the team
 
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);

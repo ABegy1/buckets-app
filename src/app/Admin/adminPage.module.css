@@ -158,11 +158,10 @@
 /* Column for players */
 .column {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
   gap: 10px;
   width: auto;
   min-width: 260px;     /* Ensures a usable starting width */
-  max-width: 300px;     /* Limits it from growing too much */
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -186,6 +185,9 @@
   text-align: center;
   background-color: #fafafa;
   transition: background-color 0.3s ease;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 

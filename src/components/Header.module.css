@@ -12,6 +12,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    flex-wrap: wrap;
   }
   
   .navItem {
@@ -20,7 +21,9 @@
     border: none;
     font-size: 1rem;
     cursor: pointer;
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.5rem;
+    width: 64px;
+    height: 64px;
   }
   /* Navbar styling */
   .navbar {
@@ -33,6 +36,11 @@
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1300;
   }
   .active {
     /* inverted color due to needing to invert the logo */
@@ -44,5 +52,33 @@
     font-size: 2rem;
     font-weight: bold;
     margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .navbarTitle {
+      font-size: 1.5rem;
+    }
+
+    .navItem {
+      width: 52px;
+      height: 52px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .navbar {
+      justify-content: center;
+    }
+
+    .navMenu {
+      width: 100%;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .navItem {
+      width: 48px;
+      height: 48px;
+    }
   }
   

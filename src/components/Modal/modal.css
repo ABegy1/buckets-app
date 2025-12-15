@@ -8,7 +8,9 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 20px 12px;
 }
 .button-row {
   display: flex;
@@ -37,6 +39,11 @@
   color: black;
   width: 520px;
   max-width: 95%;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .highlight-modal-border {
@@ -138,14 +145,22 @@ button.selected:hover {
 
 /* X Close Button Styles */
 .close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: transparent;
-  border: none;
-  font-size: 20px;
+  position: sticky;
+  top: 0;
+  align-self: flex-end;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   cursor: pointer;
   color: black;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  margin-left: auto;
 }
 
 .close-button:hover {

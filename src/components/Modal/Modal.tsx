@@ -303,9 +303,20 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className={`modal-content ${isMoneyball ? 'highlight-modal-border' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <button className="close-button" onClick={handleClose}>X</button>
+    <div
+      className="modal-overlay"
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${name} score modal`}
+    >
+      <div
+        className={`modal-content ${isMoneyball ? 'highlight-modal-border' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="close-button" onClick={handleClose} aria-label="Close player modal">
+          ×
+        </button>
 
         <h2>{name}</h2>
 

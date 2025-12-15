@@ -20,9 +20,12 @@ interface TierWithPlayers {
   color: string;
   players: Player[];
 }
+
+const sortPlayersByName = (players: Player[] = []) =>
+  [...players].sort((a, b) => a.name.localeCompare(b.name));
 /**
  * AdminPage Component
- * 
+ *
  * This component serves as the admin dashboard for managing various aspects of the application.
  * It displays the current season's standings, allows the admin to view player details.
  */
@@ -101,7 +104,12 @@ const AdminPage = () => {
       if (tiersError) {
         console.error('Error fetching tiers:', tiersError);
       } else {
-        setTiers(tiersData || []); // Update state with fetched data
+        const sortedTiers = (tiersData || []).map((tier) => ({
+          ...tier,
+          players: sortPlayersByName(tier.players || []),
+        }));
+
+        setTiers(sortedTiers); // Update state with fetched data
       }
     };
 

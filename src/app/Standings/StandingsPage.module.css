@@ -100,15 +100,6 @@
 }
 
 
-/* Adjust team stats to match the layout */
-.teamStats {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.3rem;
-  padding-top: 10px;
-  font-weight: bold;
-}
-
 /* Season standings section styling */
 .container {
   display: flex;
@@ -158,6 +149,43 @@
   border-radius: 10px;
   background-color: #fafafa;
   box-sizing: border-box;
+}
+
+.teamStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 8px 0 14px;
+  background-color: #fff;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
+  gap: 6px;
+}
+
+.statBox:not(:last-child) {
+  border-right: 1px solid #ddd;
+}
+
+.statLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #264653;
 }
 
 /* Team title */
@@ -260,9 +288,5 @@
 
   .seasonTitle {
     font-size: 2rem;
-  }
-
-  .teamStats {
-    font-size: 1.2rem;
   }
 }

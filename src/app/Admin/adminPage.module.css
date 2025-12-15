@@ -133,19 +133,6 @@
   margin-bottom: 20px;
 }
 
-.asteriskButton {
-  font-size: 2rem;
-  padding: 8px 16px;
-  line-height: 1;
-  border: 2px solid #2a9d8f;
-}
-
-.asteriskButtonActive {
-  background-color: #2a9d8f;
-  color: #fff;
-  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
-}
-
 .arrow {
   margin-left: 10px;
 }

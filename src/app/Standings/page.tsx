@@ -572,7 +572,9 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                           style={{ backgroundColor: player.tier_color }}
                         />
                         <span>{player.name}</span>
-                        
+                        {player.name === 'A. Begy' && (
+                          <span className={styles.crownIcon}>👑</span>
+                        )}
                         {/* Fire Icon: 3+ Consecutive Makes */}
                         {player.shots_made_in_row >= 3 && (
                           <span className={styles.fireIcon}>

@@ -140,6 +140,11 @@
   color: blue;  /* Blue for the cold icon */
 }
 
+.crownIcon {
+  margin-left: 6px;
+  font-size: 18px;
+}
+
 /* Individual team card */
 .team {
   display: flex;

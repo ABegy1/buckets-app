@@ -318,7 +318,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           ×
         </button>
 
-        <h2>{name}</h2>
+        <h2 className="modal-title">{name}</h2>
 
         {/* Moneyball Indicator */}
         {isMoneyball && (
@@ -328,29 +328,31 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         )}
 
         <div className="modal-body">
-          <p className={isMoneyball ? 'highlight-moneyball' : ''}>
-            Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
-          </p>
-          <p>
-            Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
-          </p>
-          {shotsTakenToday === 3 && (
-            <p className="waiver-disclaimer">
-              <strong>
-                You are logging your 4th shot, any additional shots today will be waiver attempts. For a waiver
-                attempt you get only one die to roll, no practice shot, and you sacrifice your second attempt.
-              </strong>
+          <div className="score-section">
+            <p className={isMoneyball ? 'highlight-moneyball' : ''}>
+              Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
             </p>
-          )}
-          <div className="points">
-            <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>
-            <button className={points === 1 ? 'selected' : ''} onClick={() => setPoints(1)}>1</button>
-            <button className={points === 2 ? 'selected' : ''} onClick={() => setPoints(2)}>2</button>
+            <p>
+              Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
+            </p>
+            {shotsTakenToday === 3 && (
+              <p className="waiver-disclaimer">
+                <strong>
+                  You are logging your 4th shot, any additional shots today will be waiver attempts. For a waiver
+                  attempt you get only one die to roll, no practice shot, and you sacrifice your second attempt.
+                </strong>
+              </p>
+            )}
+            <div className="points">
+              <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>
+              <button className={points === 1 ? 'selected' : ''} onClick={() => setPoints(1)}>1</button>
+              <button className={points === 2 ? 'selected' : ''} onClick={() => setPoints(2)}>2</button>
+            </div>
+            <div className="actions">
+              <button className={isDouble ? 'selected' : ''} onClick={() => setIsDouble(!isDouble)}>Double</button>
+            </div>
+            <button className="submit-button" onClick={handleSubmit}>Submit</button>
           </div>
-          <div className="actions">
-            <button className={isDouble ? 'selected' : ''} onClick={() => setIsDouble(!isDouble)}>Double</button>
-          </div>
-          <button onClick={handleSubmit}>Submit</button>
         </div>
       </div>
     </div>

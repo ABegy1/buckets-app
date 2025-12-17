@@ -33,7 +33,7 @@
 .modal-content {
   position: relative; /* To position the X button */
   background: white;
-  padding: 32px;
+  padding: 24px 32px 32px;
   border-radius: 16px;
   text-align: center;
   color: black;
@@ -42,9 +42,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   font-size: 1.1rem;
+}
+
+.modal-title {
+  margin: 4px auto 8px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .highlight-modal-border {
@@ -53,20 +60,33 @@
 
 .modal-body {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 28px;
+  width: 100%;
+}
+
+.score-section {
+  display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  width: 100%;
+  max-width: 460px;
+  text-align: left;
 }
 
 /* General button styles */
 .modal-content button {
   background-color: #f0f0f0;
   border: 1px solid #ccc;
-  padding: 14px 22px;
+  padding: 16px 28px;
   cursor: pointer;
   transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
-  font-size: 1.05rem;
-  border-radius: 10px;
+  font-size: 1.15rem;
+  border-radius: 12px;
+  min-width: 72px;
 }
 .moneyball-indicator {
   display: flex;
@@ -184,12 +204,24 @@
 }
 
 /* Points buttons */
-.points button {
-  margin: 10px;
+.points {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 100%;
 }
 
-.actions button {
-  margin: 10px;
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.submit-button {
+  align-self: flex-start;
+  padding-inline: 32px;
 }
 
 .waiver-disclaimer {

@@ -220,9 +220,36 @@
   width: 100%;
 }
 
+.points button {
+  flex: 1;
+  padding: 20px 32px;
+  font-size: 1.25rem;
+  min-width: 96px;
+  min-height: 72px;
+}
+
+.actions button {
+  width: 100%;
+  padding: 20px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-width: 2px;
+}
+
 .submit-button {
-  align-self: flex-start;
-  padding-inline: 32px;
+  align-self: center;
+  padding: 18px 40px;
+  background-color: #2e7d32;
+  color: #ffffff;
+  border: 2px solid #1b5e20;
+  font-size: 1.15rem;
+  font-weight: 700;
+  min-width: 180px;
+}
+
+.submit-button:hover {
+  background-color: #27642b;
+  color: #ffffff;
 }
 
 .waiver-disclaimer {

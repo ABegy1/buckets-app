@@ -32,6 +32,26 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  const standardRules = useMemo(
+    () => ({ dice: 2, practice: 1, attempts: 2 }),
+    [],
+  );
+
+  const waiverRules = useMemo(
+    () => ({ dice: 1, practice: 0, attempts: 1 }),
+    [],
+  );
+
+  const currentRuleType = useMemo(() => {
+    if (shotsTakenToday === null) return 'Standard';
+    return shotsTakenToday >= 4 ? 'Waiver' : 'Standard';
+  }, [shotsTakenToday]);
+
+  const nextRuleType = useMemo(() => {
+    if (shotsTakenToday === null) return 'Standard';
+    return shotsTakenToday >= 3 ? 'Waiver' : 'Standard';
+  }, [shotsTakenToday]);
+
 
 
   /**
@@ -352,6 +372,46 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
               <button className={isDouble ? 'selected' : ''} onClick={() => setIsDouble(!isDouble)}>Double</button>
             </div>
             <button className="submit-button" onClick={handleSubmit}>Submit</button>
+          </div>
+
+          <div className="rules-section">
+            <div className={`rule-card ${currentRuleType === 'Waiver' ? 'rule-card-waiver' : ''}`}>
+              <p className="rule-heading">Current Shot Rules</p>
+              <p className="rule-tag">{currentRuleType}</p>
+              <ul>
+                <li>
+                  <span>Dice</span>
+                  <strong>{(currentRuleType === 'Standard' ? standardRules : waiverRules).dice}</strong>
+                </li>
+                <li>
+                  <span>Practice</span>
+                  <strong>{(currentRuleType === 'Standard' ? standardRules : waiverRules).practice}</strong>
+                </li>
+                <li>
+                  <span>Attempts</span>
+                  <strong>{(currentRuleType === 'Standard' ? standardRules : waiverRules).attempts}</strong>
+                </li>
+              </ul>
+            </div>
+
+            <div className={`rule-card ${nextRuleType === 'Waiver' ? 'rule-card-waiver' : ''}`}>
+              <p className="rule-heading">Next Shot Rules</p>
+              <p className="rule-tag">{nextRuleType}</p>
+              <ul>
+                <li>
+                  <span>Dice</span>
+                  <strong>{(nextRuleType === 'Standard' ? standardRules : waiverRules).dice}</strong>
+                </li>
+                <li>
+                  <span>Practice</span>
+                  <strong>{(nextRuleType === 'Standard' ? standardRules : waiverRules).practice}</strong>
+                </li>
+                <li>
+                  <span>Attempts</span>
+                  <strong>{(nextRuleType === 'Standard' ? standardRules : waiverRules).attempts}</strong>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

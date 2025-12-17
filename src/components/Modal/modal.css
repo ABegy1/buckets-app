@@ -65,6 +65,7 @@
   justify-content: flex-start;
   gap: 28px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .score-section {
@@ -73,7 +74,7 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
-  max-width: 460px;
+  max-width: 360px;
   text-align: left;
 }
 
@@ -229,4 +230,72 @@
   color: #b00020;
   font-weight: 700;
   line-height: 1.5;
+}
+
+.rules-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  flex: 1 1 380px;
+  width: 100%;
+}
+
+.rule-card {
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: #fafafa;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  height: 100%;
+}
+
+.rule-card-waiver {
+  border-color: #d32f2f;
+  background: #fff6f6;
+}
+
+.rule-heading {
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.rule-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.rule-card-waiver .rule-tag {
+  background: #b00020;
+}
+
+.rule-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rule-card li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px dashed #e5e5e5;
+  border-radius: 10px;
+  background: white;
+  font-weight: 600;
+}
+
+.rule-card li span {
+  color: #555;
+  font-weight: 500;
 }

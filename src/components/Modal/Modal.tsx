@@ -373,7 +373,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
                 <p className="stat-value">{shotsTakenToday !== null ? shotsTakenToday : '...'}</p>
               </div>
               <div className="stat-card">
-                <p className="stat-label">Today's Score</p>
+                <p className="stat-label">Today&apos;s Score</p>
                 <p className="stat-value">{todaysScore !== null ? todaysScore : '...'}</p>
               </div>
             </div>

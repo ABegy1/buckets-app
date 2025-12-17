@@ -102,6 +102,11 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
       return;
     }
 
+    // If the admin is giving shots back, remove the most recent shots from today
+    if (adjustment > 0 && playerToUpdate?.player_instance_id) {
+      await removeTodaysShots(playerToUpdate.player_instance_id, adjustment);
+    }
+
     // Update the player's shot count in the database
     const { error } = await supabase
       .from('player_instance')
@@ -111,11 +116,6 @@ const AdjustShots: React.FC<AdjustShotsProps> = ({ isOpen }) => {
     if (error) {
       console.error('Error updating shots left:', error);
       return;
-    }
-
-    // If the admin is giving shots back, remove the most recent shots from today
-    if (adjustment > 0 && playerToUpdate?.player_instance_id) {
-      await removeTodaysShots(playerToUpdate.player_instance_id, adjustment);
     }
   };
 

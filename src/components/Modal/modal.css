@@ -89,6 +89,18 @@
   border-radius: 12px;
   min-width: 72px;
 }
+
+.submit-button {
+  background-color: #28a745;
+  border-color: #218838;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.submit-button:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
 .moneyball-indicator {
   display: flex;
   align-items: center;

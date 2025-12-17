@@ -27,6 +27,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
   const [shotsTakenToday, setShotsTakenToday] = useState<number | null>(null); // Shots taken in the current calendar day
+  const [todaysScore, setTodaysScore] = useState<number | null>(null); // Points earned today
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
   const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
   const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
@@ -65,6 +66,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setTierId(null);
     setShotsLeft(null);
     setShotsTakenToday(null);
+    setTodaysScore(null);
   };
   const calculateShotsMadeInRow = async (playerInstanceId: number) => {
     try {
@@ -143,21 +145,30 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
       const { data, error } = await supabase
         .from('shots')
-        .select('shot_id')
+        .select('shot_id, result')
         .eq('instance_id', instanceId)
         .gte('shot_date', startOfDay.toISOString())
         .lt('shot_date', startOfNextDay.toISOString());
 
       if (error) {
-        console.error('Error fetching today\'s shots:', error);
+        console.error("Error fetching today's shots:", error);
         setShotsTakenToday(null);
+        setTodaysScore(null);
         return;
       }
 
-      setShotsTakenToday(data?.length ?? 0);
+      const todaysShots = data ?? [];
+      const todaysTotalScore = todaysShots.reduce(
+        (total, shot: { result: number | null }) => total + (Number(shot.result) || 0),
+        0,
+      );
+
+      setShotsTakenToday(todaysShots.length);
+      setTodaysScore(todaysTotalScore);
     } catch (error) {
-      console.error('Unexpected error fetching today\'s shots:', error);
+      console.error("Unexpected error fetching today's shots:", error);
       setShotsTakenToday(null);
+      setTodaysScore(null);
     }
   }, []);
 
@@ -312,6 +323,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       }
 
       setShotsTakenToday((prev) => (prev !== null ? prev + 1 : null));
+      setTodaysScore((prev) => (prev !== null ? prev + finalPoints : null));
 
       handleClose();
     } catch (error) {
@@ -349,12 +361,22 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
 
         <div className="modal-body">
           <div className="score-section">
-            <p className={isMoneyball ? 'highlight-moneyball' : ''}>
-              Shots Left: <span>{shotsLeft !== null ? shotsLeft : ''}</span>
-            </p>
-            <p>
-              Shots Taken Today: <span>{shotsTakenToday !== null ? shotsTakenToday : '...'}</span>
-            </p>
+            <div className="stats-overview">
+              <div className="stat-card">
+                <p className="stat-label">Shots Left</p>
+                <p className={`stat-value ${isMoneyball ? 'highlight-moneyball' : ''}`}>
+                  {shotsLeft !== null ? shotsLeft : ''}
+                </p>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Shots Taken Today</p>
+                <p className="stat-value">{shotsTakenToday !== null ? shotsTakenToday : '...'}</p>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Today&apos;s Score</p>
+                <p className="stat-value">{todaysScore !== null ? todaysScore : '...'}</p>
+              </div>
+            </div>
             <div className="points">
               <button className={points === 0 ? 'selected' : ''} onClick={() => setPoints(0)}>0</button>
               <button className={points === 1 ? 'selected' : ''} onClick={() => setPoints(1)}>1</button>

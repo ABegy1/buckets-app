@@ -8,9 +8,9 @@
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   overflow-y: auto;
-  padding: 20px 12px;
+  padding: 24px;
 }
 .button-row {
   display: flex;
@@ -33,17 +33,18 @@
 .modal-content {
   position: relative; /* To position the X button */
   background: white;
-  padding: 20px;
-  border-radius: 8px;
+  padding: 32px;
+  border-radius: 16px;
   text-align: center;
   color: black;
-  width: 520px;
-  max-width: 95%;
-  max-height: calc(100vh - 64px);
+  width: min(1100px, 92vw);
+  max-height: 90vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  font-size: 1.1rem;
 }
 
 .highlight-modal-border {
@@ -54,15 +55,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 12px;
 }
 
 /* General button styles */
-button {
+.modal-content button {
   background-color: #f0f0f0;
   border: 1px solid #ccc;
-  padding: 10px 20px;
+  padding: 14px 22px;
   cursor: pointer;
   transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  font-size: 1.05rem;
+  border-radius: 10px;
 }
 .moneyball-indicator {
   display: flex;
@@ -79,17 +83,17 @@ button {
   margin: 0 8px;
 }
 /* Hover for all buttons */
-button:hover {
+.modal-content button:hover {
   background-color: #e0e0e0;
 }
 
 /* Selected state for buttons */
-button.selected {
+.modal-content button.selected {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   background-color: #d4edda;
 }
 
-button.selected:hover {
+.modal-content button.selected:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -103,6 +107,7 @@ button.selected:hover {
   position: relative;
   font-weight: bold;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  font-size: 1.05rem;
 }
 
 .moneyball:hover {
@@ -151,12 +156,12 @@ button.selected:hover {
   background: #ffffff;
   border: 1px solid #ccc;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   color: black;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);

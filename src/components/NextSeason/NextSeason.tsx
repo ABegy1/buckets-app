@@ -630,30 +630,34 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       const newTierIdMap = new Map<string, number>();
 
       const teamsToAdd = teams.filter((team) => isTempId(team.team_id));
-      for (const team of teamsToAdd) {
-        const { data: insertedTeam, error } = await supabase
-          .from('teams')
-          .insert({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
-          .select()
-          .maybeSingle();
-        if (error) handleError(error, 'Failed to add team');
-        if (insertedTeam) {
-          newTeamIdMap.set(team.team_id, insertedTeam.team_id);
-        }
-      }
+      await Promise.all(
+        teamsToAdd.map(async (team) => {
+          const { data: insertedTeam, error } = await supabase
+            .from('teams')
+            .insert({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add team');
+          if (insertedTeam) {
+            newTeamIdMap.set(team.team_id, insertedTeam.team_id);
+          }
+        })
+      );
 
       const tiersToAdd = tiers.filter((tier) => isTempId(tier.tier_id));
-      for (const tier of tiersToAdd) {
-        const { data: insertedTier, error } = await supabase
-          .from('tiers')
-          .insert({ tier_name: tier.tier_name, color: tier.color })
-          .select()
-          .maybeSingle();
-        if (error) handleError(error, 'Failed to add tier');
-        if (insertedTier) {
-          newTierIdMap.set(tier.tier_id, insertedTier.tier_id);
-        }
-      }
+      await Promise.all(
+        tiersToAdd.map(async (tier) => {
+          const { data: insertedTier, error } = await supabase
+            .from('tiers')
+            .insert({ tier_name: tier.tier_name, color: tier.color })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add tier');
+          if (insertedTier) {
+            newTierIdMap.set(tier.tier_id, insertedTier.tier_id);
+          }
+        })
+      );
 
       const teamsToUpdate = teams.filter(
         (team) =>
@@ -664,13 +668,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               (initialTeam.team_name !== team.team_name || initialTeam.is_hidden !== team.is_hidden)
           )
       );
-      for (const team of teamsToUpdate) {
-        const { error } = await supabase
-          .from('teams')
-          .update({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
-          .eq('team_id', team.team_id);
-        if (error) handleError(error, 'Failed to update team');
-      }
+      await Promise.all(
+        teamsToUpdate.map(async (team) => {
+          const { error } = await supabase
+            .from('teams')
+            .update({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
+            .eq('team_id', team.team_id);
+          if (error) handleError(error, 'Failed to update team');
+        })
+      );
 
       const tiersToUpdate = tiers.filter(
         (tier) =>
@@ -681,13 +687,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               (initialTier.tier_name !== tier.tier_name || initialTier.color !== tier.color)
           )
       );
-      for (const tier of tiersToUpdate) {
-        const { error } = await supabase
-          .from('tiers')
-          .update({ tier_name: tier.tier_name, color: tier.color })
-          .eq('tier_id', tier.tier_id);
-        if (error) handleError(error, 'Failed to update tier');
-      }
+      await Promise.all(
+        tiersToUpdate.map(async (tier) => {
+          const { error } = await supabase
+            .from('tiers')
+            .update({ tier_name: tier.tier_name, color: tier.color })
+            .eq('tier_id', tier.tier_id);
+          if (error) handleError(error, 'Failed to update tier');
+        })
+      );
 
       const teamIdsToDelete = initialTeams
         .filter((team) => !teams.some((currentTeam) => currentTeam.team_id === team.team_id))
@@ -706,35 +714,28 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       }
 
       const playersToAdd = players.filter((player) => isTempId(player.player_id));
-      for (const player of playersToAdd) {
-        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
-        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
-        const { data: insertedPlayer, error } = await supabase
-          .from('players')
-          .insert({
-            name: player.name,
-            tier_id: resolvedTierId,
-            team_id: player.is_free_agent ? null : resolvedTeamId,
-            is_free_agent: player.is_free_agent,
-            is_hidden: player.is_hidden ?? false,
-          })
-          .select()
-          .maybeSingle();
-        if (error) handleError(error, 'Failed to add player');
-        if (insertedPlayer) {
-          newTeamIdMap.forEach((mappedId, tempId) => {
-            if (player.team_id === tempId) {
-              player.team_id = mappedId;
-            }
-          });
-          newTierIdMap.forEach((mappedId, tempId) => {
-            if (player.tier_id === tempId) {
-              player.tier_id = mappedId;
-            }
-          });
-          player.player_id = insertedPlayer.player_id;
-        }
-      }
+      const newPlayerIdMap = new Map<string, number>();
+      await Promise.all(
+        playersToAdd.map(async (player) => {
+          const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+          const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+          const { data: insertedPlayer, error } = await supabase
+            .from('players')
+            .insert({
+              name: player.name,
+              tier_id: resolvedTierId,
+              team_id: player.is_free_agent ? null : resolvedTeamId,
+              is_free_agent: player.is_free_agent,
+              is_hidden: player.is_hidden ?? false,
+            })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add player');
+          if (insertedPlayer) {
+            newPlayerIdMap.set(player.player_id, insertedPlayer.player_id);
+          }
+        })
+      );
 
       const playersToUpdate = players.filter((player) => {
         if (isTempId(player.player_id)) return false;
@@ -749,21 +750,23 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         );
       });
 
-      for (const player of playersToUpdate) {
-        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
-        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
-        const { error } = await supabase
-          .from('players')
-          .update({
-            name: player.name,
-            tier_id: resolvedTierId,
-            team_id: player.is_free_agent ? null : resolvedTeamId,
-            is_free_agent: player.is_free_agent,
-            is_hidden: player.is_hidden ?? false,
-          })
-          .eq('player_id', player.player_id);
-        if (error) handleError(error, 'Failed to update player');
-      }
+      await Promise.all(
+        playersToUpdate.map(async (player) => {
+          const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+          const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+          const { error } = await supabase
+            .from('players')
+            .update({
+              name: player.name,
+              tier_id: resolvedTierId,
+              team_id: player.is_free_agent ? null : resolvedTeamId,
+              is_free_agent: player.is_free_agent,
+              is_hidden: player.is_hidden ?? false,
+            })
+            .eq('player_id', player.player_id);
+          if (error) handleError(error, 'Failed to update player');
+        })
+      );
 
       const playerIdsToDelete = initialPlayers
         .filter((player) => !players.some((currentPlayer) => currentPlayer.player_id === player.player_id))
@@ -773,9 +776,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         if (error) handleError(error, 'Failed to delete players');
       }
 
-      const { data: refreshedPlayers, error: refreshError } = await supabase.from('players').select('*');
-      if (refreshError) handleError(refreshError, 'Failed to refresh players');
-      const finalPlayers = refreshedPlayers || [];
+      const finalPlayers = players.map((player) => {
+        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+        const finalPlayerId = isTempId(player.player_id)
+          ? newPlayerIdMap.get(player.player_id as string) ?? null
+          : player.player_id;
+
+        return {
+          ...player,
+          player_id: finalPlayerId,
+          team_id: player.is_free_agent ? null : resolvedTeamId,
+          tier_id: resolvedTierId,
+        };
+      }).filter((player) => player.player_id !== null);
 
       // Step 3: Create a new season
       const newSeasonId = await createNewSeason();
@@ -783,21 +797,19 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       startedSeasonId = newSeasonId;
 
       // Step 4: Create new player instances for the new season in bulk
-      if (!finalPlayers || finalPlayers.length === 0) {
-        throw new Error('No players available to create new instances.');
+      if (finalPlayers.length > 0) {
+        const playerInstances = finalPlayers.map((player) => ({
+          player_id: player.player_id,
+          season_id: newSeasonId,
+          shots_left: shotCount,
+          score: 0,
+        }));
+
+        const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
+
+        if (playerInstanceError)
+          handleError(playerInstanceError, 'Failed to create player instances for the new season');
       }
-
-      const playerInstances = finalPlayers.map((player) => ({
-        player_id: player.player_id,
-        season_id: newSeasonId,
-        shots_left: shotCount,
-        score: 0,
-      }));
-
-      const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
-
-      if (playerInstanceError)
-        handleError(playerInstanceError, 'Failed to create player instances for the new season');
 
       // Close modal and notify parent component
       onClose();

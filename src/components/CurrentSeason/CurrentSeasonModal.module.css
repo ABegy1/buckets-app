@@ -13,6 +13,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  z-index: 900;
 }
 
 .currentSeasonModalOpen {
@@ -25,7 +26,7 @@
   padding: 20px;
   border-radius: 8px;
   width: 80%;
-  max-width: 800px;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -34,10 +35,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  margin: 0;
+  color: #4b5563;
+}
+
 .tabs {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -50,18 +69,53 @@
   font-size: 1rem;
   text-align: center;
   flex: 1;
+  border-radius: 8px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.tab:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .tabActive {
-  background: #f0f0f0;
+  background: #f8fafc;
+  border-color: #bfdbfe;
   font-weight: bold;
+}
+
+.contentWrapper {
+  flex: 1;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f9fafb;
 }
 
 .content {
   flex: 1;
-  padding: 20px;
-  border-top: 1px solid #ddd;
+  padding: 4px;
   overflow-y: auto;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.lockScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  color: #111827;
+}
+
+.lockActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .topCloseBtn {
@@ -83,29 +137,78 @@
   margin-left: auto;
 }
 
-/* Add new styles for the close button at the bottom */
 .bottomBar {
   display: flex;
-  justify-content: center;
-  padding-top: 20px;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
   position: sticky;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 30%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 40%);
   padding-bottom: 8px;
 }
 
-.closeBtn {
-  background-color: #007bff;
+.primaryBtn {
+  background-color: #2563eb;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1.1rem;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.closeBtn:hover {
-  background-color: #0056b3;
+.primaryBtn:hover:not(:disabled) {
+  background-color: #1d4ed8;
 }
 
+.primaryBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  background-color: #e5e7eb;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.secondaryBtn:hover {
+  background-color: #d1d5db;
+}
+
+.confirmationOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.confirmationCard {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirmationActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}

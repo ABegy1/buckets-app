@@ -546,19 +546,19 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                     <span className={styles.statValue}>{team.team_score}</span>
                   </div>
                   <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Shots Remaining</span>
+                    <span className={styles.statLabel}>Shots Left</span>
                     <span className={styles.statValue}>{team.total_shots}</span>
                   </div>
                   <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Avg Pts / Shot</span>
+                    <span className={styles.statLabel}>PPS</span>
                     <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
                   </div>
                 </div>
                 {/* Table Headers */}
                 <div className={styles.row}>
                   <span className={styles.columnHeader}>Name</span>
+                  <span className={styles.columnHeader}>Total Score</span>
                   <span className={styles.columnHeader}>Shots Left</span>
-                  <span className={styles.columnHeader}>Total Points</span>
                   <span className={styles.columnHeader}>PPS</span>
                 </div>
                 {team.players.map((player, playerIndex) => (
@@ -591,8 +591,8 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                       </div>
                     </div>
                     {/* Player Stats */}
-                    <span className={styles.shotsLeft}>{player.shots_left}</span>
-                  <span className={styles.totalPoints}>{player.player_score}</span>
+                    <span className={styles.totalPoints}>{player.player_score}</span>
+                  <span className={styles.shotsLeft}>{player.shots_left}</span>
                   <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
               ))}

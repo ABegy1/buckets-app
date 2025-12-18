@@ -81,6 +81,18 @@
   font-size: 1em;
 }
 
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.helperText {
+  color: #555;
+  font-size: 0.9em;
+  margin: 6px 0 0 0;
+}
+
 /* Scrollable List */
 .listSection {
   margin-bottom: 20px;

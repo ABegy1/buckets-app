@@ -604,6 +604,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const handleConfirmStartSeason = async () => {
     setIsProcessing(true);
+    let closedSeasonId: number | null = null;
+    let startedSeasonId: number | null = null;
     try {
       // Fetch the current active season
       const { data: currentSeason, error: currentSeasonError } = await supabase
@@ -621,6 +623,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
       // Step 1: Close out the current season
       await closeOutCurrentSeason(seasonId, Boolean(currentSeason.is_official));
+      closedSeasonId = seasonId;
 
       // Step 2: Apply roster updates
       const newTeamIdMap = new Map<string, number>();
@@ -777,6 +780,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       // Step 3: Create a new season
       const newSeasonId = await createNewSeason();
       if (!newSeasonId) throw new Error('Failed to start a new season.');
+      startedSeasonId = newSeasonId;
 
       // Step 4: Create new player instances for the new season in bulk
       if (!finalPlayers || finalPlayers.length === 0) {
@@ -801,7 +805,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       setIsConfirmationOpen(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      // Optionally handle user feedback for the error here
+      if (closedSeasonId && !startedSeasonId) {
+        const { error: reopenError } = await supabase
+          .from('seasons')
+          .update({ end_date: null })
+          .eq('season_id', closedSeasonId);
+        if (reopenError) {
+          console.error('Failed to reopen the previous season after an error:', reopenError);
+        }
+      }
+      setIsConfirmationOpen(false);
     } finally {
       setIsProcessing(false);
     }

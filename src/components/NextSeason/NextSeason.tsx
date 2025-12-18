@@ -37,6 +37,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<any>(null);
+  const [draggedTierId, setDraggedTierId] = useState<number | null>(null);
    /**
    * Effect: Fetch data when the modal opens.
    * This includes teams, tiers, and players data, and sets up real-time subscriptions.
@@ -225,6 +226,62 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const handleShotCountChange = (change: number) => {
     setShotCount(shotCount + change);
+  };
+
+  const handleReorderTier = (targetTierId: number) => {
+    setTiers((prevTiers) => {
+      if (draggedTierId === null || draggedTierId === targetTierId) return prevTiers;
+
+      const updated = [...prevTiers];
+      const fromIndex = updated.findIndex((tier) => tier.tier_id === draggedTierId);
+      const toIndex = updated.findIndex((tier) => tier.tier_id === targetTierId);
+
+      if (fromIndex === -1 || toIndex === -1) return prevTiers;
+
+      const [movedTier] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, movedTier);
+
+      return updated;
+    });
+  };
+
+  const handleUpdatePlayerFields = async (playerId: number, updates: Record<string, any>) => {
+    const { data, error } = await supabase
+      .from('players')
+      .update(updates)
+      .eq('player_id', playerId)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error updating player:', error);
+      return;
+    }
+
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.player_id === playerId
+          ? {
+              ...player,
+              ...updates,
+              ...(data ?? {}),
+            }
+          : player
+      )
+    );
+  };
+
+  const handlePlayerTeamChange = async (playerId: number, teamValue: string) => {
+    if (teamValue === 'free-agent') {
+      await handleUpdatePlayerFields(playerId, { team_id: null, is_free_agent: true });
+      return;
+    }
+
+    await handleUpdatePlayerFields(playerId, { team_id: Number(teamValue), is_free_agent: false });
+  };
+
+  const handlePlayerTierChange = async (playerId: number, tierValue: string) => {
+    await handleUpdatePlayerFields(playerId, { tier_id: Number(tierValue) });
   };
 
   const closeOutCurrentSeason = async (seasonId: number) => {
@@ -613,85 +670,142 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           />
         </div>
 
-        {/* Teams Management Section */}
-        <div className={styles.listSection}>
-          <h3>Teams</h3>
-          <div className={styles.scrollableList}>
-            {teams.map((team) => (
-              <div key={team.team_id} className={styles.listItem}>
-                {team.team_name}
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditTeamModal(team)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteTeam(team.team_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+        <div className={styles.modalGrid}>
+          {/* Teams Management Section */}
+          <div className={styles.listSection}>
+            <div className={styles.sectionHeader}>
+              <h3>Teams</h3>
+              <button className={styles.addButton} onClick={handleAddTeam}>
+                Add Team
+              </button>
+            </div>
+            <div className={styles.scrollableList}>
+              {teams.map((team) => (
+                <div key={team.team_id} className={styles.listItem}>
+                  <span>{team.team_name}</span>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => handleOpenEditTeamModal(team)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteTeam(team.team_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <button className={styles.addButton} onClick={handleAddTeam}>
-            Add Team
-          </button>
-        </div>
 
-        {/* Tiers Management Section */}
-        <div className={styles.listSection}>
-          <h3>Tiers</h3>
-          <div className={styles.scrollableList}>
-            {tiers.map((tier) => (
-              <div key={tier.tier_id} className={styles.listItem}>
-                {tier.tier_name} (Color: {tier.color})
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditTierModal(tier)}
+          {/* Tiers Management Section */}
+          <div className={styles.listSection}>
+            <div className={styles.sectionHeader}>
+              <h3>Tiers</h3>
+              <button className={styles.addButton} onClick={handleAddTier}>
+                Add Tier
+              </button>
+            </div>
+            <div className={styles.scrollableList}>
+              {tiers.map((tier) => (
+                <div
+                  key={tier.tier_id}
+                  className={styles.listItem}
+                  draggable
+                  onDragStart={() => setDraggedTierId(tier.tier_id)}
+                  onDragEnter={() => handleReorderTier(tier.tier_id)}
+                  onDragEnd={() => setDraggedTierId(null)}
                 >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteTier(tier.tier_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+                  <span className={styles.dragHandle} aria-label="Reorder tier">
+                    ⋮⋮
+                  </span>
+                  <span className={styles.tierDetails}>
+                    {tier.tier_name} (Color: {tier.color})
+                  </span>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => handleOpenEditTierModal(tier)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteTier(tier.tier_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <button className={styles.addButton} onClick={handleAddTier}>
-            Add Tier
-          </button>
         </div>
 
         {/* Players Management Section */}
         <div className={styles.listSection}>
-          <h3>Players</h3>
-          <div className={styles.scrollableList}>
-            {players.map((player) => (
-              <div key={player.player_id} className={styles.listItem}>
-                {player.name}
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditPlayerModal(player)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeletePlayer(player.player_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+          <div className={styles.sectionHeader}>
+            <h3>Players</h3>
+            <button className={styles.addButton} onClick={handleAddPlayer}>
+              Add Player
+            </button>
           </div>
-          <button className={styles.addButton} onClick={handleAddPlayer}>
-            Add Player
-          </button>
+          <div className={styles.playersTable}>
+            <div className={styles.playersHeader}>
+              <span>Name</span>
+              <span>Team</span>
+              <span>Tier</span>
+              <span className={styles.headerActions}>Actions</span>
+            </div>
+            <div className={styles.playersBody}>
+              {players.map((player) => (
+                <div key={player.player_id} className={styles.playersRow}>
+                  <span>{player.name}</span>
+                  <select
+                    value={player.is_free_agent ? 'free-agent' : player.team_id ?? 'free-agent'}
+                    onChange={(e) => handlePlayerTeamChange(player.player_id, e.target.value)}
+                    aria-label={`Change team for ${player.name}`}
+                  >
+                    <option value="free-agent">Free Agent</option>
+                    {teams.map((team) => (
+                      <option key={team.team_id} value={team.team_id}>
+                        {team.team_name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={player.tier_id}
+                    onChange={(e) => handlePlayerTierChange(player.player_id, e.target.value)}
+                    aria-label={`Change tier for ${player.name}`}
+                  >
+                    {tiers.map((tier) => (
+                      <option key={tier.tier_id} value={tier.tier_id}>
+                        {tier.tier_name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => handleOpenEditPlayerModal(player)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeletePlayer(player.player_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Shot Count Adjustment Section */}

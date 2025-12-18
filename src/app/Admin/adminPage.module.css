@@ -146,27 +146,29 @@
 }
 
 .players {
-  display: flex;
-  flex-wrap: wrap;
+   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
-  justify-content: flex-start;
+  justify-content: stretch;
+  align-items: start;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 
 
 /* Column for players */
 .column {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
+   display: flex;
+  flex-direction: column;
   gap: 10px;
-  width: auto;
-  min-width: 260px;     /* Ensures a usable starting width */
+  width: 100%;
+  min-width: 260px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-color: white;
-  flex: 1 1 300px;      /* Allows responsive flex sizing */
 }
 
 

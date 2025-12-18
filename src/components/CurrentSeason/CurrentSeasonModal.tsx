@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import styles from './CurrentSeasonModal.module.css'; // Import CSS module for styling
-import AdjustShots from '../AdjustShots'; // Component for adjusting shots
-import AdjustTeams from '../AdjustTeams'; // Component for managing teams and players
-import AdjustScores from '../AdjustScores'; // Component for modifying scores
-import AdjustTiers from '../AdjustTier'; // Component for adjusting tiers
-import AddPlayers from '../AddPlayers'; // Component for adding new players
-import AdjustRules from '../AdjustRules'; // Component for updating rules
+import styles from './CurrentSeasonModal.module.css';
+import AdjustShots from '../AdjustShots';
+import AdjustTeams from '../AdjustTeams';
+import AdjustScores from '../AdjustScores';
+import AdjustTiers from '../AdjustTier';
+import AddPlayers from '../AddPlayers';
+import AdjustRules from '../AdjustRules';
 
 // Type definition for the component's props
 interface CurrentSeasonModalProps {
@@ -16,47 +16,28 @@ interface CurrentSeasonModalProps {
 /**
  * CurrentSeasonModal Component
  *
- * This component displays a modal with tabs to manage and adjust various aspects
- * of the current season, such as shots, teams, scores, tiers, players, and rules.
+ * This component displays a modal with inline table controls to manage and adjust
+ * various aspects of the current season, such as shots, teams, scores, tiers,
+ * players, and rules.
  *
  * Props:
  * - `isOpen` (boolean): Controls whether the modal is visible.
  * - `onClose` (function): Callback function to close the modal.
  */
 const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose }) => {
-  // State to track the active tab in the modal
   const [activeTab, setActiveTab] = useState('Adjust Shots');
-  const [isEditingEnabled, setIsEditingEnabled] = useState(false);
-  const [isStartConfirmationOpen, setIsStartConfirmationOpen] = useState(false);
   const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setActiveTab('Adjust Shots');
-      setIsEditingEnabled(false);
-      setIsStartConfirmationOpen(false);
       setIsSubmitConfirmationOpen(false);
     }
   }, [isOpen]);
 
-  /**
-   * Updates the active tab based on user selection.
-   * @param {string} tab - The name of the selected tab.
-   */
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab); // Update the active tab state
-  };
-
   const handleCloseModal = () => {
-    setIsEditingEnabled(false);
-    setIsStartConfirmationOpen(false);
     setIsSubmitConfirmationOpen(false);
     onClose();
-  };
-
-  const handleConfirmStartEditing = () => {
-    setIsEditingEnabled(true);
-    setIsStartConfirmationOpen(false);
   };
 
   const handleSubmitChanges = () => {
@@ -65,8 +46,20 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
 
   const handleConfirmSubmitChanges = () => {
     setIsSubmitConfirmationOpen(false);
-    setIsEditingEnabled(false);
     onClose();
+  };
+
+  const controls = [
+    { key: 'Adjust Shots', label: 'Adjust Shots', description: 'Update shot attempts and completions.' },
+    { key: 'Teams', label: 'Team/Player Edit', description: 'Manage teams and player rosters.' },
+    { key: 'Adjust Scores', label: 'Adjust Scores', description: 'Modify scores and results.' },
+    { key: 'Tier Adjust', label: 'Tier Adjust', description: 'Reassign teams to tiers.' },
+    { key: 'Add Player', label: 'Add Player', description: 'Add new players to the season.' },
+    { key: 'Adjust Rules', label: 'Adjust Rules', description: 'Update season rules and guidelines.' },
+  ];
+
+  const handleQuickActionChange = (key: string) => {
+    setActiveTab(key);
   };
 
   return (
@@ -92,96 +85,82 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
               Make all edits in one place, then submit to apply them. Nothing is changed until you confirm.
             </p>
           </div>
-          {!isEditingEnabled && (
-            <button className={styles.primaryBtn} onClick={() => setIsStartConfirmationOpen(true)}>
-              Start adjustments
-            </button>
-          )}
         </div>
 
-        {/* Tabs for navigating between sections */}
-        <div className={styles.tabs} aria-disabled={!isEditingEnabled}>
-          {/* Tab: Adjust Shots */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Adjust Shots' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Adjust Shots')}
-            disabled={!isEditingEnabled}
-          >
-            Adjust Shots
-          </button>
+        <div className={styles.tableWrapper}>
+          <div className={styles.tableHeader}>
+            <div>
+              <p className={styles.tableTitle}>Select a control to edit</p>
+              <p className={styles.tableHelp}>Use the inline dropdown or the edit buttons to open a section.</p>
+            </div>
+            <div className={styles.quickSelect}>
+              <label htmlFor="controlSelect">Jump to:</label>
+              <select
+                id="controlSelect"
+                value={activeTab}
+                onChange={(e) => handleQuickActionChange(e.target.value)}
+                className={styles.select}
+              >
+                {controls.map((control) => (
+                  <option key={control.key} value={control.key}>
+                    {control.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          {/* Tab: Team/Player Edit */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Teams' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Teams')}
-            disabled={!isEditingEnabled}
-          >
-            Team/Player Edit
-          </button>
-
-          {/* Tab: Adjust Scores */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Adjust Scores' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Adjust Scores')}
-            disabled={!isEditingEnabled}
-          >
-            Adjust Scores
-          </button>
-
-          {/* Tab: Tier Adjust */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Tier Adjust')}
-            disabled={!isEditingEnabled}
-          >
-            Tier Adjust
-          </button>
-
-          {/* Tab: Add Player */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Add Player' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Add Player')}
-            disabled={!isEditingEnabled}
-          >
-            Add Player
-          </button>
-
-          {/* Tab: Adjust Rules */}
-          <button
-            className={`${styles.tab} ${activeTab === 'Adjust Rules' ? styles.tabActive : ''}`}
-            onClick={() => handleTabChange('Adjust Rules')}
-            disabled={!isEditingEnabled}
-          >
-            Adjust Rules
-          </button>
+          <table className={styles.controlsTable}>
+            <thead>
+              <tr>
+                <th scope="col">Control</th>
+                <th scope="col">Description</th>
+                <th scope="col">Action</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {controls.map((control) => (
+                <tr key={control.key} className={activeTab === control.key ? styles.activeRow : ''}>
+                  <td>{control.label}</td>
+                  <td>{control.description}</td>
+                  <td>
+                    <div className={styles.inlineActions}>
+                      <select
+                        aria-label={`Choose action for ${control.label}`}
+                        className={styles.select}
+                        value={activeTab === control.key ? 'Edit' : 'View'}
+                        onChange={() => handleQuickActionChange(control.key)}
+                      >
+                        <option value="View">View</option>
+                        <option value="Edit">Edit</option>
+                      </select>
+                      <button
+                        className={styles.inlineEditBtn}
+                        onClick={() => handleQuickActionChange(control.key)}
+                        aria-label={`Open ${control.label}`}
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </td>
+                  <td>{activeTab === control.key ? 'Editing' : 'Idle'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Content area for the selected tab */}
         <div className={styles.contentWrapper}>
-          {!isEditingEnabled ? (
-            <div className={styles.lockScreen}>
-              <h3>Ready to tune the current season?</h3>
-              <p>Start adjustments to load the latest season data. No edits are applied until you confirm.</p>
-              <div className={styles.lockActions}>
-                <button className={styles.primaryBtn} onClick={() => setIsStartConfirmationOpen(true)}>
-                  Start adjustments
-                </button>
-                <button className={styles.secondaryBtn} onClick={handleCloseModal}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={styles.content}>
-              {/* Render content based on the active tab */}
-              {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
-              {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
-              {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
-              {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
-              {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
-              {activeTab === 'Adjust Rules' && <AdjustRules isOpen={isOpen} />}
-            </div>
-          )}
+          <div className={styles.content}>
+            {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
+            {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
+            {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
+            {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
+            {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
+            {activeTab === 'Adjust Rules' && <AdjustRules isOpen={isOpen} />}
+          </div>
         </div>
 
         {/* Bottom bar with controls */}
@@ -189,30 +168,11 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button className={styles.secondaryBtn} onClick={handleCloseModal}>
             Close
           </button>
-          <button className={styles.primaryBtn} onClick={handleSubmitChanges} disabled={!isEditingEnabled}>
+          <button className={styles.primaryBtn} onClick={handleSubmitChanges}>
             Submit changes
           </button>
         </div>
       </div>
-
-      {isStartConfirmationOpen && (
-        <div className={styles.confirmationOverlay} role="alertdialog" aria-modal="true">
-          <div className={styles.confirmationCard}>
-            <h3>Enable current season adjustments?</h3>
-            <p>
-              You&apos;re about to load the latest data. Changes will only be applied after you submit them.
-            </p>
-            <div className={styles.confirmationActions}>
-              <button className={styles.secondaryBtn} onClick={() => setIsStartConfirmationOpen(false)}>
-                Go back
-              </button>
-              <button className={styles.primaryBtn} onClick={handleConfirmStartEditing}>
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {isSubmitConfirmationOpen && (
         <div className={styles.confirmationOverlay} role="alertdialog" aria-modal="true">

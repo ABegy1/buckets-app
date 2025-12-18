@@ -139,9 +139,10 @@ const updateTeamScores = async () => {
       .from('seasons')
       .select('season_id')
       .is('end_date', null)
-      .single();
+      .maybeSingle();
 
-    if (seasonError || !activeSeason) throw seasonError;
+    if (seasonError) throw seasonError;
+    if (!activeSeason) return;
     const activeSeasonId = activeSeason.season_id;
 
     // Fetch all teams
@@ -249,10 +250,15 @@ const StandingsPage: React.FC = () => {
         .from('seasons')
         .select('season_id, season_name, shot_total, rules')
         .is('end_date', null)
-        .single();
-  
-      if (seasonError || !activeSeason) throw seasonError;
-  
+        .maybeSingle();
+
+      if (seasonError) throw seasonError;
+      if (!activeSeason) {
+        setSeason({ season_id: -1, season_name: 'No Active Season', shot_total: 0, rules: '' });
+        setTeams([]);
+        return;
+      }
+
       const activeSeasonId = activeSeason.season_id;
       setSeason(activeSeason);
         // Fetch teams

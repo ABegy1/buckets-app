@@ -28,7 +28,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
-  const [isTeamTournament, setIsTeamTournament] = useState<boolean>(false); // Track whether the season is a team tournament
+  const [isTeamTournament, setIsTeamTournament] = useState<boolean>(true); // Track whether the season is a team tournament
   const [isFfaTournament, setIsFfaTournament] = useState<boolean>(false); // Track whether the season is a free-for-all tournament
   const shouldRecordStats = isTeamTournament || isFfaTournament;
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
@@ -47,7 +47,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   useEffect(() => {
     if (!isOpen) return;
 
-    setIsTeamTournament(false);
+    // Default to recording stats so seasons remain official unless explicitly disabled
+    setIsTeamTournament(true);
     setIsFfaTournament(false);
 
     // Fetch teams from the database

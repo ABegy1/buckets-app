@@ -616,14 +616,14 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .maybeSingle();
 
       if (currentSeasonError) handleError(currentSeasonError, 'Failed to retrieve current season');
-      if (!currentSeason) throw new Error('Current season data is null');
-      if (currentSeason.end_date) throw new Error('No active season to close out.');
 
-      const seasonId = currentSeason.season_id;
+      if (currentSeason && !currentSeason.end_date) {
+        const seasonId = currentSeason.season_id;
 
-      // Step 1: Close out the current season
-      await closeOutCurrentSeason(seasonId, Boolean(currentSeason.is_official));
-      closedSeasonId = seasonId;
+        // Step 1: Close out the current season
+        await closeOutCurrentSeason(seasonId, Boolean(currentSeason.is_official));
+        closedSeasonId = seasonId;
+      }
 
       // Step 2: Apply roster updates
       const newTeamIdMap = new Map<string, number>();

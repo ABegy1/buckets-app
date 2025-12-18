@@ -31,6 +31,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
   const [isOfficialSeason, setIsOfficialSeason] = useState<boolean>(true); // Track whether the season should be recorded historically
+  const [isTeamTournament, setIsTeamTournament] = useState<boolean>(false); // Track whether the season is a team tournament
+  const [isFfaTournament, setIsFfaTournament] = useState<boolean>(false); // Track whether the season is a free-for-all tournament
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -52,6 +54,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     if (!isOpen) return;
 
     setIsOfficialSeason(true);
+    setIsTeamTournament(false);
+    setIsFfaTournament(false);
 
     // Fetch teams from the database
     const fetchTeams = async () => {
@@ -873,6 +877,34 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               <span className={styles.toggleTrack} aria-hidden="true" />
             </label>
             <span className={styles.toggleText}>Record stats to Player Stats</span>
+          </div>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggleControl} htmlFor="teamTournament">
+              <input
+                id="teamTournament"
+                aria-label="Team Tournament"
+                className={styles.toggleInput}
+                type="checkbox"
+                checked={isTeamTournament}
+                onChange={(e) => setIsTeamTournament(e.target.checked)}
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+            <span className={styles.toggleText}>Team Tournament</span>
+          </div>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggleControl} htmlFor="ffaTournament">
+              <input
+                id="ffaTournament"
+                aria-label="FFA (Free for All) Tournament"
+                className={styles.toggleInput}
+                type="checkbox"
+                checked={isFfaTournament}
+                onChange={(e) => setIsFfaTournament(e.target.checked)}
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+            <span className={styles.toggleText}>FFA Tournament (Free for All)</span>
           </div>
           <p className={styles.helperText}>
             Leave unchecked for draft seasons; their stats will be cleared when the next season starts.

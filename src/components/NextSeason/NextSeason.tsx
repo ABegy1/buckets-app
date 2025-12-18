@@ -1019,13 +1019,22 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         )}
 
         {isConfirmationOpen && (
-          <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
-            <div className={styles.modal}>
+          <div className={`${styles.modalBackdrop} ${styles.centeredBackdrop}`} aria-modal="true" role="dialog" tabIndex={-1}>
+            <div className={`${styles.modal} ${styles.confirmModal}`}>
               <div className={styles.modalContent}>
-                <h3>Confirm New Season Start</h3>
-                <p>Confirm New Season Start</p>
+                <div className={styles.confirmHeader}>
+                  <h3>Confirm New Season Start</h3>
+                  <p>
+                    Starting a new season will create a fresh schedule and reset player shot counts.
+                    You can review these settings again before proceeding.
+                  </p>
+                </div>
                 <div className={styles.modalActions}>
-                  <button onClick={() => setIsConfirmationOpen(false)} className={styles.cancelButton} disabled={isProcessing}>
+                  <button
+                    onClick={() => setIsConfirmationOpen(false)}
+                    className={styles.cancelButton}
+                    disabled={isProcessing}
+                  >
                     Cancel
                   </button>
                   <button onClick={handleConfirmStartSeason} className={styles.saveButton} disabled={isProcessing}>

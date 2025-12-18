@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onCurrentSeasonClick
       <button className={styles.closeBtn} onClick={onClose}>X</button>
       <div className={styles.sidebarContent}>
         <div className={styles.option} onClick={onCurrentSeasonClick}>Current Season</div>
-        <div className={styles.option} onClick={onStartSeasonClick}>Start Season</div>
+        <div className={styles.option} onClick={onStartSeasonClick}>New Season Setup</div>
       </div>
     </div>
   );

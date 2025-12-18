@@ -860,14 +860,19 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
         <div className={styles.formSection}>
           <label htmlFor="officialSeason">Official Season</label>
-          <div className={styles.checkboxRow}>
-            <input
-              id="officialSeason"
-              type="checkbox"
-              checked={isOfficialSeason}
-              onChange={(e) => setIsOfficialSeason(e.target.checked)}
-            />
-            <span>Record stats to Player Stats</span>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggleControl} htmlFor="officialSeason">
+              <input
+                id="officialSeason"
+                aria-label="Official Season"
+                className={styles.toggleInput}
+                type="checkbox"
+                checked={isOfficialSeason}
+                onChange={(e) => setIsOfficialSeason(e.target.checked)}
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+            <span className={styles.toggleText}>Record stats to Player Stats</span>
           </div>
           <p className={styles.helperText}>
             Leave unchecked for draft seasons; their stats will be cleared when the next season starts.

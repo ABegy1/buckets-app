@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './CurrentSeasonModal.module.css'; // Import CSS module for styling
 import AdjustShots from '../AdjustShots'; // Component for adjusting shots
 import AdjustTeams from '../AdjustTeams'; // Component for managing teams and players
@@ -15,10 +15,10 @@ interface CurrentSeasonModalProps {
 
 /**
  * CurrentSeasonModal Component
- * 
+ *
  * This component displays a modal with tabs to manage and adjust various aspects
  * of the current season, such as shots, teams, scores, tiers, players, and rules.
- * 
+ *
  * Props:
  * - `isOpen` (boolean): Controls whether the modal is visible.
  * - `onClose` (function): Callback function to close the modal.
@@ -26,6 +26,18 @@ interface CurrentSeasonModalProps {
 const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose }) => {
   // State to track the active tab in the modal
   const [activeTab, setActiveTab] = useState('Adjust Shots');
+  const [isEditingEnabled, setIsEditingEnabled] = useState(false);
+  const [isStartConfirmationOpen, setIsStartConfirmationOpen] = useState(false);
+  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveTab('Adjust Shots');
+      setIsEditingEnabled(false);
+      setIsStartConfirmationOpen(false);
+      setIsSubmitConfirmationOpen(false);
+    }
+  }, [isOpen]);
 
   /**
    * Updates the active tab based on user selection.
@@ -33,6 +45,28 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
    */
   const handleTabChange = (tab: string) => {
     setActiveTab(tab); // Update the active tab state
+  };
+
+  const handleCloseModal = () => {
+    setIsEditingEnabled(false);
+    setIsStartConfirmationOpen(false);
+    setIsSubmitConfirmationOpen(false);
+    onClose();
+  };
+
+  const handleConfirmStartEditing = () => {
+    setIsEditingEnabled(true);
+    setIsStartConfirmationOpen(false);
+  };
+
+  const handleSubmitChanges = () => {
+    setIsSubmitConfirmationOpen(true);
+  };
+
+  const handleConfirmSubmitChanges = () => {
+    setIsSubmitConfirmationOpen(false);
+    setIsEditingEnabled(false);
+    onClose();
   };
 
   return (
@@ -46,17 +80,32 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
       <div className={styles.modalContent}>
         <button
           className={styles.topCloseBtn}
-          onClick={onClose}
+          onClick={handleCloseModal}
           aria-label="Close current season controls"
         >
           ×
         </button>
+        <div className={styles.headerRow}>
+          <div>
+            <h2 className={styles.title}>Current Season Controls</h2>
+            <p className={styles.subtitle}>
+              Make all edits in one place, then submit to apply them. Nothing is changed until you confirm.
+            </p>
+          </div>
+          {!isEditingEnabled && (
+            <button className={styles.primaryBtn} onClick={() => setIsStartConfirmationOpen(true)}>
+              Start adjustments
+            </button>
+          )}
+        </div>
+
         {/* Tabs for navigating between sections */}
-        <div className={styles.tabs}>
+        <div className={styles.tabs} aria-disabled={!isEditingEnabled}>
           {/* Tab: Adjust Shots */}
           <button
             className={`${styles.tab} ${activeTab === 'Adjust Shots' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Adjust Shots')}
+            disabled={!isEditingEnabled}
           >
             Adjust Shots
           </button>
@@ -65,6 +114,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button
             className={`${styles.tab} ${activeTab === 'Teams' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Teams')}
+            disabled={!isEditingEnabled}
           >
             Team/Player Edit
           </button>
@@ -73,6 +123,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button
             className={`${styles.tab} ${activeTab === 'Adjust Scores' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Adjust Scores')}
+            disabled={!isEditingEnabled}
           >
             Adjust Scores
           </button>
@@ -81,6 +132,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button
             className={`${styles.tab} ${activeTab === 'Tier Adjust' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Tier Adjust')}
+            disabled={!isEditingEnabled}
           >
             Tier Adjust
           </button>
@@ -89,6 +141,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button
             className={`${styles.tab} ${activeTab === 'Add Player' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Add Player')}
+            disabled={!isEditingEnabled}
           >
             Add Player
           </button>
@@ -97,29 +150,86 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           <button
             className={`${styles.tab} ${activeTab === 'Adjust Rules' ? styles.tabActive : ''}`}
             onClick={() => handleTabChange('Adjust Rules')}
+            disabled={!isEditingEnabled}
           >
             Adjust Rules
           </button>
         </div>
 
         {/* Content area for the selected tab */}
-        <div className={styles.content}>
-          {/* Render content based on the active tab */}
-          {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
-          {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
-          {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
-          {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
-          {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
-          {activeTab === 'Adjust Rules' && <AdjustRules isOpen={isOpen} />}
+        <div className={styles.contentWrapper}>
+          {!isEditingEnabled ? (
+            <div className={styles.lockScreen}>
+              <h3>Ready to tune the current season?</h3>
+              <p>Start adjustments to load the latest season data. No edits are applied until you confirm.</p>
+              <div className={styles.lockActions}>
+                <button className={styles.primaryBtn} onClick={() => setIsStartConfirmationOpen(true)}>
+                  Start adjustments
+                </button>
+                <button className={styles.secondaryBtn} onClick={handleCloseModal}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.content}>
+              {/* Render content based on the active tab */}
+              {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
+              {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
+              {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
+              {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}
+              {activeTab === 'Add Player' && <AddPlayers isOpen={isOpen} />}
+              {activeTab === 'Adjust Rules' && <AdjustRules isOpen={isOpen} />}
+            </div>
+          )}
         </div>
 
-        {/* Bottom bar with a close button */}
+        {/* Bottom bar with controls */}
         <div className={styles.bottomBar}>
-          <button className={styles.closeBtn} onClick={onClose}>
+          <button className={styles.secondaryBtn} onClick={handleCloseModal}>
             Close
+          </button>
+          <button className={styles.primaryBtn} onClick={handleSubmitChanges} disabled={!isEditingEnabled}>
+            Submit changes
           </button>
         </div>
       </div>
+
+      {isStartConfirmationOpen && (
+        <div className={styles.confirmationOverlay} role="alertdialog" aria-modal="true">
+          <div className={styles.confirmationCard}>
+            <h3>Enable current season adjustments?</h3>
+            <p>
+              You&apos;re about to load the latest data. Changes will only be applied after you submit them.
+            </p>
+            <div className={styles.confirmationActions}>
+              <button className={styles.secondaryBtn} onClick={() => setIsStartConfirmationOpen(false)}>
+                Go back
+              </button>
+              <button className={styles.primaryBtn} onClick={handleConfirmStartEditing}>
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isSubmitConfirmationOpen && (
+        <div className={styles.confirmationOverlay} role="alertdialog" aria-modal="true">
+          <div className={styles.confirmationCard}>
+            <h3>Submit current season updates?</h3>
+            <p>Confirm to apply your changes and close the modal.</p>
+            <div className={styles.confirmationActions}>
+              <button className={styles.secondaryBtn} onClick={() => setIsSubmitConfirmationOpen(false)}>
+                Keep editing
+              </button>
+              <button className={styles.primaryBtn} onClick={handleConfirmSubmitChanges}>
+                Submit and close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

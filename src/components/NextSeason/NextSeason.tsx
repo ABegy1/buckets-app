@@ -3,9 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css';
 import { supabase } from '@/supabaseClient';
 import { PostgrestError } from '@supabase/supabase-js';
-import EditTeamModal from './EditTeamModal';
 import EditTierModal from './EditTierModal';
-import EditPlayerModal from './EditPlayerModal';
 
 interface NextSeasonModalProps {
   isOpen: boolean;
@@ -30,20 +28,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
-  const [isOfficialSeason, setIsOfficialSeason] = useState<boolean>(true); // Track whether the season should be recorded historically
   const [isTeamTournament, setIsTeamTournament] = useState<boolean>(false); // Track whether the season is a team tournament
   const [isFfaTournament, setIsFfaTournament] = useState<boolean>(false); // Track whether the season is a free-for-all tournament
+  const shouldRecordStats = isTeamTournament || isFfaTournament;
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   // Modals state
-  const [isEditPlayerModalOpen, setEditPlayerModalOpen] = useState<boolean>(false);
-  const [isEditTeamModalOpen, setEditTeamModalOpen] = useState<boolean>(false);
   const [isEditTierModalOpen, setEditTierModalOpen] = useState<boolean>(false);
 
   // Selected items for editing
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<any>(null);
   const [draggedTierId, setDraggedTierId] = useState<number | null>(null);
    /**
@@ -53,7 +47,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   useEffect(() => {
     if (!isOpen) return;
 
-    setIsOfficialSeason(true);
     setIsTeamTournament(false);
     setIsFfaTournament(false);
 
@@ -62,8 +55,9 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       const { data, error } = await supabase.from('teams').select('*');
       if (error) console.error('Error fetching teams:', error);
       else {
-        setTeams(data || []);
-        setInitialTeams(data || []);
+        const normalizedTeams = (data || []).map((team) => ({ ...team, is_hidden: team.is_hidden ?? false }));
+        setTeams(normalizedTeams);
+        setInitialTeams(normalizedTeams);
       }
     };
 
@@ -82,8 +76,9 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       const { data, error } = await supabase.from('players').select('*');
       if (error) console.error('Error fetching players:', error);
       else {
-        setPlayers(data || []);
-        setInitialPlayers(data || []);
+        const normalizedPlayers = (data || []).map((player) => ({ ...player, is_hidden: player.is_hidden ?? false }));
+        setPlayers(normalizedPlayers);
+        setInitialPlayers(normalizedPlayers);
       }
     };
 
@@ -113,16 +108,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
  * Handles adding a new team to the database.
   * The team name is auto-generated based on the number of existing teams.
   */
- const handleAddTeam = async () => {
-  const newTeam = { team_id: `temp-team-${Date.now()}`, team_name: `New Team ${teams.length + 1}` };
-  setTeams((prevTeams) => [...prevTeams, newTeam]);
-};
+  const handleAddTeam = async () => {
+    const newTeam = {
+      team_id: `temp-team-${Date.now()}`,
+      team_name: `New Team ${teams.length + 1}`,
+      is_hidden: false,
+    };
+    setTeams((prevTeams) => [...prevTeams, newTeam]);
+  };
 
    /**
    * Handles deleting a team from the database by its ID.
    * @param teamId - The ID of the team to delete.
    */
-   const handleDeleteTeam = async (teamId: number) => {
+  const handleDeleteTeam = async (teamId: number) => {
     setTeams((prevTeams) => prevTeams.filter((team) => team.team_id !== teamId));
     setPlayers((prevPlayers) =>
       prevPlayers.map((player) =>
@@ -130,22 +129,10 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       )
     );
   };
- /**
-   * Opens the modal for editing a specific team.
-   * @param team - The team to edit.
-   */
- const handleOpenEditTeamModal = (team: any) => {
-  setSelectedTeam(team);
-  setEditTeamModalOpen(true);
-};
 
- /**
-   * Closes the team editing modal and clears the selected team.
-   */
- const handleCloseEditTeamModal = () => {
-  setSelectedTeam(null);
-  setEditTeamModalOpen(false);
-};
+  const handleTeamFieldChange = (teamId: number, updates: Record<string, any>) => {
+    setTeams((prevTeams) => prevTeams.map((team) => (team.team_id === teamId ? { ...team, ...updates } : team)));
+  };
 
   /**
    * Handles adding a new tier to the database.
@@ -214,6 +201,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       tier_id: tiers[0]?.tier_id || null,
       team_id: isFreeAgent ? null : teams[0]?.team_id || null,
       is_free_agent: isFreeAgent,
+      is_hidden: false,
     };
 
     setPlayers((prev) => [...prev, newPlayer]);
@@ -221,16 +209,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const handleDeletePlayer = async (playerId: number) => {
     setPlayers((prevPlayers) => prevPlayers.filter((player) => player.player_id !== playerId));
-  };
-
-  const handleOpenEditPlayerModal = (player: any) => {
-    setSelectedPlayer(player);
-    setEditPlayerModalOpen(true);
-  };
-
-  const handleCloseEditPlayerModal = () => {
-    setSelectedPlayer(null);
-    setEditPlayerModalOpen(false);
   };
 
   const handleShotCountChange = (change: number) => {
@@ -606,7 +584,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         end_date: null,
         shot_total: shotCount,
         rules: seasonRules || 'Default Rules',
-        is_official: isOfficialSeason,
+        is_official: shouldRecordStats,
       })
       .select();
   
@@ -652,7 +630,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       for (const team of teamsToAdd) {
         const { data: insertedTeam, error } = await supabase
           .from('teams')
-          .insert({ team_name: team.team_name })
+          .insert({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
           .select()
           .maybeSingle();
         if (error) handleError(error, 'Failed to add team');
@@ -677,12 +655,16 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       const teamsToUpdate = teams.filter(
         (team) =>
           !isTempId(team.team_id) &&
-          initialTeams.some((initialTeam) => initialTeam.team_id === team.team_id && initialTeam.team_name !== team.team_name)
+          initialTeams.some(
+            (initialTeam) =>
+              initialTeam.team_id === team.team_id &&
+              (initialTeam.team_name !== team.team_name || initialTeam.is_hidden !== team.is_hidden)
+          )
       );
       for (const team of teamsToUpdate) {
         const { error } = await supabase
           .from('teams')
-          .update({ team_name: team.team_name })
+          .update({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
           .eq('team_id', team.team_id);
         if (error) handleError(error, 'Failed to update team');
       }
@@ -731,6 +713,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             tier_id: resolvedTierId,
             team_id: player.is_free_agent ? null : resolvedTeamId,
             is_free_agent: player.is_free_agent,
+            is_hidden: player.is_hidden ?? false,
           })
           .select()
           .maybeSingle();
@@ -758,7 +741,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           initialPlayer.name !== player.name ||
           initialPlayer.team_id !== resolveMappedId(player.team_id, newTeamIdMap) ||
           initialPlayer.tier_id !== resolveMappedId(player.tier_id, newTierIdMap) ||
-          initialPlayer.is_free_agent !== player.is_free_agent
+          initialPlayer.is_free_agent !== player.is_free_agent ||
+          initialPlayer.is_hidden !== player.is_hidden
         );
       });
 
@@ -772,6 +756,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             tier_id: resolvedTierId,
             team_id: player.is_free_agent ? null : resolvedTeamId,
             is_free_agent: player.is_free_agent,
+            is_hidden: player.is_hidden ?? false,
           })
           .eq('player_id', player.player_id);
         if (error) handleError(error, 'Failed to update player');
@@ -863,21 +848,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         </div>
 
         <div className={styles.formSection}>
-          <label htmlFor="officialSeason">Official Season</label>
-          <div className={styles.toggleRow}>
-            <label className={styles.toggleControl} htmlFor="officialSeason">
-              <input
-                id="officialSeason"
-                aria-label="Official Season"
-                className={styles.toggleInput}
-                type="checkbox"
-                checked={isOfficialSeason}
-                onChange={(e) => setIsOfficialSeason(e.target.checked)}
-              />
-              <span className={styles.toggleTrack} aria-hidden="true" />
-            </label>
-            <span className={styles.toggleText}>Record stats to Player Stats</span>
-          </div>
+          <label>Competition Format</label>
           <div className={styles.toggleRow}>
             <label className={styles.toggleControl} htmlFor="teamTournament">
               <input
@@ -907,7 +878,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             <span className={styles.toggleText}>FFA Tournament (Free for All)</span>
           </div>
           <p className={styles.helperText}>
-            Leave unchecked for draft seasons; their stats will be cleared when the next season starts.
+            Player stats are recorded when either tournament option is enabled. Leave both unchecked for draft seasons; their stats
+            will be cleared when the next season starts.
           </p>
         </div>
 
@@ -923,14 +895,21 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             <div className={styles.scrollableList}>
               {teams.map((team) => (
                 <div key={team.team_id} className={styles.listItem}>
-                  <span>{team.team_name}</span>
+                  <input
+                    className={styles.inlineInput}
+                    value={team.team_name}
+                    onChange={(e) => handleTeamFieldChange(team.team_id, { team_name: e.target.value })}
+                    aria-label={`Edit ${team.team_name} name`}
+                  />
                   <div className={styles.itemActions}>
-                    <button
-                      className={styles.editButton}
-                      onClick={() => handleOpenEditTeamModal(team)}
-                    >
-                      Edit
-                    </button>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={team.is_hidden || false}
+                        onChange={(e) => handleTeamFieldChange(team.team_id, { is_hidden: e.target.checked })}
+                      />
+                      Hide from standings
+                    </label>
                     <button
                       className={styles.deleteButton}
                       onClick={() => handleDeleteTeam(team.team_id)}
@@ -1000,12 +979,18 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               <span>Name</span>
               <span>Team</span>
               <span>Tier</span>
+              <span>Visibility</span>
               <span className={styles.headerActions}>Actions</span>
             </div>
             <div className={styles.playersBody}>
               {players.map((player) => (
                 <div key={player.player_id} className={styles.playersRow}>
-                  <span>{player.name}</span>
+                  <input
+                    className={styles.inlineInput}
+                    value={player.name}
+                    onChange={(e) => handleUpdatePlayerFields(player.player_id, { name: e.target.value })}
+                    aria-label={`Edit name for ${player.name}`}
+                  />
                   <select
                     value={player.is_free_agent ? 'free-agent' : player.team_id ?? 'free-agent'}
                     onChange={(e) => handlePlayerTeamChange(player.player_id, e.target.value)}
@@ -1029,13 +1014,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
                       </option>
                     ))}
                   </select>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={player.is_hidden || false}
+                      onChange={(e) => handleUpdatePlayerFields(player.player_id, { is_hidden: e.target.checked })}
+                    />
+                    Hide from standings
+                  </label>
                   <div className={styles.itemActions}>
-                    <button
-                      className={styles.editButton}
-                      onClick={() => handleOpenEditPlayerModal(player)}
-                    >
-                      Edit
-                    </button>
                     <button
                       className={styles.deleteButton}
                       onClick={() => handleDeletePlayer(player.player_id)}
@@ -1063,36 +1050,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         <button className={styles.globalButton} onClick={handleSubmit} disabled={isProcessing}>
           Start Season
         </button>
-
-        {/* Edit Player Modal */}
-        {isEditPlayerModalOpen && (
-          <EditPlayerModal
-            isOpen={isEditPlayerModalOpen}
-            onClose={handleCloseEditPlayerModal}
-            player={selectedPlayer}
-            tiers={tiers}
-            teams={teams}
-            onUpdate={(updatedPlayer) => {
-              setPlayers((prevPlayers) =>
-                prevPlayers.map((p) => (p.player_id === updatedPlayer.player_id ? updatedPlayer : p))
-              );
-            }}
-          />
-        )}
-
-        {/* Edit Team Modal */}
-        {isEditTeamModalOpen && (
-          <EditTeamModal
-            isOpen={isEditTeamModalOpen}
-            onClose={handleCloseEditTeamModal}
-            team={selectedTeam}
-            onUpdate={(updatedTeam) => {
-              setTeams((prevTeams) =>
-                prevTeams.map((t) => (t.team_id === updatedTeam.team_id ? updatedTeam : t))
-              );
-            }}
-          />
-        )}
 
         {/* Edit Tier Modal */}
         {isEditTierModalOpen && (

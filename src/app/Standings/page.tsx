@@ -16,6 +16,7 @@ interface Team {
   team_id: number;
   team_name: string;
   team_score: number;
+  is_hidden?: boolean;
 }
 
 interface TeamWithPlayers {
@@ -146,12 +147,14 @@ const updateTeamScores = async () => {
     // Fetch all teams
     const { data: teamsData, error: teamsError } = await supabase
       .from('teams')
-      .select('team_id, team_score');
+      .select('team_id, team_score, is_hidden');
 
     if (teamsError) throw teamsError;
 
+    const visibleTeams = (teamsData || []).filter((team: any) => !team.is_hidden);
+
     await Promise.all(
-      teamsData.map(async (team: any) => {
+      visibleTeams.map(async (team: any) => {
         // Fetch players for the current team
         const { data: players, error: playersError } = await supabase
           .from('players')
@@ -256,21 +259,24 @@ const StandingsPage: React.FC = () => {
 
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('team_name, team_score, team_id');
-  
+        .select('team_name, team_score, team_id, is_hidden');
+
       if (teamsError) throw teamsError;
+      const visibleTeams = (teamsData || []).filter((team) => !team.is_hidden);
         // Enrich teams with their players and stats
 
       const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        teamsData.map(async (team: any) => {
+        visibleTeams.map(async (team: any) => {
           const { data: players, error: playersError } = await supabase
             .from('players')
             .select('*, tiers(color)')
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
-  
+
+          const visiblePlayers = (players || []).filter((player: any) => !player.is_hidden);
+
           const playersWithStats = await Promise.all(
-            players.map(async (player: any) => {
+            visiblePlayers.map(async (player: any) => {
               const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
                 .select('player_instance_id, shots_left, score')

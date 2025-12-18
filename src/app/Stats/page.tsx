@@ -18,6 +18,13 @@ type PlayerStats = {
   points_per_shot: number;
 };
 
+type PlayerRow = {
+  player_id: number;
+  name: string;
+  is_hidden: boolean;
+  is_free_agent: boolean;
+};
+
 type SortKey = keyof PlayerStats;
 
 const getSortableLastName = (name: string) => {
@@ -89,13 +96,15 @@ const StatsPage: React.FC = () => {
       // Step 1: Fetch player data (including hidden status)
       const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('player_id, name, is_hidden');
+        .select('player_id, name, is_hidden, is_free_agent');
 
       if (playersError) throw playersError;
       if (!playersData) return;
 
       // Step 2: Filter out hidden players
-      const visiblePlayersData = playersData.filter((p) => !p.is_hidden);
+      const visiblePlayersData: PlayerRow[] = playersData.filter(
+        (p) => !p.is_hidden && !p.is_free_agent,
+      );
 
       // Step 3: Fetch additional stats from the `stats` table
       const { data: statsData, error: statsError } = await supabase
@@ -107,34 +116,39 @@ const StatsPage: React.FC = () => {
       // Step 4: Get active season details
       const { data: currentSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, shot_total')
+        .select('season_id, shot_total, is_official')
         .is('end_date', null) // Only fetch the active season
         .single();
 
       if (seasonError || !currentSeason) throw seasonError;
 
       const currentSeasonId = currentSeason.season_id; // Active season ID
-      const seasonShotTotal = currentSeason.shot_total; // Total shots for the season
+      const includeCurrentSeasonStats = Boolean(currentSeason.is_official);
+      const seasonShotTotal = includeCurrentSeasonStats ? currentSeason.shot_total : 0; // Total shots for the season
 
       // Step 5: Fetch current season player instances
-      const { data: currentSeasonData, error: instanceError } = await supabase
-        .from('player_instance')
-        .select('player_id, score, shots_left')
-        .eq('season_id', currentSeasonId);
+      const { data: currentSeasonData, error: instanceError } = includeCurrentSeasonStats
+        ? await supabase
+            .from('player_instance')
+            .select('player_id, score, shots_left')
+            .eq('season_id', currentSeasonId)
+        : { data: [], error: null };
 
       if (instanceError) throw instanceError;
 
       // Step 6: Combine data for visible players
       const combinedData = visiblePlayersData.map((player) => {
         const playerStats = statsData?.find((stat) => stat.player_id === player.player_id);
-        const currentInstance = currentSeasonData?.find(
-          (instance) => instance.player_id === player.player_id
-        );
-        const currentSeasonScore = currentInstance?.score || 0;
-        const shotsLeft = currentInstance?.shots_left || 0;
+        const currentInstance = includeCurrentSeasonStats
+          ? currentSeasonData?.find((instance) => instance.player_id === player.player_id)
+          : undefined;
+        const currentSeasonScore = includeCurrentSeasonStats ? currentInstance?.score || 0 : 0;
+        const shotsLeft = includeCurrentSeasonStats ? currentInstance?.shots_left || 0 : 0;
 
         // Calculate current season shots taken
-        const currentSeasonShots = Math.max(0, seasonShotTotal - shotsLeft);
+        const currentSeasonShots = includeCurrentSeasonStats
+          ? Math.max(0, seasonShotTotal - shotsLeft)
+          : 0;
 
         // Calculate total shots and total score
         const totalShots = (playerStats?.total_shots || 0) + currentSeasonShots;

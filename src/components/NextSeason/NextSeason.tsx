@@ -30,6 +30,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
+  const [isOfficialSeason, setIsOfficialSeason] = useState<boolean>(true); // Track whether the season should be recorded historically
   const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -49,6 +50,8 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    */
   useEffect(() => {
     if (!isOpen) return;
+
+    setIsOfficialSeason(true);
 
     // Fetch teams from the database
     const fetchTeams = async () => {
@@ -282,7 +285,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     await handleUpdatePlayerFields(playerId, { tier_id: tierValue });
   };
 
-  const closeOutCurrentSeason = async (seasonId: number) => {
+  const closeOutCurrentSeason = async (seasonId: number, isOfficialSeason: boolean) => {
     console.log('Closing out season ID:', seasonId);
   
     // Retrieve the season shot total for calculating shots taken
@@ -295,6 +298,29 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     if (seasonError) handleError(seasonError, 'Failed to retrieve current season');
     if (!currentSeason) handleError(null, 'Current season data is null');
     const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
+
+    if (!isOfficialSeason) {
+      const currentDate = new Date().toISOString();
+      const { error: closeSeasonError } = await supabase
+        .from('seasons')
+        .update({ end_date: currentDate })
+        .eq('season_id', seasonId);
+
+      if (closeSeasonError) handleError(closeSeasonError, 'Failed to close the current season');
+      return;
+    }
+
+    const { data: playerRecords, error: playersError } = await supabase
+      .from('players')
+      .select('player_id, is_free_agent');
+
+    if (playersError) handleError(playersError, 'Failed to retrieve player records');
+
+    const eligiblePlayerIds = new Set(
+      (playerRecords || [])
+        .filter((player) => !player.is_free_agent)
+        .map((player) => player.player_id),
+    );
   
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
@@ -411,7 +437,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     }
     if (!playerInstances) return;
 
-    for (const instance of playerInstances) {
+    const filteredPlayerInstances =
+      eligiblePlayerIds.size > 0
+        ? playerInstances.filter((instance) => eligiblePlayerIds.has(instance.player_id))
+        : playerInstances;
+
+    for (const instance of filteredPlayerInstances) {
       const playerId = instance.player_id;
       if (!statsByPlayer[playerId]) {
         statsByPlayer[playerId] = {
@@ -430,7 +461,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     // Update player stats
     if (!playerStatsList) return;
-    for (const playerStat of playerStatsList) {
+    const eligiblePlayerStatsList =
+      eligiblePlayerIds.size > 0
+        ? playerStatsList.filter((player) => eligiblePlayerIds.has(player.player_id))
+        : playerStatsList;
+
+    for (const playerStat of eligiblePlayerStatsList) {
       const playerId = playerStat.player_id;
       const stats = statsByPlayer[playerId];
   
@@ -566,6 +602,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         end_date: null,
         shot_total: shotCount,
         rules: seasonRules || 'Default Rules',
+        is_official: isOfficialSeason,
       })
       .select();
   
@@ -589,7 +626,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       // Fetch the current active season
       const { data: currentSeason, error: currentSeasonError } = await supabase
         .from('seasons')
-        .select('season_id, end_date')
+        .select('season_id, end_date, is_official')
         .order('start_date', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -601,7 +638,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       const seasonId = currentSeason.season_id;
 
       // Step 1: Close out the current season
-      await closeOutCurrentSeason(seasonId);
+      await closeOutCurrentSeason(seasonId, Boolean(currentSeason.is_official));
 
       // Step 2: Apply roster updates
       const newTeamIdMap = new Map<string, number>();
@@ -819,6 +856,22 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             onChange={(e) => setSeasonRules(e.target.value)}
             placeholder="Enter season rules"
           />
+        </div>
+
+        <div className={styles.formSection}>
+          <label htmlFor="officialSeason">Official Season</label>
+          <div className={styles.checkboxRow}>
+            <input
+              id="officialSeason"
+              type="checkbox"
+              checked={isOfficialSeason}
+              onChange={(e) => setIsOfficialSeason(e.target.checked)}
+            />
+            <span>Record stats to Player Stats</span>
+          </div>
+          <p className={styles.helperText}>
+            Leave unchecked for draft seasons; their stats will be cleared when the next season starts.
+          </p>
         </div>
 
         <div className={styles.modalGrid}>

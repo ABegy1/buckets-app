@@ -31,7 +31,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [isTeamTournament, setIsTeamTournament] = useState<boolean>(true); // Track whether the season is a team tournament
   const [isFfaTournament, setIsFfaTournament] = useState<boolean>(false); // Track whether the season is a free-for-all tournament
   const shouldRecordStats = isTeamTournament || isFfaTournament;
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   // Modals state
@@ -600,10 +599,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
   // Handle the submission to close out the current season and start a new one
   const handleSubmit = async () => {
-    setIsConfirmationOpen(true);
-  };
-
-  const handleConfirmStartSeason = async () => {
     setIsProcessing(true);
     let closedSeasonId: number | null = null;
     let startedSeasonId: number | null = null;
@@ -815,7 +810,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       // Close modal and notify parent component
       onClose();
       onStartSeason();
-      setIsConfirmationOpen(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       if (closedSeasonId && !startedSeasonId) {
@@ -827,7 +821,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           console.error('Failed to reopen the previous season after an error:', reopenError);
         }
       }
-      setIsConfirmationOpen(false);
     } finally {
       setIsProcessing(false);
     }
@@ -1089,34 +1082,6 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               );
             }}
           />
-        )}
-
-        {isConfirmationOpen && (
-          <div className={`${styles.modalBackdrop} ${styles.centeredBackdrop}`} aria-modal="true" role="dialog" tabIndex={-1}>
-            <div className={`${styles.modal} ${styles.confirmModal}`}>
-              <div className={styles.modalContent}>
-                <div className={styles.confirmHeader}>
-                  <h3>Confirm New Season Start</h3>
-                  <p>
-                    Starting a new season will create a fresh schedule and reset player shot counts.
-                    You can review these settings again before proceeding.
-                  </p>
-                </div>
-                <div className={styles.modalActions}>
-                  <button
-                    onClick={() => setIsConfirmationOpen(false)}
-                    className={styles.cancelButton}
-                    disabled={isProcessing}
-                  >
-                    Cancel
-                  </button>
-                  <button onClick={handleConfirmStartSeason} className={styles.saveButton} disabled={isProcessing}>
-                    Accept
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </div>

@@ -1,7 +1,6 @@
 'use client'; // Required for client-side rendering in Next.js App Router
 import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css'; // Import CSS module for styling
-import { supabase } from '@/supabaseClient'; // Supabase client for database interactions
 
 /**
  * Props interface for the EditPlayerModal component
@@ -32,8 +31,8 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
 }) => {
   // State variables for tracking player details
   const [playerName, setPlayerName] = useState<string>(player?.name || ''); // Player's name
-  const [tierId, setTierId] = useState<number>(player?.tier_id || tiers[0]?.tier_id); // Player's tier
-  const [teamId, setTeamId] = useState<number>(player?.team_id || teams[0]?.team_id); // Player's team
+  const [tierId, setTierId] = useState<string | number>(player?.tier_id || tiers[0]?.tier_id); // Player's tier
+  const [teamId, setTeamId] = useState<string | number>(player?.team_id || teams[0]?.team_id); // Player's team
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(player?.is_free_agent || false); // Free agent status
   const [isHidden, setIsHidden] = useState<boolean>(player?.is_hidden || false); // Hidden status
 
@@ -54,22 +53,6 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
    * Updates the player's information in the database and triggers the onUpdate callback.
    */
   const handleUpdatePlayer = async () => {
-    // Update player details in the database
-    const { error: playerError } = await supabase
-      .from('players')
-      .update({
-        name: playerName,
-        tier_id: tierId,
-        team_id: isFreeAgent ? null : teamId, // Set team_id to null if player is a free agent
-        is_free_agent: isFreeAgent,
-        is_hidden: isHidden, // Update hidden status
-      })
-      .eq('player_id', player.player_id);
-
-    if (playerError) {
-      console.error('Error updating player:', playerError);
-    }
-
     // Trigger the onUpdate callback with the updated player information
     onUpdate({
       ...player,
@@ -105,33 +88,42 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
 
           {/* Tier Selection Dropdown */}
           <label htmlFor="tierSelect">Tier</label>
-          <select
-            id="tierSelect"
-            value={tierId}
-            onChange={(e) => setTierId(Number(e.target.value))}
-            aria-label="Select Tier"
-          >
-            {tiers.map((tier) => (
-              <option key={tier.tier_id} value={tier.tier_id}>
-                {tier.tier_name}
+        <select
+          id="tierSelect"
+          value={tierId}
+          onChange={(e) => setTierId(e.target.value)}
+          aria-label="Select Tier"
+        >
+          {tiers.map((tier) => (
+            <option key={tier.tier_id} value={tier.tier_id}>
+              {tier.tier_name}
               </option>
             ))}
           </select>
 
           {/* Team Selection Dropdown */}
-          <label htmlFor="teamSelect">Team</label>
-          <select
-            id="teamSelect"
-            value={teamId}
-            onChange={(e) => setTeamId(Number(e.target.value))}
-            aria-label="Select Team"
-            disabled={isFreeAgent} // Disable if the player is a free agent
-          >
-            {teams.map((team) => (
-              <option key={team.team_id} value={team.team_id}>
-                {team.team_name}
-              </option>
-            ))}
+        <label htmlFor="teamSelect">Team</label>
+        <select
+          id="teamSelect"
+          value={isFreeAgent ? 'free-agent' : teamId || 'free-agent'}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === 'free-agent') {
+              setIsFreeAgent(true);
+            } else {
+              setIsFreeAgent(false);
+              setTeamId(value);
+            }
+          }}
+          aria-label="Select Team"
+          disabled={isFreeAgent} // Disable if the player is a free agent
+        >
+          <option value="free-agent">Free Agent</option>
+          {teams.map((team) => (
+            <option key={team.team_id} value={team.team_id}>
+              {team.team_name}
+            </option>
+          ))}
           </select>
 
           {/* Free Agent Checkbox */}
@@ -140,7 +132,12 @@ const EditPlayerModal: React.FC<EditPlayerModalProps> = ({
               <input
                 type="checkbox"
                 checked={isFreeAgent}
-                onChange={() => setIsFreeAgent(!isFreeAgent)}
+                onChange={() => {
+                  setIsFreeAgent(!isFreeAgent);
+                  if (isFreeAgent) {
+                    setTeamId(teams[0]?.team_id || '');
+                  }
+                }}
               />
               Free Agent
             </label>

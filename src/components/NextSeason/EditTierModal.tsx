@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css'; // Import CSS module for styling
-import { supabase } from '@/supabaseClient'; // Supabase client for database interactions
 
 /**
  * Props interface for the EditTierModal component
@@ -45,19 +44,9 @@ const EditTierModal: React.FC<EditTierModalProps> = ({
    * Updates the tier's details in the database and triggers the `onUpdate` callback.
    */
   const handleUpdateTier = async () => {
-    // Update the tier details in the Supabase database
-    const { error } = await supabase
-      .from('tiers')
-      .update({ tier_name: tierName, color }) // Update tier name and color
-      .eq('tier_id', tier.tier_id); // Match the tier by its ID
-
-    if (error) {
-      console.error('Error updating tier:', error); // Log any errors
-    } else {
-      // Trigger the `onUpdate` callback with the updated tier data
-      onUpdate({ ...tier, tier_name: tierName, color });
-      onClose(); // Close the modal after saving
-    }
+    // Trigger the `onUpdate` callback with the updated tier data
+    onUpdate({ ...tier, tier_name: tierName, color });
+    onClose(); // Close the modal after saving
   };
 
   // Render nothing if the modal is not open

@@ -23,10 +23,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [teams, setTeams] = useState<any[]>([]); // List of teams
   const [tiers, setTiers] = useState<any[]>([]); // List of tiers
   const [players, setPlayers] = useState<any[]>([]); // List of players
+  const [initialTeams, setInitialTeams] = useState<any[]>([]);
+  const [initialTiers, setInitialTiers] = useState<any[]>([]);
+  const [initialPlayers, setInitialPlayers] = useState<any[]>([]);
   const [shotCount, setShotCount] = useState<number>(40); // Default shot count for the new season
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   // Modals state
   const [isEditPlayerModalOpen, setEditPlayerModalOpen] = useState<boolean>(false);
@@ -42,28 +47,37 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    * Effect: Fetch data when the modal opens.
    * This includes teams, tiers, and players data, and sets up real-time subscriptions.
    */
-   useEffect(() => {
+  useEffect(() => {
     if (!isOpen) return;
 
     // Fetch teams from the database
     const fetchTeams = async () => {
       const { data, error } = await supabase.from('teams').select('*');
       if (error) console.error('Error fetching teams:', error);
-      else setTeams(data || []);
+      else {
+        setTeams(data || []);
+        setInitialTeams(data || []);
+      }
     };
 
     // Fetch tiers from the database
     const fetchTiers = async () => {
       const { data, error } = await supabase.from('tiers').select('*');
       if (error) console.error('Error fetching tiers:', error);
-      else setTiers(data || []);
+      else {
+        setTiers(data || []);
+        setInitialTiers(data || []);
+      }
     };
 
     // Fetch players from the database
     const fetchPlayers = async () => {
       const { data, error } = await supabase.from('players').select('*');
       if (error) console.error('Error fetching players:', error);
-      else setPlayers(data || []);
+      else {
+        setPlayers(data || []);
+        setInitialPlayers(data || []);
+      }
     };
 
     //Fetch the active season rules from the database
@@ -86,36 +100,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     fetchTiers();
     fetchPlayers();
     fetchSeasonData();
-
-    // Set up real-time subscriptions for teams, tiers, and players
-    const teamChannel = supabase
-      .channel('team-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeams)
-      .subscribe();
-    const tierChannel = supabase
-      .channel('tier-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiers)
-      .subscribe();
-    const playerChannel = supabase
-      .channel('player-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchPlayers)
-      .subscribe();
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      supabase.removeChannel(teamChannel);
-      supabase.removeChannel(tierChannel);
-      supabase.removeChannel(playerChannel);
-    };
   }, [isOpen]);
 
  /**
-   * Handles adding a new team to the database.
-   * The team name is auto-generated based on the number of existing teams.
-   */
+ * Handles adding a new team to the database.
+  * The team name is auto-generated based on the number of existing teams.
+  */
  const handleAddTeam = async () => {
-  const { error } = await supabase.from('teams').insert([{ team_name: `New Team ${teams.length + 1}` }]);
-  if (error) console.error('Error adding team:', error);
+  const newTeam = { team_id: `temp-team-${Date.now()}`, team_name: `New Team ${teams.length + 1}` };
+  setTeams((prevTeams) => [...prevTeams, newTeam]);
 };
 
    /**
@@ -123,8 +116,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    * @param teamId - The ID of the team to delete.
    */
    const handleDeleteTeam = async (teamId: number) => {
-    const { error } = await supabase.from('teams').delete().eq('team_id', teamId);
-    if (error) console.error('Error deleting team:', error);
+    setTeams((prevTeams) => prevTeams.filter((team) => team.team_id !== teamId));
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.team_id === teamId ? { ...player, team_id: null, is_free_agent: true } : player
+      )
+    );
   };
  /**
    * Opens the modal for editing a specific team.
@@ -148,8 +145,13 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    * The tier name is auto-generated based on the number of existing tiers, with a default color.
    */
   const handleAddTier = async () => {
-    const { error } = await supabase.from('tiers').insert([{ tier_name: `New Tier ${tiers.length + 1}`, color: '#000000' }]);
-    if (error) console.error('Error adding tier:', error);
+    const newTier = {
+      tier_id: `temp-tier-${Date.now()}`,
+      tier_name: `New Tier ${tiers.length + 1}`,
+      color: '#000000',
+    };
+
+    setTiers((prev) => [...prev, newTier]);
   };
 
 
@@ -167,8 +169,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    * @param tierId - The ID of the tier to delete.
    */
   const handleDeleteTier = async (tierId: number) => {
-    const { error } = await supabase.from('tiers').delete().eq('tier_id', tierId);
-    if (error) console.error('Error deleting tier:', error);
+    setTiers((prevTiers) => prevTiers.filter((tier) => tier.tier_id !== tierId));
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.tier_id === tierId ? { ...player, tier_id: tiers.find((t) => t.tier_id !== tierId)?.tier_id } : player
+      )
+    );
   };
 
  /**
@@ -194,24 +200,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       console.error('No available tiers to assign to the player.');
       return;
     }
-  
-    const { error } = await supabase
-      .from('players')
-      .insert([{ 
-        name: `Player ${players.length + 1}`, 
-        tier_id: tiers[0]?.tier_id || 1,  
-        team_id: isFreeAgent ? null : teams[0]?.team_id || null, 
-        is_free_agent: isFreeAgent 
-      }]);
-  
-    if (error) {
-      console.error('Error adding player:', error);
-    }
+
+    const newPlayer = {
+      player_id: `temp-player-${Date.now()}`,
+      name: `Player ${players.length + 1}`,
+      tier_id: tiers[0]?.tier_id || null,
+      team_id: isFreeAgent ? null : teams[0]?.team_id || null,
+      is_free_agent: isFreeAgent,
+    };
+
+    setPlayers((prev) => [...prev, newPlayer]);
   };
 
   const handleDeletePlayer = async (playerId: number) => {
-    const { error } = await supabase.from('players').delete().eq('player_id', playerId);
-    if (error) console.error('Error deleting player:', error);
+    setPlayers((prevPlayers) => prevPlayers.filter((player) => player.player_id !== playerId));
   };
 
   const handleOpenEditPlayerModal = (player: any) => {
@@ -226,6 +228,15 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
 
   const handleShotCountChange = (change: number) => {
     setShotCount(shotCount + change);
+  };
+
+  const isTempId = (id: any) => typeof id === 'string' && id.startsWith('temp-');
+  const resolveMappedId = (value: any, map: Map<string, number>) => {
+    if (value === null || value === undefined) return null;
+    if (isTempId(value)) {
+      return map.get(value) ?? null;
+    }
+    return value;
   };
 
   const handleReorderTier = (targetTierId: number) => {
@@ -246,25 +257,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   };
 
   const handleUpdatePlayerFields = async (playerId: number, updates: Record<string, any>) => {
-    const { data, error } = await supabase
-      .from('players')
-      .update(updates)
-      .eq('player_id', playerId)
-      .select()
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error updating player:', error);
-      return;
-    }
-
     setPlayers((prevPlayers) =>
       prevPlayers.map((player) =>
         player.player_id === playerId
           ? {
               ...player,
               ...updates,
-              ...(data ?? {}),
             }
           : player
       )
@@ -277,11 +275,11 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       return;
     }
 
-    await handleUpdatePlayerFields(playerId, { team_id: Number(teamValue), is_free_agent: false });
+    await handleUpdatePlayerFields(playerId, { team_id: teamValue, is_free_agent: false });
   };
 
   const handlePlayerTierChange = async (playerId: number, tierValue: string) => {
-    await handleUpdatePlayerFields(playerId, { tier_id: Number(tierValue) });
+    await handleUpdatePlayerFields(playerId, { tier_id: tierValue });
   };
 
   const closeOutCurrentSeason = async (seasonId: number) => {
@@ -582,6 +580,11 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
   // Handle the submission to close out the current season and start a new one
   const handleSubmit = async () => {
+    setIsConfirmationOpen(true);
+  };
+
+  const handleConfirmStartSeason = async () => {
+    setIsProcessing(true);
     try {
       // Fetch the current active season
       const { data: currentSeason, error: currentSeasonError } = await supabase
@@ -590,43 +593,191 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .order('start_date', { ascending: false })
         .limit(1)
         .maybeSingle();
-  
+
       if (currentSeasonError) handleError(currentSeasonError, 'Failed to retrieve current season');
       if (!currentSeason) throw new Error('Current season data is null');
       if (currentSeason.end_date) throw new Error('No active season to close out.');
-  
+
       const seasonId = currentSeason.season_id;
-  
+
       // Step 1: Close out the current season
       await closeOutCurrentSeason(seasonId);
-  
-      // Step 2: Create a new season
+
+      // Step 2: Apply roster updates
+      const newTeamIdMap = new Map<string, number>();
+      const newTierIdMap = new Map<string, number>();
+
+      const teamsToAdd = teams.filter((team) => isTempId(team.team_id));
+      for (const team of teamsToAdd) {
+        const { data: insertedTeam, error } = await supabase
+          .from('teams')
+          .insert({ team_name: team.team_name })
+          .select()
+          .maybeSingle();
+        if (error) handleError(error, 'Failed to add team');
+        if (insertedTeam) {
+          newTeamIdMap.set(team.team_id, insertedTeam.team_id);
+        }
+      }
+
+      const tiersToAdd = tiers.filter((tier) => isTempId(tier.tier_id));
+      for (const tier of tiersToAdd) {
+        const { data: insertedTier, error } = await supabase
+          .from('tiers')
+          .insert({ tier_name: tier.tier_name, color: tier.color })
+          .select()
+          .maybeSingle();
+        if (error) handleError(error, 'Failed to add tier');
+        if (insertedTier) {
+          newTierIdMap.set(tier.tier_id, insertedTier.tier_id);
+        }
+      }
+
+      const teamsToUpdate = teams.filter(
+        (team) =>
+          !isTempId(team.team_id) &&
+          initialTeams.some((initialTeam) => initialTeam.team_id === team.team_id && initialTeam.team_name !== team.team_name)
+      );
+      for (const team of teamsToUpdate) {
+        const { error } = await supabase
+          .from('teams')
+          .update({ team_name: team.team_name })
+          .eq('team_id', team.team_id);
+        if (error) handleError(error, 'Failed to update team');
+      }
+
+      const tiersToUpdate = tiers.filter(
+        (tier) =>
+          !isTempId(tier.tier_id) &&
+          initialTiers.some(
+            (initialTier) =>
+              initialTier.tier_id === tier.tier_id &&
+              (initialTier.tier_name !== tier.tier_name || initialTier.color !== tier.color)
+          )
+      );
+      for (const tier of tiersToUpdate) {
+        const { error } = await supabase
+          .from('tiers')
+          .update({ tier_name: tier.tier_name, color: tier.color })
+          .eq('tier_id', tier.tier_id);
+        if (error) handleError(error, 'Failed to update tier');
+      }
+
+      const teamIdsToDelete = initialTeams
+        .filter((team) => !teams.some((currentTeam) => currentTeam.team_id === team.team_id))
+        .map((team) => team.team_id);
+      if (teamIdsToDelete.length) {
+        const { error } = await supabase.from('teams').delete().in('team_id', teamIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete teams');
+      }
+
+      const tierIdsToDelete = initialTiers
+        .filter((tier) => !tiers.some((currentTier) => currentTier.tier_id === tier.tier_id))
+        .map((tier) => tier.tier_id);
+      if (tierIdsToDelete.length) {
+        const { error } = await supabase.from('tiers').delete().in('tier_id', tierIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete tiers');
+      }
+
+      const playersToAdd = players.filter((player) => isTempId(player.player_id));
+      for (const player of playersToAdd) {
+        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+        const { data: insertedPlayer, error } = await supabase
+          .from('players')
+          .insert({
+            name: player.name,
+            tier_id: resolvedTierId,
+            team_id: player.is_free_agent ? null : resolvedTeamId,
+            is_free_agent: player.is_free_agent,
+          })
+          .select()
+          .maybeSingle();
+        if (error) handleError(error, 'Failed to add player');
+        if (insertedPlayer) {
+          newTeamIdMap.forEach((mappedId, tempId) => {
+            if (player.team_id === tempId) {
+              player.team_id = mappedId;
+            }
+          });
+          newTierIdMap.forEach((mappedId, tempId) => {
+            if (player.tier_id === tempId) {
+              player.tier_id = mappedId;
+            }
+          });
+          player.player_id = insertedPlayer.player_id;
+        }
+      }
+
+      const playersToUpdate = players.filter((player) => {
+        if (isTempId(player.player_id)) return false;
+        const initialPlayer = initialPlayers.find((p) => p.player_id === player.player_id);
+        if (!initialPlayer) return false;
+        return (
+          initialPlayer.name !== player.name ||
+          initialPlayer.team_id !== resolveMappedId(player.team_id, newTeamIdMap) ||
+          initialPlayer.tier_id !== resolveMappedId(player.tier_id, newTierIdMap) ||
+          initialPlayer.is_free_agent !== player.is_free_agent
+        );
+      });
+
+      for (const player of playersToUpdate) {
+        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+        const { error } = await supabase
+          .from('players')
+          .update({
+            name: player.name,
+            tier_id: resolvedTierId,
+            team_id: player.is_free_agent ? null : resolvedTeamId,
+            is_free_agent: player.is_free_agent,
+          })
+          .eq('player_id', player.player_id);
+        if (error) handleError(error, 'Failed to update player');
+      }
+
+      const playerIdsToDelete = initialPlayers
+        .filter((player) => !players.some((currentPlayer) => currentPlayer.player_id === player.player_id))
+        .map((player) => player.player_id);
+      if (playerIdsToDelete.length) {
+        const { error } = await supabase.from('players').delete().in('player_id', playerIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete players');
+      }
+
+      const { data: refreshedPlayers, error: refreshError } = await supabase.from('players').select('*');
+      if (refreshError) handleError(refreshError, 'Failed to refresh players');
+      const finalPlayers = refreshedPlayers || [];
+
+      // Step 3: Create a new season
       const newSeasonId = await createNewSeason();
       if (!newSeasonId) throw new Error('Failed to start a new season.');
-  
-      // Step 3: Create new player instances for the new season in bulk
-      if (!players || players.length === 0) {
+
+      // Step 4: Create new player instances for the new season in bulk
+      if (!finalPlayers || finalPlayers.length === 0) {
         throw new Error('No players available to create new instances.');
       }
-  
-      const playerInstances = players.map((player) => ({
+
+      const playerInstances = finalPlayers.map((player) => ({
         player_id: player.player_id,
         season_id: newSeasonId,
         shots_left: shotCount,
         score: 0,
       }));
-  
+
       const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
-  
+
       if (playerInstanceError)
         handleError(playerInstanceError, 'Failed to create player instances for the new season');
-  
+
       // Close modal and notify parent component
       onClose();
       onStartSeason();
+      setIsConfirmationOpen(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       // Optionally handle user feedback for the error here
+    } finally {
+      setIsProcessing(false);
     }
   };
   // Check if the modal should be rendered. If `isOpen` is false, return null to avoid rendering.
@@ -819,7 +970,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         </div>
 
         {/* Submit Button */}
-        <button className={styles.globalButton} onClick={handleSubmit}>
+        <button className={styles.globalButton} onClick={handleSubmit} disabled={isProcessing}>
           Start Season
         </button>
 
@@ -865,6 +1016,25 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
               );
             }}
           />
+        )}
+
+        {isConfirmationOpen && (
+          <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
+            <div className={styles.modal}>
+              <div className={styles.modalContent}>
+                <h3>Confirm New Season Start</h3>
+                <p>Confirm New Season Start</p>
+                <div className={styles.modalActions}>
+                  <button onClick={() => setIsConfirmationOpen(false)} className={styles.cancelButton} disabled={isProcessing}>
+                    Cancel
+                  </button>
+                  <button onClick={handleConfirmStartSeason} className={styles.saveButton} disabled={isProcessing}>
+                    Accept
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

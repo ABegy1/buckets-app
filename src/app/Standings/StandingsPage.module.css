@@ -83,12 +83,10 @@
   flex-basis: 33%;
   gap: 6px;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .playerNameText {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .shotsLeft,

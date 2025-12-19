@@ -516,8 +516,8 @@ const StandingsPage: React.FC = () => {
                 {/* Table Headers */}
                 <div className={styles.row}>
                   <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Total Score</span>
-                  <span className={styles.columnHeader}>Shots Left</span>
+                  <span className={styles.columnHeader}>Score</span>
+                  <span className={styles.columnHeader}>SL</span>
                   <span className={styles.columnHeader}>PPS</span>
                 </div>
                 {team.players.map((player, playerIndex) => (

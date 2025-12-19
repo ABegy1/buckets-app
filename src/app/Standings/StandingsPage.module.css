@@ -81,6 +81,15 @@
   display: inline-flex; /* Ensures the circle and name stay on the same line */
   align-items: center;  /* Vertically aligns the circle and name */
   flex-basis: 33%;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.playerNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .shotsLeft,
 .totalPoints,
@@ -227,6 +236,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  min-width: 0;
 }
 
 .colorCircle {
@@ -251,38 +261,6 @@
   font-size: 1.5rem;
   padding: 10px 0;
   border-bottom: 1px solid #ddd;
-}
-
-
-/* Summary card */
-.summary {
-  /* display: flex;
-  flex-direction: column; */
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 10px;
-  background-color: #fafafa;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-/* Summary Row Styling */
-.summaryHeader {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
-  justify-items: center;
-  font-size: 1.3rem;
-  font-weight: bold;
-  text-decoration-line: underline;
-}
-
-.totalStats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* Add columns as this grows */
-  justify-items: center;
-  font-size: 1.3rem;
-  font-weight: bold;
 }
 
 

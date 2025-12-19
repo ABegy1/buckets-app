@@ -4,11 +4,7 @@ import styles from './StandingsPage.module.css'; // Updated path for combined st
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-import {eachDayOfInterval, startOfMonth, endOfMonth, isWeekend} from 'date-fns'
-import { usePathname, useRouter } from 'next/navigation';
-import { Howl } from 'howler';
-
-import { stat } from 'fs';
+import { useRouter } from 'next/navigation';
 
 import Header from '@/components/Header';
 
@@ -199,20 +195,6 @@ const updateTeamScores = async () => {
   }
 };
 
-//function to calculate the waiver waterline based on the number of valid shooting days in the month
-const calculateWaiverWaterline = (date: Date, shotTotal: number): number =>{
-  //get an array of dates containing the days left in the month
-  const daysInMonth = eachDayOfInterval({
-    start: date,
-    end: endOfMonth(date),
-  });
-
-  // get the number of business days remaining in the month. TODO: turn shotsPerDay and business day toggle into settings in a settings page
-  const remainingBusinessDays =  daysInMonth.filter(day => !isWeekend(day)).length;
-  const shotsPerDay = 4;
-  return remainingBusinessDays*shotsPerDay > shotTotal? shotTotal: remainingBusinessDays*shotsPerDay;
-}
-
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
@@ -223,7 +205,6 @@ const StandingsPage: React.FC = () => {
   shot_total: -1,
   rules: ''
  }); // Current season info
- const [waiverWaterline, setWaiverWaterline] = useState<number>(0); // Remaining shooting days in season
  const router = useRouter(); // Router for navigation
 
   /**
@@ -504,40 +485,6 @@ const StandingsPage: React.FC = () => {
       };
   }, [userView ]);
 
-/**
- * Set up timers for updating the waiver waterline every day
- */
-  useEffect(() => {
-    const now = new Date();
-const midnight = new Date(
-  now.getFullYear(),
-  now.getMonth(),
-  now.getDate() + 1,
-  0, 0, 0, 0
-);
-const timeUntilMidnight = midnight.getTime() - now.getTime(); 
-
-
-    const timeout = setTimeout(() => {
-      //calculate waterline at the next midnight from mount
-      setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-      console.log("Setting waterline on first midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-      // calculate waterline every day at midnight after first midnight from mount
-      const interval = setInterval(() => {
-        setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-        console.log("Setting waterline every midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-      }, 24 * 60 * 60 * 1000); //every 24 hours
-
-      return () => clearInterval(interval);
-    }, timeUntilMidnight);
-
-    //calculate waterline on mount
-    setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-    console.log("Setting waterline on mount to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-
-    return () => clearTimeout(timeout);
-  }, [season.shot_total]);
-
  return (
   <div className={styles.userContainer}>
     <Header></Header>
@@ -583,7 +530,7 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                           className={styles.colorCircle}
                           style={{ backgroundColor: player.tier_color }}
                         />
-                        <span>{player.name}</span>
+                        <span className={styles.playerNameText}>{player.name}</span>
                         {player.name === 'A. Begy' && (
                           <span className={styles.crownIcon}>👑</span>
                         )}
@@ -610,18 +557,6 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
               ))}
               </div>
             ))}
-          </div>
-          <div className={styles.summary}>
-            <div className={styles.summaryHeader}>
-              <span>Total Shots Remaining</span>
-              <span>Total Score</span>
-              <span>Waiver Waterline</span>
-            </div>
-            <div className={styles.totalStats}>
-              <span>{teams.reduce((a, index) => a + index.total_shots, 0)}</span>
-              <span>{teams.reduce((a, index) => a + index.team_score, 0)}</span>
-              <span>{waiverWaterline}</span>
-            </div>
           </div>
         </div>
     </main>

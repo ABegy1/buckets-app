@@ -130,25 +130,28 @@ const PucketsPage: React.FC = () => {
       const matches: Match[] = await Promise.all(
         matchData.map(async (match: any) => {
               return {
-                player1:
-                {
-                  instance_id: match.player_instance_id,
-                  name: match.player1_name,
-                  rating: match.player1_rating,
-                  score: match.player1_score
-                },
-                player2:
-                {
-                  instance_id: match.player_instance_id,
-                  name: match.player2_name,
-                  rating: match.player2_rating,
-                  score: match.player2_score
-                },
+                players: [
+                  {
+                    instance_id: match.player_instance_id,
+                    name: match.player1_name,
+                    rating: match.player1_rating,
+                    score: match.player1_score
+                  },
+                  {
+                    instance_id: match.player_instance_id,
+                    name: match.player2_name,
+                    rating: match.player2_rating,
+                    score: match.player2_score
+                  }
+                ].filter((player: any) => player.instance_id !== null),
+                type: 1, // Assuming singles for now
                 season_id: match.season_id,
                 date: new Date(match.match_date),
               };
             })
           );
+
+
   
       // Sort the teams by team_score in descending order
       // teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
@@ -196,6 +199,7 @@ const PucketsPage: React.FC = () => {
                   rating: player.rating,
                   wins: player.wins,
                   losses: player.losses,
+                  draws: player.draws,
                   successive_wins: player.successive_wins,
                   successive_losses: player.successive_loss,
                   tier: 0,
@@ -382,14 +386,14 @@ const PucketsPage: React.FC = () => {
                     {/* Player Name and Icons */}
                     <div className={styles.match}>
                       <div className={styles.playerDetails}>
-                        <span className='text-left w-full'>{match.player1.name}</span>
-                        <span>{match.player1.rating}</span>
-                        <span>{match.player1.score}</span>
+                        <span className='text-left w-full'>{match.players[0].name}</span>
+                        <span>{match.players[0].rating}</span>
+                        <span>{match.players[0].score}</span>
                       </div>
                       <div className={styles.playerDetails}>
-                        <span className='text-left w-full'>{match.player2.name}</span>
-                        <span>{match.player2.rating}</span>
-                        <span>{match.player2.score}</span>
+                        <span className='text-left w-full'>{match.players[1].name}</span>
+                        <span>{match.players[1].rating}</span>
+                        <span>{match.players[1].score}</span>
                       </div>
                     </div>
                   </div>

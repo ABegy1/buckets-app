@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS puckets.matches
         REFERENCES puckets.player_instance (player_instance_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
-    UNIQUE (player1_instance_id, player2_instance_id)
+    CONSTRAINT unique_players CHECK (player1_instance_id <> player2_instance_id)
 );
 
 -- Table: puckets.stats

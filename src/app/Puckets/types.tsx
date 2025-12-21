@@ -2,18 +2,13 @@
 
 
 export interface Match {
-  player1: {
+  players: [{
     instance_id: string;
     name: string;
     rating: number;
     score: number;
-  };
-  player2: {
-    instance_id: string;
-    name: string;
-    rating: number;
-    score: number;
-  };
+  }];
+  type: number; // 1 for singles, 2 for doubles
   season_id: string;
   date: Date;
 }
@@ -30,6 +25,7 @@ export interface PucketsPlayerWithStats {
   rating: number;
   wins: number;
   losses: number;
+  draws: number;
   successive_wins: number;
   successive_losses: number;
   tier: number;

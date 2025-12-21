@@ -52,8 +52,8 @@ const RecordMatch: React.FC<RecordMatchProps> = ({ isOpen }) => {
     
         const activeSeasonId = activeSeason.season_id;
         setSeason(activeSeasonId);
-          // Fetch players
-  
+
+        // Fetch players
         const { data: playerData, error: playerError } = await supabase
           .schema('puckets')
           .from('player_instance')
@@ -70,6 +70,7 @@ const RecordMatch: React.FC<RecordMatchProps> = ({ isOpen }) => {
                   rating: player.rating,
                   wins: player.wins,
                   losses: player.losses,
+                  draws: player.draws,
                   successive_wins: player.successive_wins,
                   successive_losses: player.successive_loss,
                   tier: 0,

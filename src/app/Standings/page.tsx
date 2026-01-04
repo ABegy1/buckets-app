@@ -546,12 +546,12 @@ const StandingsPage: React.FC = () => {
                   <div key={playerIndex} className={styles.row}>
                     {/* Player Name and Icons */}
                     <div className={styles.playerNameColumn}>
-                      <div className={styles.playerName}>
-                        {/* Tier Color Indicator */}
-                        <span
-                          className={styles.colorCircle}
-                          style={{ backgroundColor: player.tier_color }}
-                        />
+                      <div
+                        className={styles.playerName}
+                        style={{
+                          backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
+                        }}
+                      >
                         <span className={styles.playerNameText}>{player.name}</span>
                         {player.name === 'A. Begy' && (
                           <span className={styles.crownIcon}>👑</span>

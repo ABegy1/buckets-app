@@ -487,13 +487,12 @@ const StandingsPage: React.FC = () => {
 
  return (
   <div className={styles.userContainer}>
-    <Header></Header>
+    <Header seasonTitle={`${season.season_name} Standings`} />
 
     {/* Main Content Section */}
     <main className={styles.userContent}>
         {/* Standings View*/}
         <div className={styles.container}>
-          <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
           <div className={styles.teams}>
             {teams.map((team, index) => (
               <div key={index} className={styles.team}>

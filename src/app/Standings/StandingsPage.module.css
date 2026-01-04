@@ -198,7 +198,21 @@
   text-align: center;
   font-size: 2rem;
   font-weight: bold;
+  margin: 0;
+}
+
+.teamHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.teamLogo {
+  width: auto;
+  height: 48px;
+  object-fit: contain;
 }
 
 /* Header row for player stats */

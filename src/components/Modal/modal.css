@@ -110,6 +110,20 @@
   letter-spacing: 0.5px;
 }
 
+.shots-left-dashes {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.shots-left-dash {
+  width: 20px;
+  height: 5px;
+  border-radius: 999px;
+  background-color: #52606d;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 /* General button styles */
 .modal-content button {
   background-color: #f0f0f0;
@@ -123,15 +137,15 @@
 }
 
 .submit-button {
-  background-color: #28a745;
-  border-color: #218838;
+  background-color: #f97316;
+  border-color: #ea580c;
   color: #ffffff;
   font-weight: 600;
 }
 
 .submit-button:hover {
-  background-color: #218838;
-  border-color: #1e7e34;
+  background-color: #ea580c;
+  border-color: #c2410c;
 }
 .moneyball-indicator {
   display: flex;
@@ -160,6 +174,12 @@
 
 .modal-content button.selected:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
 }
 
 /* Moneyball button - base styling */
@@ -273,7 +293,7 @@
 }
 
 .actions button {
-  width: 100%;
+  flex: 1;
   padding: 20px 0;
   font-size: 1.2rem;
   font-weight: 700;
@@ -283,16 +303,16 @@
 .submit-button {
   align-self: center;
   padding: 18px 40px;
-  background-color: #22c55e;
+  background-color: #f97316;
   color: #ffffff;
-  border: 2px solid #15803d;
+  border: 2px solid #ea580c;
   font-size: 1.15rem;
   font-weight: 700;
   min-width: 180px;
 }
 
 .submit-button:hover {
-  background-color: #16a34a;
+  background-color: #ea580c;
   color: #ffffff;
 }
 

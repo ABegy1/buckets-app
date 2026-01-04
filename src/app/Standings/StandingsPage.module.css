@@ -205,16 +205,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 6px 0;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .teamLogo {
   width: auto;
-  height: 72px;
+  height: 48px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 /* Header row for player stats */

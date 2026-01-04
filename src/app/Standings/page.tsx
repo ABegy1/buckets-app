@@ -515,8 +515,8 @@ const StandingsPage: React.FC = () => {
                       className={styles.teamLogo}
                       src={teamLogoMap[team.team_name]}
                       alt={`${team.team_name} logo`}
-                      width={72}
-                      height={72}
+                      width={48}
+                      height={48}
                     />
                   )}
                   <h2 className={styles.teamTitle}>{team.team_name}</h2>

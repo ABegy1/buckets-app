@@ -132,7 +132,6 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         player_id: newPlayer.player_id,
         season_id: seasonId,
         shots_left: shotCount,
-        shots_left_dashes: 0,
         score: 0,
       });
 

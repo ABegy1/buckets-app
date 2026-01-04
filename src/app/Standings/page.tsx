@@ -29,7 +29,6 @@ interface TeamWithPlayers {
     tier_color: string | undefined;
     name: string;
     shots_left: number;
-    shots_left_dashes: number;
     player_score: number;
     pps: number;
     reached_score_at: string | null;
@@ -279,7 +278,7 @@ const StandingsPage: React.FC = () => {
             visiblePlayers.map(async (player: any) => {
               const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
-                .select('player_instance_id, shots_left, score, shots_left_dashes')
+                .select('player_instance_id, shots_left, score')
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
@@ -296,7 +295,6 @@ const StandingsPage: React.FC = () => {
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
-                shots_left_dashes: playerInstance.shots_left_dashes ?? 0,
                 player_score: playerInstance.score,
                 shots_taken: shotsTaken,
                 pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
@@ -577,13 +575,6 @@ const StandingsPage: React.FC = () => {
                     <span className={styles.totalPoints}>{player.player_score}</span>
                   <div className={styles.shotsLeft}>
                     <span className={styles.shotsLeftValue}>{player.shots_left}</span>
-                    {player.shots_left_dashes > 0 && (
-                      <span className={styles.shotsLeftDashes} aria-label={`${player.shots_left_dashes} shots left dashes`}>
-                        {Array.from({ length: player.shots_left_dashes }).map((_, dashIndex) => (
-                          <span key={dashIndex} className={styles.shotsLeftDash} aria-hidden="true" />
-                        ))}
-                      </span>
-                    )}
                   </div>
                   <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>

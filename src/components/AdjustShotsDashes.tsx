@@ -57,7 +57,6 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
           .select(`
             player_id,
             player_instance_id,
-            shots_left_dashes,
             players (name)
           `)
           .eq('season_id', activeSeason.season_id)
@@ -66,7 +65,11 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
         if (playerError) {
           console.error('Error fetching player dash data:', playerError);
         } else {
-          setPlayers((playerData || []) as PlayerDashRow[]);
+          const hydratedPlayers = (playerData || []).map((player) => ({
+            ...(player as PlayerDashRow),
+            shots_left_dashes: 0,
+          }));
+          setPlayers(hydratedPlayers);
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -91,22 +94,6 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
     });
 
     setPlayers(updatedPlayers);
-
-    const playerToUpdate = updatedPlayers.find((player) => player.player_id === playerId);
-
-    if (!playerToUpdate) {
-      console.error('Player not found when adjusting dashes');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('player_instance')
-      .update({ shots_left_dashes: playerToUpdate.shots_left_dashes })
-      .eq('player_instance_id', playerToUpdate.player_instance_id);
-
-    if (error) {
-      console.error('Error updating shots left dashes:', error);
-    }
   };
 
   const resolvePlayerName = (player: PlayerDashRow) => {

@@ -53,8 +53,7 @@ export const playerInstanceTable = pgTable('player_instance', {
   teamId: integer('team_id')
     .notNull()
     .references(() => teamsTable.teamId, { onDelete: 'cascade' }),
-  shotsLeft: integer('shots_left').notNull(),
-  shotsLeftDashes: integer('shots_left_dashes').notNull().default(0)
+  shotsLeft: integer('shots_left').notNull()
 });
 
 export const shotsTable = pgTable('shots', {

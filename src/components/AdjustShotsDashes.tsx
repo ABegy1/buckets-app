@@ -19,7 +19,7 @@ interface PlayerDashRow {
   shots_left_dashes: number;
   players: {
     name: string;
-  };
+  }[];
 }
 
 const MIN_DASHES = 0;
@@ -122,7 +122,7 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
             <tbody>
               {players.map((player) => (
                 <tr key={player.player_id}>
-                  <td>{player.players?.name}</td>
+                  <td>{player.players?.[0]?.name}</td>
                   <td>
                     <button
                       onClick={() => handleAdjustDashes(player.player_id, -1)}

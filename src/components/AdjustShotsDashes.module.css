@@ -68,3 +68,39 @@
 .adjustShotsDashes button:hover:not(:disabled) {
   background-color: #0056b3;
 }
+
+.adjustShotsDashes .adjustControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adjustShotsDashes .dashCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adjustShotsDashes .countValue {
+  min-width: 22px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.adjustShotsDashes .dashMarks {
+  display: inline-flex;
+  gap: 6px;
+  color: #666;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.adjustShotsDashes .dashMark {
+  line-height: 1;
+}
+
+.adjustShotsDashes .emptyState {
+  padding: 24px;
+  color: #666;
+  font-style: italic;
+}

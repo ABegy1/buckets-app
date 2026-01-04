@@ -17,9 +17,14 @@ interface PlayerDashRow {
   player_id: number;
   player_instance_id: number;
   shots_left_dashes: number;
-  players: {
-    name: string;
-  }[];
+  players:
+    | {
+        name: string;
+      }
+    | {
+        name: string;
+      }[]
+    | null;
 }
 
 const MIN_DASHES = 0;
@@ -56,7 +61,7 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
             players (name)
           `)
           .eq('season_id', activeSeason.season_id)
-          .order('player_id', { ascending: true });
+          .order('name', { foreignTable: 'players', ascending: true });
 
         if (playerError) {
           console.error('Error fetching player dash data:', playerError);
@@ -104,6 +109,13 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
     }
   };
 
+  const resolvePlayerName = (player: PlayerDashRow) => {
+    if (Array.isArray(player.players)) {
+      return player.players[0]?.name ?? 'Unknown player';
+    }
+    return player.players?.name ?? 'Unknown player';
+  };
+
   return (
     <div className={styles.adjustShotsDashes}>
       <h2>Shots Left Dashes</h2>
@@ -117,29 +129,56 @@ const AdjustShotsDashes: React.FC<AdjustShotsDashesProps> = ({ isOpen }) => {
               <tr>
                 <th>Player</th>
                 <th>Dashes</th>
+                <th>Adjust</th>
               </tr>
             </thead>
             <tbody>
-              {players.map((player) => (
-                <tr key={player.player_id}>
-                  <td>{player.players?.[0]?.name}</td>
-                  <td>
-                    <button
-                      onClick={() => handleAdjustDashes(player.player_id, -1)}
-                      disabled={(player.shots_left_dashes ?? 0) <= MIN_DASHES}
-                    >
-                      -
-                    </button>
-                    {player.shots_left_dashes ?? 0}
-                    <button
-                      onClick={() => handleAdjustDashes(player.player_id, 1)}
-                      disabled={(player.shots_left_dashes ?? 0) >= MAX_DASHES}
-                    >
-                      +
-                    </button>
+              {players.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className={styles.emptyState}>
+                    No players found for the active season.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                players.map((player) => {
+                  const dashCount = player.shots_left_dashes ?? 0;
+                  return (
+                    <tr key={player.player_instance_id}>
+                      <td>{resolvePlayerName(player)}</td>
+                      <td>
+                        <div className={styles.dashCount}>
+                          <span className={styles.countValue}>{dashCount}</span>
+                          <span className={styles.dashMarks} aria-label={`${dashCount} dashes`}>
+                            {Array.from({ length: dashCount }).map((_, index) => (
+                              <span key={index} className={styles.dashMark}>
+                                —
+                              </span>
+                            ))}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className={styles.adjustControls}>
+                          <button
+                            onClick={() => handleAdjustDashes(player.player_id, -1)}
+                            disabled={dashCount <= MIN_DASHES}
+                            aria-label={`Remove dash from ${resolvePlayerName(player)}`}
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => handleAdjustDashes(player.player_id, 1)}
+                            disabled={dashCount >= MAX_DASHES}
+                            aria-label={`Add dash to ${resolvePlayerName(player)}`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -31,7 +31,8 @@
   flex-direction: column;
   position: relative;
   max-height: calc(100vh - 64px);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -145,6 +146,7 @@
 
 .contentWrapper {
   flex: 1;
+  min-height: 0;
   border: 1px dashed #e5e7eb;
   border-radius: 12px;
   padding: 16px;
@@ -153,6 +155,7 @@
 
 .content {
   flex: 1;
+  min-height: 0;
   padding: 4px;
   overflow-y: auto;
   background: white;

@@ -26,22 +26,30 @@
     height: 64px;
   }
   /* Navbar styling */
-  .navbar {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    background-color: #264653; /* Darker color for better contrast */
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 1300;
-  }
+.navbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: #264653; /* Darker color for better contrast */
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1300;
+}
+
+.seasonName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+  flex: 1;
+}
   .active {
     /* inverted color due to needing to invert the logo */
     border-bottom: 2px solid #000000; /* Highlight active tab */
@@ -55,9 +63,13 @@
   }
 
   @media (max-width: 900px) {
-    .navbarTitle {
-      font-size: 1.5rem;
-    }
+  .navbarTitle {
+    font-size: 1.5rem;
+  }
+
+  .seasonName {
+    font-size: 1.25rem;
+  }
 
     .navItem {
       width: 52px;
@@ -66,15 +78,20 @@
   }
 
   @media (max-width: 640px) {
-    .navbar {
-      justify-content: center;
-    }
+  .navbar {
+    justify-content: center;
+  }
 
-    .navMenu {
-      width: 100%;
-      justify-content: center;
-      gap: 0.35rem;
-    }
+  .navMenu {
+    width: 100%;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .seasonName {
+    width: 100%;
+    order: 2;
+  }
 
     .navItem {
       width: 48px;

@@ -120,13 +120,6 @@
   box-sizing: border-box;
 }
 
-.seasonTitle {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #264653; /* Updated color for consistency */
-  text-align: center;
-  margin-bottom: 20px;
-}
 
 /* Teams container */
 .teams {

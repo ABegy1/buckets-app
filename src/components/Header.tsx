@@ -3,7 +3,7 @@ import styles from "./Header.module.css"
 
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image'
-import bucketsLogo from "@/assets/images/buckets.png"
+import nblLogo from "@/assets/images/NBL Logo.png"
 import scoreLogo from "@/assets/images/add.png" 
 import standingsLogo from "@/assets/images/speedometer.png"
 import freeAgencyLogo from "@/assets/images/bench.png"
@@ -13,7 +13,11 @@ import userLogo from "@/assets/images/user.png"
 import adminLogo from "@/assets/images/administrator.png" 
 
 
-export default function Header() {
+interface HeaderProps {
+    seasonTitle?: string;
+}
+
+export default function Header({ seasonTitle }: HeaderProps) {
 
     const router = useRouter(); // Router for navigation
     const pathname = usePathname(); // Current pathname of the app
@@ -31,8 +35,8 @@ export default function Header() {
 
         <header className={styles.navbar}>
             <div className={styles.navMenu}>
-                <Image className={`${styles.navItem} invert`} 
-                            src={bucketsLogo}
+                <Image className={styles.navItem}
+                            src={nblLogo}
                             alt='Buckets!'
                             width="75"
                             height="75"
@@ -40,6 +44,9 @@ export default function Header() {
                 </Image>
                 <h1 className={`${styles.navbarTitle}`}>Buckets</h1>
             </div>
+            {seasonTitle ? (
+                <div className={styles.seasonName}>{seasonTitle}</div>
+            ) : null}
             <nav className={styles.navMenu}>
                 {/* Navigation Buttons */}
                 <div className="relative group">

@@ -99,6 +99,30 @@
   text-align: center;
 }
 
+.shotsLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shotsLeftValue {
+  font-weight: 600;
+}
+
+.shotsLeftDashes {
+  display: flex;
+  gap: 4px;
+}
+
+.shotsLeftDash {
+  width: 14px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: #1f2933;
+  display: inline-block;
+}
+
 /* Ensure that the columns are evenly spaced and aligned */
 .columnHeader {
   flex-basis: 25%;

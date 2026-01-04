@@ -5,8 +5,13 @@ import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
 import { useRouter } from 'next/navigation';
+import Image, { StaticImageData } from 'next/image';
 
 import Header from '@/components/Header';
+import direwolvesLogo from '@/assets/images/Direwolves - Clear BG (1).png';
+import monstarsLogo from '@/assets/images/Monstars - Clear BG.png';
+import nightmaresLogo from '@/assets/images/Nightmares - Clear BG Needs Fixed.png';
+import spartansLogo from '@/assets/images/Spartans-hoodie-illustrated-transparent-small.png';
 
 interface Team {
   team_id: number;
@@ -39,6 +44,13 @@ interface Season {
   shot_total: number;
   rules: string;
 }
+
+const teamLogoMap: Record<string, StaticImageData> = {
+  Direwolves: direwolvesLogo,
+  Monstars: monstarsLogo,
+  Nightmares: nightmaresLogo,
+  Spartans: spartansLogo,
+};
 
 
 
@@ -497,7 +509,18 @@ const StandingsPage: React.FC = () => {
             {teams.map((team, index) => (
               <div key={index} className={styles.team}>
                 {/* Team Title */}
-                <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                <div className={styles.teamHeader}>
+                  {teamLogoMap[team.team_name] && (
+                    <Image
+                      className={styles.teamLogo}
+                      src={teamLogoMap[team.team_name]}
+                      alt={`${team.team_name} logo`}
+                      width={72}
+                      height={72}
+                    />
+                  )}
+                  <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                </div>
                 <div className={styles.teamStatsGrid}>
                   <div className={styles.statBox}>
                     <span className={styles.statLabel}>Total Score</span>

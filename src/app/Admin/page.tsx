@@ -6,6 +6,7 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
+import AdminShotHistory from '@/components/AdminShotHistory';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
 
@@ -63,7 +64,7 @@ const AdminPage = () => {
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
   const [userView, setUserView] = useState<string>(''); // User's current view setting
 
-  const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
+  const pageOptions = ['Standings', 'FreeAgent', 'Rules', 'Shot History'];
 
   // 1. Verify user is admin
   useEffect(() => {
@@ -279,7 +280,7 @@ const AdminPage = () => {
       {/* Main Content */}
       <main className={styles.adminContent}>
         <div className={styles.container}>
-          <h2>{seasonName} Standings</h2>
+          <h2>{userView === 'Shot History' ? 'Shot History' : `${seasonName} Standings`}</h2>
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>
               Settings
@@ -299,29 +300,31 @@ const AdminPage = () => {
             </select>
           </div>
 
-          {/* 5. Display only players where is_hidden === false */}
-          <div className={styles.players}>
-           {tiers
-  .filter((tier) => tier.players.some((player) => !player.is_hidden))
-  .map((tier) => (
-    <div key={tier.tier_name} className={styles.column}>
-      <div className={styles.header}>{tier.tier_name}</div>
-      {tier.players
-        .filter((player) => !player.is_hidden)
-        .map((player) => (
-          <div
-            key={player.player_id}
-            className={styles.box}
-            onClick={() => handleOpenModal(player.player_id, player.name)}
-            style={{ color: tier.color }}
-          >
-            {player.name}
-          </div>
-        ))}
-    </div>
-))}
-
-          </div>
+          {userView === 'Shot History' ? (
+            <AdminShotHistory />
+          ) : (
+            <div className={styles.players}>
+              {tiers
+                .filter((tier) => tier.players.some((player) => !player.is_hidden))
+                .map((tier) => (
+                  <div key={tier.tier_name} className={styles.column}>
+                    <div className={styles.header}>{tier.tier_name}</div>
+                    {tier.players
+                      .filter((player) => !player.is_hidden)
+                      .map((player) => (
+                        <div
+                          key={player.player_id}
+                          className={styles.box}
+                          onClick={() => handleOpenModal(player.player_id, player.name)}
+                          style={{ color: tier.color }}
+                        >
+                          {player.name}
+                        </div>
+                      ))}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* Modals */}

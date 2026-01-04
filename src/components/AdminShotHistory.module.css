@@ -1,0 +1,87 @@
+.historySection {
+  grid-column: 1 / -1;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.historyHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.historyTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.historySubtitle {
+  margin: 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.historyTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.historyTable th,
+.historyTable td {
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.historyTable th {
+  font-weight: 600;
+  color: #1f2937;
+  background-color: #f9fafb;
+}
+
+.historyTable tbody tr:hover {
+  background-color: #f6f9fb;
+}
+
+.emptyState {
+  padding: 16px 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.undoButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.undoButton:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+.undoButton:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.statusMessage {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}

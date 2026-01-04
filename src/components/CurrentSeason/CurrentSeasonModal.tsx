@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './CurrentSeasonModal.module.css';
 import AdjustShots from '../AdjustShots';
+import AdjustShotsDashes from '../AdjustShotsDashes';
 import AdjustTeams from '../AdjustTeams';
 import AdjustScores from '../AdjustScores';
 import AdjustTiers from '../AdjustTier';
@@ -51,6 +52,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
 
   const controls = [
     { key: 'Adjust Shots', label: 'Adjust Shots', description: 'Update shot attempts and completions.' },
+    { key: 'Shots Left Dashes', label: 'Shots Left Dashes', description: 'Assign up to two dashes under shots left.' },
     { key: 'Teams', label: 'Team/Player Edit', description: 'Manage teams and player rosters.' },
     { key: 'Adjust Scores', label: 'Adjust Scores', description: 'Modify scores and results.' },
     { key: 'Tier Adjust', label: 'Tier Adjust', description: 'Reassign teams to tiers.' },
@@ -155,6 +157,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
         <div className={styles.contentWrapper}>
           <div className={styles.content}>
             {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
+            {activeTab === 'Shots Left Dashes' && <AdjustShotsDashes isOpen={isOpen} />}
             {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
             {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}
             {activeTab === 'Tier Adjust' && <AdjustTiers isOpen={isOpen} />}

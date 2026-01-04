@@ -26,8 +26,10 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [currentScore, setCurrentScore] = useState<number>(0); // Current score of the player
   const [tierId, setTierId] = useState<number | null>(null); // Tier ID of the player
   const [shotsLeft, setShotsLeft] = useState<number | null>(null); // Remaining shots for the player
+  const [shotsLeftDashes, setShotsLeftDashes] = useState<number | null>(null); // Remaining dash shots
   const [shotsTakenToday, setShotsTakenToday] = useState<number | null>(null); // Shots taken in the current calendar day
   const [todaysScore, setTodaysScore] = useState<number | null>(null); // Points earned today
+  const [useDash, setUseDash] = useState<boolean>(false); // Spend a dash on submit
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
   const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
   const sadsound = useMemo(() => new Howl({ src: ['/sounds/sadtrombone.mp3'] }), []); // Sound effect for sad events
@@ -65,8 +67,10 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setPlayerInstanceId(null);
     setTierId(null);
     setShotsLeft(null);
+    setShotsLeftDashes(null);
     setShotsTakenToday(null);
     setTodaysScore(null);
+    setUseDash(false);
   };
   const calculateShotsMadeInRow = async (playerInstanceId: number) => {
     try {
@@ -200,7 +204,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Fetch player instance details
       const { data: playerInstance, error: instanceError } = await supabase
         .from('player_instance')
-        .select('player_instance_id, score, shots_left')
+        .select('player_instance_id, score, shots_left, shots_left_dashes')
         .eq('player_id', playerId)
         .eq('season_id', currentSeason.season_id)
         .single();
@@ -214,6 +218,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       setPlayerInstanceId(playerInstance.player_instance_id);
       setCurrentScore(playerInstance.score);
       setShotsLeft(playerInstance.shots_left);
+      setShotsLeftDashes(playerInstance.shots_left_dashes ?? 0);
       fetchShotsTakenToday(playerInstance.player_instance_id);
 
       // Fetch the player's tier ID
@@ -260,6 +265,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setIsMoneyball(isMoneyballShot);
   }, [shotsLeft]);
 
+  useEffect(() => {
+    if (!shotsLeftDashes) {
+      setUseDash(false);
+    }
+  }, [shotsLeftDashes]);
+
   /**
    * Handles the submission of the shot and updates player data in the database.
    */
@@ -291,10 +302,15 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   
       const newScore = currentScore + finalPoints;
       const newShotsLeft = (shotsLeft || 0) - 1;
-  
+      const nextShotsLeftDashes = Math.max(0, (shotsLeftDashes ?? 0) - (useDash ? 1 : 0));
+
       const { error: updateScoreError } = await supabase
         .from('player_instance')
-        .update({ score: newScore, shots_left: newShotsLeft })
+        .update({
+          score: newScore,
+          shots_left: newShotsLeft,
+          shots_left_dashes: nextShotsLeftDashes,
+        })
         .eq('player_instance_id', playerInstanceId);
   
       if (updateScoreError) {
@@ -369,6 +385,17 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
                 </p>
               </div>
               <div className="stat-card">
+                <p className="stat-label">Dashes</p>
+                <p className="stat-value">{shotsLeftDashes !== null ? shotsLeftDashes : '...'}</p>
+                {shotsLeftDashes !== null && shotsLeftDashes > 0 && (
+                  <span className="shots-left-dashes" aria-label={`${shotsLeftDashes} shots left dashes`}>
+                    {Array.from({ length: shotsLeftDashes }).map((_, index) => (
+                      <span key={index} className="shots-left-dash" />
+                    ))}
+                  </span>
+                )}
+              </div>
+              <div className="stat-card">
                 <p className="stat-label">Shots Taken Today</p>
                 <p className="stat-value">{shotsTakenToday !== null ? shotsTakenToday : '...'}</p>
               </div>
@@ -384,6 +411,13 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             </div>
             <div className="actions">
               <button className={isDouble ? 'selected' : ''} onClick={() => setIsDouble(!isDouble)}>Double</button>
+              <button
+                className={useDash ? 'selected' : ''}
+                onClick={() => setUseDash((prev) => !prev)}
+                disabled={!shotsLeftDashes}
+              >
+                Use Dash
+              </button>
             </div>
             <button className="submit-button" onClick={handleSubmit}>Submit</button>
           </div>

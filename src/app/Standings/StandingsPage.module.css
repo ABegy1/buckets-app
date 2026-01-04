@@ -84,6 +84,9 @@
   gap: 6px;
   white-space: nowrap;
   overflow: visible;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #1f2933;
 }
 
 .playerNameText {
@@ -244,12 +247,6 @@
   min-width: 0;
 }
 
-.colorCircle {
-  width: 10px !important; /* Ensure width is enforced */
-  height: 10px !important; /* Ensure height is enforced */
-  border-radius: 50%;
-  margin-right: 8px;
-}
 .signOutButton:hover {
   background-color: #a11a1a;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);

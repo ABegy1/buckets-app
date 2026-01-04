@@ -113,13 +113,15 @@
 .shotsLeftDashes {
   display: flex;
   gap: 4px;
+  margin-top: 2px;
 }
 
 .shotsLeftDash {
-  width: 14px;
-  height: 3px;
+  width: 16px;
+  height: 4px;
   border-radius: 999px;
-  background-color: #1f2933;
+  background-color: #52606d;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   display: inline-block;
 }
 

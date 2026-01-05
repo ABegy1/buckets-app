@@ -53,6 +53,13 @@ const teamLogoMap: Record<string, StaticImageData> = {
   Spartans: spartansLogo,
 };
 
+const teamLogoSizeMap: Record<string, number> = {
+  Direwolves: 202,
+  Monstars: 202,
+  Nightmares: 202,
+  Spartans: 202,
+};
+
 const teamBorderClassMap: Record<string, string> = {
   Direwolves: styles.teamDirewolves,
   Monstars: styles.teamMonstars,
@@ -528,12 +535,11 @@ const StandingsPage: React.FC = () => {
                       className={styles.teamLogo}
                       src={teamLogoMap[team.team_name]}
                       alt={`${team.team_name} logo`}
-                      width={168}
-                      height={168}
-                      sizes="168px"
+                      width={teamLogoSizeMap[team.team_name] ?? 202}
+                      height={teamLogoSizeMap[team.team_name] ?? 202}
+                      sizes={`${teamLogoSizeMap[team.team_name] ?? 202}px`}
                     />
                   )}
-                  <h2 className={styles.teamTitle}>{team.team_name}</h2>
                 </div>
                 <div className={styles.teamStatsGrid}>
                   <div className={styles.statBox}>

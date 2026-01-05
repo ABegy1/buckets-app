@@ -243,25 +243,16 @@
   color: #264653;
 }
 
-/* Team title */
-.teamTitle {
-  text-align: center;
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 0;
-}
-
 .teamHeader {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
   margin-bottom: 14px;
 }
 
 .teamLogo {
   width: auto;
-  height: 168px;
+  height: 202px;
   object-fit: contain;
 }
 

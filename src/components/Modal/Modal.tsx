@@ -271,6 +271,17 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     }
   }, [shotsLeftDashes]);
 
+  const projectedPoints = useMemo(() => {
+    if (points === null) return null;
+
+    let finalPoints = points;
+
+    if (isMoneyball) finalPoints *= 2;
+    if (isDouble) finalPoints *= 2;
+
+    return finalPoints;
+  }, [points, isMoneyball, isDouble]);
+
   /**
    * Handles the submission of the shot and updates player data in the database.
    */
@@ -419,7 +430,13 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
                 Use Dash
               </button>
             </div>
-            <button className="submit-button" onClick={handleSubmit}>Submit</button>
+            <div className="submit-row">
+              <button className="submit-button" onClick={handleSubmit}>Submit</button>
+              <div className="projected-points" aria-live="polite">
+                <span className="projected-label">Projected Points</span>
+                <span className="projected-value">{projectedPoints ?? '--'}</span>
+              </div>
+            </div>
           </div>
 
           <div className="rules-section">

@@ -178,11 +178,32 @@
 .team {
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
+  border: 2px solid var(--team-border-primary, #ddd);
   padding: 15px;
   border-radius: 10px;
   background-color: #fafafa;
   box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--team-border-secondary, #ddd);
+}
+
+.teamNightmares {
+  --team-border-primary: #f4c542;
+  --team-border-secondary: #7a1e2c;
+}
+
+.teamDirewolves {
+  --team-border-primary: #f26a21;
+  --team-border-secondary: #0b1f3a;
+}
+
+.teamMonstars {
+  --team-border-primary: #3fae2a;
+  --team-border-secondary: #111111;
+}
+
+.teamSpartans {
+  --team-border-primary: #4b5320;
+  --team-border-secondary: #6b8e23;
 }
 
 .teamStatsGrid {

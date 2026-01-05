@@ -137,15 +137,15 @@
 }
 
 .submit-button {
-  background-color: #f97316;
-  border-color: #ea580c;
+  background-color: #3b82f6;
+  border-color: #2563eb;
   color: #ffffff;
   font-weight: 600;
 }
 
 .submit-button:hover {
-  background-color: #ea580c;
-  border-color: #c2410c;
+  background-color: #2563eb;
+  border-color: #1d4ed8;
 }
 .moneyball-indicator {
   display: flex;
@@ -300,20 +300,52 @@
   border-width: 2px;
 }
 
+.submit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
 .submit-button {
   align-self: center;
   padding: 18px 40px;
-  background-color: #f97316;
+  background-color: #3b82f6;
   color: #ffffff;
-  border: 2px solid #ea580c;
+  border: 2px solid #2563eb;
   font-size: 1.15rem;
   font-weight: 700;
   min-width: 180px;
 }
 
 .submit-button:hover {
-  background-color: #ea580c;
+  background-color: #2563eb;
   color: #ffffff;
+}
+
+.projected-points {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 160px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+.projected-label {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.projected-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .waiver-disclaimer {

@@ -55,7 +55,7 @@ const teamLogoMap: Record<string, StaticImageData> = {
 
 const teamLogoSizeMap: Record<string, number> = {
   Direwolves: 202,
-  Monstars: 202,
+  Monstars: 242,
   Nightmares: 202,
   Spartans: 202,
 };

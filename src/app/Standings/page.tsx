@@ -53,6 +53,13 @@ const teamLogoMap: Record<string, StaticImageData> = {
   Spartans: spartansLogo,
 };
 
+const teamBorderClassMap: Record<string, string> = {
+  Direwolves: styles.teamDirewolves,
+  Monstars: styles.teamMonstars,
+  Nightmares: styles.teamNightmares,
+  Spartans: styles.teamSpartans,
+};
+
 
 
 // Function to calculate the current streak of consecutive made shots
@@ -510,7 +517,10 @@ const StandingsPage: React.FC = () => {
         <div className={styles.container}>
           <div className={styles.teams}>
             {teams.map((team, index) => (
-              <div key={index} className={styles.team}>
+              <div
+                key={index}
+                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''}`}
+              >
                 {/* Team Title */}
                 <div className={styles.teamHeader}>
                   {teamLogoMap[team.team_name] && (

@@ -261,7 +261,12 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
    * Automatically set the Moneyball flag based on specific shot counts.
    */
   useEffect(() => {
-    const isMoneyballShot = [1, 11, 21, 31, 41].includes(shotsLeft || 0);
+    if (shotsLeft === null) {
+      setIsMoneyball(false);
+      return;
+    }
+
+    const isMoneyballShot = shotsLeft % 10 === 1;
     setIsMoneyball(isMoneyballShot);
   }, [shotsLeft]);
 
@@ -433,7 +438,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
             <div className="submit-row">
               <button className="submit-button" onClick={handleSubmit}>Submit</button>
               <div className="projected-points" aria-live="polite">
-                <span className="projected-label">Projected Points</span>
+                <span className="projected-label">Point Preview</span>
                 <span className="projected-value">{projectedPoints ?? '--'}</span>
               </div>
             </div>

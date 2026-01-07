@@ -457,3 +457,77 @@
   color: #555;
   font-weight: 500;
 }
+
+/* =========================
+   Compact Landscape Layouts
+========================= */
+@media (max-height: 820px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .modal-content {
+    padding: 16px 20px 20px;
+    max-height: 92vh;
+    gap: 8px;
+    font-size: 1rem;
+  }
+
+  .modal-title {
+    margin: 0 auto 4px;
+    font-size: 1.5rem;
+  }
+
+  .modal-body {
+    gap: 20px;
+  }
+
+  .score-section {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 10px 12px;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .points button {
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    min-height: 56px;
+  }
+
+  .actions button {
+    padding: 14px 0;
+    font-size: 1.05rem;
+    min-height: 52px;
+  }
+
+  .modal-content button.submit-button {
+    padding: 14px 28px;
+    font-size: 1.05rem;
+    min-height: 52px;
+  }
+
+  .projected-points {
+    padding: 8px 12px;
+    min-width: 140px;
+  }
+
+  .rules-section {
+    gap: 12px;
+  }
+
+  .rule-card {
+    padding: 12px 14px;
+  }
+
+  .rule-card li {
+    padding: 6px 8px;
+  }
+}

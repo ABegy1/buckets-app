@@ -1,0 +1,106 @@
+.adjustShotsDashes {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.adjustShotsDashes h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.adjustShotsDashes p {
+  text-align: center;
+  font-size: 1em;
+  color: #666;
+}
+
+.adjustShotsDashes .table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.adjustShotsDashes table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.adjustShotsDashes thead {
+  background-color: #f9f9f9;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.adjustShotsDashes th,
+.adjustShotsDashes td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.adjustShotsDashes tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.adjustShotsDashes button {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  background-color: #007BFF;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.adjustShotsDashes button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.adjustShotsDashes button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.adjustShotsDashes .adjustControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adjustShotsDashes .dashCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adjustShotsDashes .countValue {
+  min-width: 22px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.adjustShotsDashes .dashMarks {
+  display: inline-flex;
+  gap: 6px;
+  color: #666;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.adjustShotsDashes .dashMark {
+  line-height: 1;
+}
+
+.adjustShotsDashes .emptyState {
+  padding: 24px;
+  color: #666;
+  font-style: italic;
+}

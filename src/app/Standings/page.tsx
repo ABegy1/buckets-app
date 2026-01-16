@@ -1,33 +1,40 @@
 'use client'; // Required in Next.js App Router
-import React, { use, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
-import {eachDayOfInterval, startOfMonth, endOfMonth, isWeekend} from 'date-fns'
-import { usePathname, useRouter } from 'next/navigation';
-import { Howl } from 'howler';
-
-import { stat } from 'fs';
+import { useRouter } from 'next/navigation';
+import Image, { StaticImageData } from 'next/image';
 
 import Header from '@/components/Header';
+import direwolvesLogo from '@/assets/images/Direwolves - Clear BG (1).png';
+import monstarsLogo from '@/assets/images/Monstars - Clear BG.png';
+import nightmaresLogo from '@/assets/images/Nightmares - Clear BG Needs Fixed.png';
+import spartansLogo from '@/assets/images/Spartans-hoodie-illustrated-transparent-small.png';
 
 interface Team {
   team_id: number;
   team_name: string;
   team_score: number;
+  is_hidden?: boolean;
 }
 
 interface TeamWithPlayers {
   team_name: string;
   players: {
+    shots_taken: number;
     shots_made_in_row: number;
     shots_missed_in_row: number;
     tier_color: string | undefined;
     name: string;
     shots_left: number;
+    shots_left_dashes: number;
     player_score: number;
+    pps: number;
+    reached_score_at: string | null;
   }[];
+  team_pps: number;
   total_shots: number;
   team_score: number;
 }
@@ -38,6 +45,27 @@ interface Season {
   shot_total: number;
   rules: string;
 }
+
+const teamLogoMap: Record<string, StaticImageData> = {
+  Direwolves: direwolvesLogo,
+  Monstars: monstarsLogo,
+  Nightmares: nightmaresLogo,
+  Spartans: spartansLogo,
+};
+
+const teamLogoSizeMap: Record<string, number> = {
+  Direwolves: 202,
+  Monstars: 242,
+  Nightmares: 202,
+  Spartans: 202,
+};
+
+const teamBorderClassMap: Record<string, string> = {
+  Direwolves: styles.teamDirewolves,
+  Monstars: styles.teamMonstars,
+  Nightmares: styles.teamNightmares,
+  Spartans: styles.teamSpartans,
+};
 
 
 
@@ -70,31 +98,58 @@ const calculateShotsMadeInRow = async (playerInstanceId: number) => {
 };
 
 
-// Function to calculate the current streak of consecutive missed shots
-const calculateShotsMissedInRow = async (playerInstanceId: number) => {
+const calculateShotDetails = async (
+  playerInstanceId: number,
+  targetScore: number,
+) => {
   try {
     const { data: shots, error: shotsError } = await supabase
       .from('shots')
-      .select('result')
+      .select('result, shot_date')
       .eq('instance_id', playerInstanceId)
       .order('shot_date', { ascending: true });
 
     if (shotsError || !shots) throw shotsError;
 
-    // Walk backwards from most recent shot
+    let makeStreak = 0;
     let missStreak = 0;
+    let cumulativeScore = 0;
+    let reachedScoreAt: string | null = null;
+
     for (let i = shots.length - 1; i >= 0; i--) {
-      if (shots[i].result === 0) {
+      const shotResult = Number(shots[i].result) || 0;
+      if (shotResult !== 0) {
+        makeStreak++;
+      } else {
+        break;
+      }
+    }
+
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const shotResult = Number(shots[i].result) || 0;
+      if (shotResult === 0) {
         missStreak++;
       } else {
         break;
       }
     }
 
-    return missStreak;
+    shots.forEach((shot) => {
+      const shotResult = Number(shot.result) || 0;
+      cumulativeScore += shotResult;
+      if (!reachedScoreAt && cumulativeScore >= targetScore) {
+        reachedScoreAt = shot.shot_date;
+      }
+    });
+
+    return {
+      shotsMadeInRow: makeStreak,
+      shotsMissedInRow: missStreak,
+      reachedScoreAt,
+    };
   } catch (error) {
-    console.error('Error calculating shots missed in a row:', error);
-    return 0;
+    console.error('Error calculating shot details:', error);
+    return { shotsMadeInRow: 0, shotsMissedInRow: 0, reachedScoreAt: null };
   }
 };
 
@@ -107,20 +162,23 @@ const updateTeamScores = async () => {
       .from('seasons')
       .select('season_id')
       .is('end_date', null)
-      .single();
+      .maybeSingle();
 
-    if (seasonError || !activeSeason) throw seasonError;
+    if (seasonError) throw seasonError;
+    if (!activeSeason) return;
     const activeSeasonId = activeSeason.season_id;
 
     // Fetch all teams
     const { data: teamsData, error: teamsError } = await supabase
       .from('teams')
-      .select('team_id, team_score');
+      .select('team_id, team_score, is_hidden');
 
     if (teamsError) throw teamsError;
 
+    const visibleTeams = (teamsData || []).filter((team: any) => !team.is_hidden);
+
     await Promise.all(
-      teamsData.map(async (team: any) => {
+      visibleTeams.map(async (team: any) => {
         // Fetch players for the current team
         const { data: players, error: playersError } = await supabase
           .from('players')
@@ -164,20 +222,6 @@ const updateTeamScores = async () => {
   }
 };
 
-//function to calculate the waiver waterline based on the number of valid shooting days in the month
-const calculateWaiverWaterline = (date: Date, shotTotal: number): number =>{
-  //get an array of dates containing the days left in the month
-  const daysInMonth = eachDayOfInterval({
-    start: date,
-    end: endOfMonth(date),
-  });
-
-  // get the number of business days remaining in the month. TODO: turn shotsPerDay and business day toggle into settings in a settings page
-  const remainingBusinessDays =  daysInMonth.filter(day => !isWeekend(day)).length;
-  const shotsPerDay = 4;
-  return remainingBusinessDays*shotsPerDay > shotTotal? shotTotal: remainingBusinessDays*shotsPerDay;
-}
-
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
@@ -188,7 +232,6 @@ const StandingsPage: React.FC = () => {
   shot_total: -1,
   rules: ''
  }); // Current season info
- const [waiverWaterline, setWaiverWaterline] = useState<number>(0); // Remaining shooting days in season
  const router = useRouter(); // Router for navigation
 
   /**
@@ -215,64 +258,100 @@ const StandingsPage: React.FC = () => {
         .from('seasons')
         .select('season_id, season_name, shot_total, rules')
         .is('end_date', null)
-        .single();
-  
-      if (seasonError || !activeSeason) throw seasonError;
-  
+        .maybeSingle();
+
+      if (seasonError) throw seasonError;
+      if (!activeSeason) {
+        setSeason({ season_id: -1, season_name: 'No Active Season', shot_total: 0, rules: '' });
+        setTeams([]);
+        return;
+      }
+
       const activeSeasonId = activeSeason.season_id;
       setSeason(activeSeason);
         // Fetch teams
 
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('team_name, team_score, team_id');
-  
+        .select('team_name, team_score, team_id, is_hidden');
+
       if (teamsError) throw teamsError;
+      const visibleTeams = (teamsData || []).filter((team) => !team.is_hidden);
         // Enrich teams with their players and stats
 
       const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        teamsData.map(async (team: any) => {
+        visibleTeams.map(async (team: any) => {
           const { data: players, error: playersError } = await supabase
             .from('players')
             .select('*, tiers(color)')
             .eq('team_id', team.team_id);
           if (playersError) throw playersError;
-  
+
+          const visiblePlayers = (players || []).filter((player: any) => !player.is_hidden);
+
           const playersWithStats = await Promise.all(
-            players.map(async (player: any) => {
+            visiblePlayers.map(async (player: any) => {
               const { data: playerInstance, error: piError } = await supabase
                 .from('player_instance')
-                .select('player_instance_id, shots_left, score')
+                .select('player_instance_id, shots_left, shots_left_dashes, score')
                 .eq('player_id', player.player_id)
                 .eq('season_id', activeSeasonId)
                 .single();
-  
+
               if (piError || !playerInstance) throw piError;
               // Calculate streaks
 
-              const shotsMadeInRow = await calculateShotsMadeInRow(playerInstance.player_instance_id);
-              const shotsMissedInRow = await calculateShotsMissedInRow(playerInstance.player_instance_id);
+              const { shotsMadeInRow, shotsMissedInRow, reachedScoreAt } = await calculateShotDetails(
+                playerInstance.player_instance_id,
+                playerInstance.score,
+              );
               console.log(shotsMadeInRow, shotsMissedInRow);
+              const shotsTaken = Math.max(0, activeSeason.shot_total - playerInstance.shots_left);
+              const shotsLeftDashes = Math.max(0, Math.min(2, playerInstance.shots_left_dashes ?? 0));
               return {
                 name: player.name,
                 shots_left: playerInstance.shots_left,
+                shots_left_dashes: shotsLeftDashes,
                 player_score: playerInstance.score,
+                shots_taken: shotsTaken,
+                pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
                 tier_color: player.tiers?.color || '#000',
                 shots_made_in_row: shotsMadeInRow,
                 shots_missed_in_row: shotsMissedInRow,
+                reached_score_at: reachedScoreAt,
               };
             })
           );
-  
-          // Sort players by their score, descending
-          playersWithStats.sort((a, b) => b.player_score - a.player_score);
+
+          // Sort players by their score, descending. Break ties with PPS and then by who reached the score first.
+          playersWithStats.sort((a, b) => {
+            if (b.player_score !== a.player_score) {
+              return b.player_score - a.player_score;
+            }
+
+            if (b.pps !== a.pps) {
+              return b.pps - a.pps;
+            }
+
+            const aReachedScoreAt = a.reached_score_at ? new Date(a.reached_score_at).getTime() : Infinity;
+            const bReachedScoreAt = b.reached_score_at ? new Date(b.reached_score_at).getTime() : Infinity;
+
+            if (aReachedScoreAt !== bReachedScoreAt) {
+              return aReachedScoreAt - bReachedScoreAt;
+            }
+
+            return a.name.localeCompare(b.name);
+          });
           // Calculate total shots left for the team
 
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
-  
+          const totalShotsTaken = playersWithStats.reduce((acc, player) => acc + player.shots_taken, 0);
+          const teamPointsPerShot = totalShotsTaken > 0 ? team.team_score / totalShotsTaken : 0;
+
           return {
             team_name: team.team_name,
             players: playersWithStats,
+            team_pps: teamPointsPerShot,
             total_shots: totalShots,
             team_score: team.team_score,
           };
@@ -435,72 +514,68 @@ const StandingsPage: React.FC = () => {
       };
   }, [userView ]);
 
-/**
- * Set up timers for updating the waiver waterline every day
- */
-  useEffect(() => {
-    const now = new Date();
-const midnight = new Date(
-  now.getFullYear(),
-  now.getMonth(),
-  now.getDate() + 1,
-  0, 0, 0, 0
-);
-const timeUntilMidnight = midnight.getTime() - now.getTime(); 
-
-
-    const timeout = setTimeout(() => {
-      //calculate waterline at the next midnight from mount
-      setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-      console.log("Setting waterline on first midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-      // calculate waterline every day at midnight after first midnight from mount
-      const interval = setInterval(() => {
-        setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-        console.log("Setting waterline every midnight to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-      }, 24 * 60 * 60 * 1000); //every 24 hours
-
-      return () => clearInterval(interval);
-    }, timeUntilMidnight);
-
-    //calculate waterline on mount
-    setWaiverWaterline(calculateWaiverWaterline(new Date(), season.shot_total));
-    console.log("Setting waterline on mount to : ", calculateWaiverWaterline(new Date(), season.shot_total));
-
-    return () => clearTimeout(timeout);
-  }, [season.shot_total]);
-
  return (
   <div className={styles.userContainer}>
-    <Header></Header>
+    <Header seasonTitle={`${season.season_name} Standings`} />
 
     {/* Main Content Section */}
     <main className={styles.userContent}>
         {/* Standings View*/}
         <div className={styles.container}>
-          <h2 className={styles.seasonTitle}>{season.season_name} Standings</h2>
           <div className={styles.teams}>
             {teams.map((team, index) => (
-              <div key={index} className={styles.team}>
+              <div
+                key={index}
+                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''}`}
+              >
                 {/* Team Title */}
-                <h2 className={styles.teamTitle}>{team.team_name}</h2>
+                <div className={styles.teamHeader}>
+                  {teamLogoMap[team.team_name] && (
+                    <Image
+                      className={styles.teamLogo}
+                      src={teamLogoMap[team.team_name]}
+                      alt={`${team.team_name} logo`}
+                      width={teamLogoSizeMap[team.team_name] ?? 202}
+                      height={teamLogoSizeMap[team.team_name] ?? 202}
+                      sizes={`${teamLogoSizeMap[team.team_name] ?? 202}px`}
+                    />
+                  )}
+                </div>
+                <div className={styles.teamStatsGrid}>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Total Score</span>
+                    <span className={styles.statValue}>{team.team_score}</span>
+                  </div>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>Shots Left</span>
+                    <span className={styles.statValue}>{team.total_shots}</span>
+                  </div>
+                  <div className={styles.statBox}>
+                    <span className={styles.statLabel}>PPS</span>
+                    <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
+                  </div>
+                </div>
                 {/* Table Headers */}
                 <div className={styles.row}>
                   <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Shots Left</span>
-                  <span className={styles.columnHeader}>Total Points</span>
+                  <span className={styles.columnHeader}>Score</span>
+                  <span className={styles.columnHeader}>SL</span>
+                  <span className={styles.columnHeader}>PPS</span>
                 </div>
                 {team.players.map((player, playerIndex) => (
                   <div key={playerIndex} className={styles.row}>
                     {/* Player Name and Icons */}
                     <div className={styles.playerNameColumn}>
-                      <div className={styles.playerName}>
-                        {/* Tier Color Indicator */}
-                        <span
-                          className={styles.colorCircle}
-                          style={{ backgroundColor: player.tier_color }}
-                        />
-                        <span>{player.name}</span>
-                        
+                      <div
+                        className={styles.playerName}
+                        style={{
+                          backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
+                        }}
+                      >
+                        <span className={styles.playerNameText}>{player.name}</span>
+                        {player.name === 'A. Begy' && (
+                          <span className={styles.crownIcon}>👑</span>
+                        )}
                         {/* Fire Icon: 3+ Consecutive Makes */}
                         {player.shots_made_in_row >= 3 && (
                           <span className={styles.fireIcon}>
@@ -515,31 +590,27 @@ const timeUntilMidnight = midnight.getTime() - now.getTime();
                           </span>
                         )}
                       </div>
-                    </div>
-                    {/* Player Stats */}
-                    <span className={styles.shotsLeft}>{player.shots_left}</span>
-                    <span className={styles.totalPoints}>{player.player_score}</span>
                   </div>
-                ))}
-                {/* Team Stats */}
-                <div className={styles.teamStats}>
-                  <span>Team Shots Remaining: {team.total_shots}</span>
-                  <span>Team Score: {team.team_score}</span>
+                    {/* Player Stats */}
+                    <span className={styles.totalPoints}>{player.player_score}</span>
+                  <div className={styles.shotsLeft}>
+                    <span className={styles.shotsLeftValue}>{player.shots_left}</span>
+                    {player.shots_left_dashes > 0 && (
+                      <span
+                        className={styles.shotsLeftDashes}
+                        aria-label={`${player.shots_left_dashes} shots left dashes`}
+                      >
+                        {Array.from({ length: player.shots_left_dashes }).map((_, index) => (
+                          <span key={index} className={styles.shotsLeftDash} />
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
+              ))}
               </div>
             ))}
-          </div>
-          <div className={styles.summary}>
-            <div className={styles.summaryHeader}>
-              <span>Total Shots Remaining</span>
-              <span>Total Score</span>
-              <span>Waiver Waterline</span>
-            </div>
-            <div className={styles.totalStats}>
-              <span>{teams.reduce((a, index) => a + index.total_shots, 0)}</span>
-              <span>{teams.reduce((a, index) => a + index.team_score, 0)}</span>
-              <span>{waiverWaterline}</span>
-            </div>
           </div>
         </div>
     </main>

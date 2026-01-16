@@ -6,11 +6,7 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
-<<<<<<< HEAD
 import PucketsMatchModal from '@/components/PucketsMatch/PucketsMatchModal'
-=======
-import AdminShotHistory from '@/components/AdminShotHistory';
->>>>>>> main
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
 
@@ -25,31 +21,9 @@ interface TierWithPlayers {
   color: string;
   players: Player[];
 }
-
-const getSortableLastName = (name: string) => {
-  const trimmedName = name.trim();
-  const nameParts = trimmedName.split(/\s+/);
-
-  if (nameParts.length === 1) return trimmedName;
-
-  return nameParts[nameParts.length - 1];
-};
-
-const sortPlayersByName = (players: Player[] = []) =>
-  [...players].sort((a, b) => {
-    const lastNameComparison = getSortableLastName(a.name).localeCompare(
-      getSortableLastName(b.name),
-      undefined,
-      { sensitivity: 'base' },
-    );
-
-    if (lastNameComparison !== 0) return lastNameComparison;
-
-    return a.name.localeCompare(b.name);
-  });
 /**
  * AdminPage Component
- *
+ * 
  * This component serves as the admin dashboard for managing various aspects of the application.
  * It displays the current season's standings, allows the admin to view player details.
  */
@@ -69,7 +43,7 @@ const AdminPage = () => {
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
   const [userView, setUserView] = useState<string>(''); // User's current view setting
 
-  const pageOptions = ['Standings', 'FreeAgent', 'Rules', 'Shot History'];
+  const pageOptions = ['Standings', 'FreeAgent', 'Rules'];
 
   // 1. Verify user is admin
   useEffect(() => {
@@ -129,12 +103,7 @@ const AdminPage = () => {
       if (tiersError) {
         console.error('Error fetching tiers:', tiersError);
       } else {
-        const sortedTiers = (tiersData || []).map((tier) => ({
-          ...tier,
-          players: sortPlayersByName(tier.players || []),
-        }));
-
-        setTiers(sortedTiers); // Update state with fetched data
+        setTiers(tiersData || []); // Update state with fetched data
       }
     };
 
@@ -296,7 +265,7 @@ const AdminPage = () => {
       {/* Main Content */}
       <main className={styles.adminContent}>
         <div className={styles.container}>
-          <h2>{userView === 'Shot History' ? 'Shot History' : `${seasonName} Standings`}</h2>
+          <h2>{seasonName} Standings</h2>
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>
               Settings
@@ -319,31 +288,26 @@ const AdminPage = () => {
             </select>
           </div>
 
-          {userView === 'Shot History' ? (
-            <AdminShotHistory />
-          ) : (
-            <div className={styles.players}>
-              {tiers
-                .filter((tier) => tier.players.some((player) => !player.is_hidden))
-                .map((tier) => (
-                  <div key={tier.tier_name} className={styles.column}>
-                    <div className={styles.header}>{tier.tier_name}</div>
-                    {tier.players
-                      .filter((player) => !player.is_hidden)
-                      .map((player) => (
-                        <div
-                          key={player.player_id}
-                          className={styles.box}
-                          onClick={() => handleOpenModal(player.player_id, player.name)}
-                          style={{ color: tier.color }}
-                        >
-                          {player.name}
-                        </div>
-                      ))}
-                  </div>
-                ))}
-            </div>
-          )}
+          {/* 5. Display only players where is_hidden === false */}
+          <div className={styles.players}>
+            {tiers.map((tier) => (
+              <div key={tier.tier_name} className={styles.column}>
+                <div className={styles.header}>{tier.tier_name}</div>
+                {tier.players
+                  .filter((player) => !player.is_hidden) // only show players who are NOT hidden
+                  .map((player) => (
+                    <div
+                      key={player.player_id}
+                      className={styles.box}
+                      onClick={() => handleOpenModal(player.player_id, player.name)}
+                      style={{ color: tier.color }} // Apply tier color to player name
+                    >
+                      {player.name}
+                    </div>
+                  ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Modals */}

@@ -3,9 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css';
 import { supabase } from '@/supabaseClient';
 import { PostgrestError } from '@supabase/supabase-js';
-import EditTeamModal from './EditTeamModal';
 import EditTierModal from './EditTierModal';
-import EditPlayerModal from './EditPlayerModal';
 
 interface NextSeasonModalProps {
   isOpen: boolean;
@@ -23,46 +21,65 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   const [teams, setTeams] = useState<any[]>([]); // List of teams
   const [tiers, setTiers] = useState<any[]>([]); // List of tiers
   const [players, setPlayers] = useState<any[]>([]); // List of players
+  const [initialTeams, setInitialTeams] = useState<any[]>([]);
+  const [initialTiers, setInitialTiers] = useState<any[]>([]);
+  const [initialPlayers, setInitialPlayers] = useState<any[]>([]);
   const [shotCount, setShotCount] = useState<number>(40); // Default shot count for the new season
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
   const [seasonName, setSeasonName] = useState<string>(''); // Name of the upcoming season
   const [seasonRules, setSeasonRules] = useState<string>(''); // Rules for the new season
+  const [isTeamTournament, setIsTeamTournament] = useState<boolean>(true); // Track whether the season is a team tournament
+  const [isFfaTournament, setIsFfaTournament] = useState<boolean>(false); // Track whether the season is a free-for-all tournament
+  const shouldRecordStats = isTeamTournament || isFfaTournament;
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   // Modals state
-  const [isEditPlayerModalOpen, setEditPlayerModalOpen] = useState<boolean>(false);
-  const [isEditTeamModalOpen, setEditTeamModalOpen] = useState<boolean>(false);
   const [isEditTierModalOpen, setEditTierModalOpen] = useState<boolean>(false);
 
   // Selected items for editing
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<any>(null);
+  const [draggedTierId, setDraggedTierId] = useState<number | null>(null);
    /**
    * Effect: Fetch data when the modal opens.
    * This includes teams, tiers, and players data, and sets up real-time subscriptions.
    */
-   useEffect(() => {
+  useEffect(() => {
     if (!isOpen) return;
+
+    // Default to recording stats so seasons remain official unless explicitly disabled
+    setIsTeamTournament(true);
+    setIsFfaTournament(false);
 
     // Fetch teams from the database
     const fetchTeams = async () => {
       const { data, error } = await supabase.from('teams').select('*');
       if (error) console.error('Error fetching teams:', error);
-      else setTeams(data || []);
+      else {
+        const normalizedTeams = (data || []).map((team) => ({ ...team, is_hidden: team.is_hidden ?? false }));
+        setTeams(normalizedTeams);
+        setInitialTeams(normalizedTeams);
+      }
     };
 
     // Fetch tiers from the database
     const fetchTiers = async () => {
       const { data, error } = await supabase.from('tiers').select('*');
       if (error) console.error('Error fetching tiers:', error);
-      else setTiers(data || []);
+      else {
+        setTiers(data || []);
+        setInitialTiers(data || []);
+      }
     };
 
     // Fetch players from the database
     const fetchPlayers = async () => {
       const { data, error } = await supabase.from('players').select('*');
       if (error) console.error('Error fetching players:', error);
-      else setPlayers(data || []);
+      else {
+        const normalizedPlayers = (data || []).map((player) => ({ ...player, is_hidden: player.is_hidden ?? false }));
+        setPlayers(normalizedPlayers);
+        setInitialPlayers(normalizedPlayers);
+      }
     };
 
     //Fetch the active season rules from the database
@@ -71,82 +88,64 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           .from('seasons')
           .select('season_id, rules')
           .is('end_date', null)
-          .single();
-        if (error || !activeSeason) {
+          .maybeSingle();
+        if (error) {
           console.error('Error fetching season data:', error);
           return;
         }
-        else setSeasonRules(activeSeason.rules); // Set the current rules
+        if (activeSeason) {
+          setSeasonRules(activeSeason.rules); // Set the current rules
+        }
     };
 
     fetchTeams();
     fetchTiers();
     fetchPlayers();
     fetchSeasonData();
-
-    // Set up real-time subscriptions for teams, tiers, and players
-    const teamChannel = supabase
-      .channel('team-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeams)
-      .subscribe();
-    const tierChannel = supabase
-      .channel('tier-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiers)
-      .subscribe();
-    const playerChannel = supabase
-      .channel('player-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchPlayers)
-      .subscribe();
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      supabase.removeChannel(teamChannel);
-      supabase.removeChannel(tierChannel);
-      supabase.removeChannel(playerChannel);
-    };
   }, [isOpen]);
 
  /**
-   * Handles adding a new team to the database.
-   * The team name is auto-generated based on the number of existing teams.
-   */
- const handleAddTeam = async () => {
-  const { error } = await supabase.from('teams').insert([{ team_name: `New Team ${teams.length + 1}` }]);
-  if (error) console.error('Error adding team:', error);
-};
+ * Handles adding a new team to the database.
+  * The team name is auto-generated based on the number of existing teams.
+  */
+  const handleAddTeam = async () => {
+    const newTeam = {
+      team_id: `temp-team-${Date.now()}`,
+      team_name: `New Team ${teams.length + 1}`,
+      is_hidden: false,
+    };
+    setTeams((prevTeams) => [...prevTeams, newTeam]);
+  };
 
    /**
    * Handles deleting a team from the database by its ID.
    * @param teamId - The ID of the team to delete.
    */
-   const handleDeleteTeam = async (teamId: number) => {
-    const { error } = await supabase.from('teams').delete().eq('team_id', teamId);
-    if (error) console.error('Error deleting team:', error);
+  const handleDeleteTeam = async (teamId: number) => {
+    setTeams((prevTeams) => prevTeams.filter((team) => team.team_id !== teamId));
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.team_id === teamId ? { ...player, team_id: null, is_free_agent: true } : player
+      )
+    );
   };
- /**
-   * Opens the modal for editing a specific team.
-   * @param team - The team to edit.
-   */
- const handleOpenEditTeamModal = (team: any) => {
-  setSelectedTeam(team);
-  setEditTeamModalOpen(true);
-};
 
- /**
-   * Closes the team editing modal and clears the selected team.
-   */
- const handleCloseEditTeamModal = () => {
-  setSelectedTeam(null);
-  setEditTeamModalOpen(false);
-};
+  const handleTeamFieldChange = (teamId: number, updates: Record<string, any>) => {
+    setTeams((prevTeams) => prevTeams.map((team) => (team.team_id === teamId ? { ...team, ...updates } : team)));
+  };
 
   /**
    * Handles adding a new tier to the database.
    * The tier name is auto-generated based on the number of existing tiers, with a default color.
    */
   const handleAddTier = async () => {
-    const { error } = await supabase.from('tiers').insert([{ tier_name: `New Tier ${tiers.length + 1}`, color: '#000000' }]);
-    if (error) console.error('Error adding tier:', error);
+    const newTier = {
+      tier_id: `temp-tier-${Date.now()}`,
+      tier_name: `New Tier ${tiers.length + 1}`,
+      color: '#000000',
+    };
+
+    setTiers((prev) => [...prev, newTier]);
   };
 
 
@@ -164,8 +163,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
    * @param tierId - The ID of the tier to delete.
    */
   const handleDeleteTier = async (tierId: number) => {
-    const { error } = await supabase.from('tiers').delete().eq('tier_id', tierId);
-    if (error) console.error('Error deleting tier:', error);
+    setTiers((prevTiers) => prevTiers.filter((tier) => tier.tier_id !== tierId));
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.tier_id === tierId ? { ...player, tier_id: tiers.find((t) => t.tier_id !== tierId)?.tier_id } : player
+      )
+    );
   };
 
  /**
@@ -191,41 +194,80 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       console.error('No available tiers to assign to the player.');
       return;
     }
-  
-    const { error } = await supabase
-      .from('players')
-      .insert([{ 
-        name: `Player ${players.length + 1}`, 
-        tier_id: tiers[0]?.tier_id || 1,  
-        team_id: isFreeAgent ? null : teams[0]?.team_id || null, 
-        is_free_agent: isFreeAgent 
-      }]);
-  
-    if (error) {
-      console.error('Error adding player:', error);
-    }
+
+    const newPlayer = {
+      player_id: `temp-player-${Date.now()}`,
+      name: `Player ${players.length + 1}`,
+      tier_id: tiers[0]?.tier_id || null,
+      team_id: isFreeAgent ? null : teams[0]?.team_id || null,
+      is_free_agent: isFreeAgent,
+      is_hidden: false,
+    };
+
+    setPlayers((prev) => [...prev, newPlayer]);
   };
 
   const handleDeletePlayer = async (playerId: number) => {
-    const { error } = await supabase.from('players').delete().eq('player_id', playerId);
-    if (error) console.error('Error deleting player:', error);
-  };
-
-  const handleOpenEditPlayerModal = (player: any) => {
-    setSelectedPlayer(player);
-    setEditPlayerModalOpen(true);
-  };
-
-  const handleCloseEditPlayerModal = () => {
-    setSelectedPlayer(null);
-    setEditPlayerModalOpen(false);
+    setPlayers((prevPlayers) => prevPlayers.filter((player) => player.player_id !== playerId));
   };
 
   const handleShotCountChange = (change: number) => {
     setShotCount(shotCount + change);
   };
 
-  const closeOutCurrentSeason = async (seasonId: number) => {
+  const isTempId = (id: any) => typeof id === 'string' && id.startsWith('temp-');
+  const resolveMappedId = (value: any, map: Map<string, number>) => {
+    if (value === null || value === undefined) return null;
+    if (isTempId(value)) {
+      return map.get(value) ?? null;
+    }
+    return value;
+  };
+
+  const handleReorderTier = (targetTierId: number) => {
+    setTiers((prevTiers) => {
+      if (draggedTierId === null || draggedTierId === targetTierId) return prevTiers;
+
+      const updated = [...prevTiers];
+      const fromIndex = updated.findIndex((tier) => tier.tier_id === draggedTierId);
+      const toIndex = updated.findIndex((tier) => tier.tier_id === targetTierId);
+
+      if (fromIndex === -1 || toIndex === -1) return prevTiers;
+
+      const [movedTier] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, movedTier);
+
+      return updated;
+    });
+  };
+
+  const handleUpdatePlayerFields = async (playerId: number, updates: Record<string, any>) => {
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((player) =>
+        player.player_id === playerId
+          ? {
+              ...player,
+              ...updates,
+            }
+          : player
+      )
+    );
+  };
+
+  const handlePlayerTeamChange = async (playerId: number, teamValue: string) => {
+    if (teamValue === 'free-agent') {
+      await handleUpdatePlayerFields(playerId, { team_id: null, is_free_agent: true });
+      return;
+    }
+
+    await handleUpdatePlayerFields(playerId, { team_id: teamValue, is_free_agent: false });
+  };
+
+  const handlePlayerTierChange = async (playerId: number, tierValue: string) => {
+    await handleUpdatePlayerFields(playerId, { tier_id: tierValue });
+  };
+
+  const closeOutCurrentSeason = async (seasonId: number, isOfficialSeason: boolean) => {
     console.log('Closing out season ID:', seasonId);
   
     // Retrieve the season shot total for calculating shots taken
@@ -233,26 +275,51 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .from('seasons')
       .select('shot_total')
       .eq('season_id', seasonId)
-      .single();
-  
+      .maybeSingle();
+
     if (seasonError) handleError(seasonError, 'Failed to retrieve current season');
     if (!currentSeason) handleError(null, 'Current season data is null');
     const seasonShotTotal = currentSeason ? currentSeason.shot_total || 0 : 0;
+
+    if (!isOfficialSeason) {
+      const currentDate = new Date().toISOString();
+      const { error: closeSeasonError } = await supabase
+        .from('seasons')
+        .update({ end_date: currentDate })
+        .eq('season_id', seasonId);
+
+      if (closeSeasonError) handleError(closeSeasonError, 'Failed to close the current season');
+      return;
+    }
+
+    const { data: playerRecords, error: playersError } = await supabase
+      .from('players')
+      .select('player_id, is_free_agent');
+
+    if (playersError) handleError(playersError, 'Failed to retrieve player records');
+
+    const eligiblePlayerIds = new Set(
+      (playerRecords || [])
+        .filter((player) => !player.is_free_agent)
+        .map((player) => player.player_id),
+    );
   
     // Step 1: Calculate team and player stats for the current season
     // Find the team with the highest score
     const { data: highestScoringTeam, error: highestTeamError } = await supabase
-      .from('teams')
-      .select('team_id')
-      .order('team_score', { ascending: false })
-      .limit(1)
-      .single();
+  .from('teams')
+  .select('team_id')
+  .gt('team_score', 0) // Only consider teams that scored
+  .order('team_score', { ascending: false })
+  .limit(1)
+  .maybeSingle(); // Avoid crash if no teams scored
+
   
     if (highestTeamError) handleError(highestTeamError, 'Failed to retrieve highest scoring team');
   
-    if (!highestScoringTeam) {
-      console.warn('No highest scoring team found.');
-    } else {
+    if (!highestScoringTeam || highestScoringTeam.team_id === null) {
+  console.warn('No winning team found this season — skipping team_wins increment.');
+} else {
       // Get player IDs on the winning team
       const { data: teamPlayers, error: teamPlayersError } = await supabase
         .from('players')
@@ -270,12 +337,13 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
             .from('stats')
             .select('team_wins')
             .eq('player_id', player.player_id)
-            .single();
+            .maybeSingle();
   
           if (playerStatsError) handleError(playerStatsError, 'Failed to retrieve player stats');
-          if (!playerStats) {
-            handleError(null, `Player stats not found for player ID ${player.player_id}`);
-          } else {
+         if (!playerStats) {
+            console.warn(`No stats found for player ID ${player.player_id} — skipping team_wins increment.`);
+            continue; // go to next player
+} else {
             const currentTeamWins = playerStats.team_wins || 0;
             const newTeamWins = currentTeamWins + 1;
   
@@ -297,10 +365,10 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
       .eq('season_id', seasonId)
       .order('score', { ascending: false })
       .limit(1)
-      .single();
-  
+      .maybeSingle();
+
     if (topPlayerError) handleError(topPlayerError, 'Failed to retrieve top scoring player');
-  
+
     if (!topScoringPlayer) {
       console.warn('No top scoring player found for this season.');
     } else {
@@ -309,20 +377,20 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         .from('stats')
         .select('mvp_awards')
         .eq('player_id', topScoringPlayer.player_id)
-        .single();
-  
+        .maybeSingle();
+
       if (mvpStatsError) handleError(mvpStatsError, 'Failed to retrieve MVP stats');
       if (!mvpStats) {
-        handleError(null, `MVP stats not found for player ID ${topScoringPlayer.player_id}`);
+        console.warn(`MVP stats not found for player ID ${topScoringPlayer.player_id} — skipping MVP update.`);
       } else {
         const currentMvpAwards = mvpStats.mvp_awards || 0;
         const newMvpAwards = currentMvpAwards + 1;
-  
+
         const { error: updateMvpError } = await supabase
           .from('stats')
           .update({ mvp_awards: newMvpAwards })
           .eq('player_id', topScoringPlayer.player_id);
-  
+
         if (updateMvpError) handleError(updateMvpError, 'Failed to update MVP awards');
       }
     }
@@ -351,7 +419,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
     }
     if (!playerInstances) return;
 
-    for (const instance of playerInstances) {
+    const filteredPlayerInstances =
+      eligiblePlayerIds.size > 0
+        ? playerInstances.filter((instance) => eligiblePlayerIds.has(instance.player_id))
+        : playerInstances;
+
+    for (const instance of filteredPlayerInstances) {
       const playerId = instance.player_id;
       if (!statsByPlayer[playerId]) {
         statsByPlayer[playerId] = {
@@ -370,7 +443,12 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
     // Update player stats
     if (!playerStatsList) return;
-    for (const playerStat of playerStatsList) {
+    const eligiblePlayerStatsList =
+      eligiblePlayerIds.size > 0
+        ? playerStatsList.filter((player) => eligiblePlayerIds.has(player.player_id))
+        : playerStatsList;
+
+    for (const playerStat of eligiblePlayerStatsList) {
       const playerId = playerStat.player_id;
       const stats = statsByPlayer[playerId];
   
@@ -506,6 +584,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         end_date: null,
         shot_total: shotCount,
         rules: seasonRules || 'Default Rules',
+        is_official: shouldRecordStats,
       })
       .select();
   
@@ -520,58 +599,243 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
   
   // Handle the submission to close out the current season and start a new one
   const handleSubmit = async () => {
+    setIsProcessing(true);
+    let closedSeasonId: number | null = null;
+    let startedSeasonId: number | null = null;
     try {
       // Fetch the current active season
       const { data: currentSeason, error: currentSeasonError } = await supabase
         .from('seasons')
-        .select('season_id, end_date')
+        .select('season_id, end_date, is_official')
         .order('start_date', { ascending: false })
         .limit(1)
-        .single();
-  
+        .maybeSingle();
+
       if (currentSeasonError) handleError(currentSeasonError, 'Failed to retrieve current season');
-      if (!currentSeason) throw new Error('Current season data is null');
-      if (currentSeason.end_date) throw new Error('No active season to close out.');
-  
-      const seasonId = currentSeason.season_id;
-  
-      // Step 1: Close out the current season
-      await closeOutCurrentSeason(seasonId);
-  
-      // Step 2: Create a new season
+
+      if (currentSeason && !currentSeason.end_date) {
+        const seasonId = currentSeason.season_id;
+
+        // Step 1: Close out the current season
+        await closeOutCurrentSeason(seasonId, Boolean(currentSeason.is_official));
+        closedSeasonId = seasonId;
+      }
+
+      // Step 2: Apply roster updates
+      const newTeamIdMap = new Map<string, number>();
+      const newTierIdMap = new Map<string, number>();
+
+      const teamsToAdd = teams.filter((team) => isTempId(team.team_id));
+      await Promise.all(
+        teamsToAdd.map(async (team) => {
+          const { data: insertedTeam, error } = await supabase
+            .from('teams')
+            .insert({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add team');
+          if (insertedTeam) {
+            newTeamIdMap.set(team.team_id, insertedTeam.team_id);
+          }
+        })
+      );
+
+      const tiersToAdd = tiers.filter((tier) => isTempId(tier.tier_id));
+      await Promise.all(
+        tiersToAdd.map(async (tier) => {
+          const { data: insertedTier, error } = await supabase
+            .from('tiers')
+            .insert({ tier_name: tier.tier_name, color: tier.color })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add tier');
+          if (insertedTier) {
+            newTierIdMap.set(tier.tier_id, insertedTier.tier_id);
+          }
+        })
+      );
+
+      const teamsToUpdate = teams.filter(
+        (team) =>
+          !isTempId(team.team_id) &&
+          initialTeams.some(
+            (initialTeam) =>
+              initialTeam.team_id === team.team_id &&
+              (initialTeam.team_name !== team.team_name || initialTeam.is_hidden !== team.is_hidden)
+          )
+      );
+      await Promise.all(
+        teamsToUpdate.map(async (team) => {
+          const { error } = await supabase
+            .from('teams')
+            .update({ team_name: team.team_name, is_hidden: team.is_hidden ?? false })
+            .eq('team_id', team.team_id);
+          if (error) handleError(error, 'Failed to update team');
+        })
+      );
+
+      const tiersToUpdate = tiers.filter(
+        (tier) =>
+          !isTempId(tier.tier_id) &&
+          initialTiers.some(
+            (initialTier) =>
+              initialTier.tier_id === tier.tier_id &&
+              (initialTier.tier_name !== tier.tier_name || initialTier.color !== tier.color)
+          )
+      );
+      await Promise.all(
+        tiersToUpdate.map(async (tier) => {
+          const { error } = await supabase
+            .from('tiers')
+            .update({ tier_name: tier.tier_name, color: tier.color })
+            .eq('tier_id', tier.tier_id);
+          if (error) handleError(error, 'Failed to update tier');
+        })
+      );
+
+      const teamIdsToDelete = initialTeams
+        .filter((team) => !teams.some((currentTeam) => currentTeam.team_id === team.team_id))
+        .map((team) => team.team_id);
+      if (teamIdsToDelete.length) {
+        const { error } = await supabase.from('teams').delete().in('team_id', teamIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete teams');
+      }
+
+      const tierIdsToDelete = initialTiers
+        .filter((tier) => !tiers.some((currentTier) => currentTier.tier_id === tier.tier_id))
+        .map((tier) => tier.tier_id);
+      if (tierIdsToDelete.length) {
+        const { error } = await supabase.from('tiers').delete().in('tier_id', tierIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete tiers');
+      }
+
+      const playersToAdd = players.filter((player) => isTempId(player.player_id));
+      const newPlayerIdMap = new Map<string, number>();
+      await Promise.all(
+        playersToAdd.map(async (player) => {
+          const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+          const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+          const { data: insertedPlayer, error } = await supabase
+            .from('players')
+            .insert({
+              name: player.name,
+              tier_id: resolvedTierId,
+              team_id: player.is_free_agent ? null : resolvedTeamId,
+              is_free_agent: player.is_free_agent,
+              is_hidden: player.is_hidden ?? false,
+            })
+            .select()
+            .maybeSingle();
+          if (error) handleError(error, 'Failed to add player');
+          if (insertedPlayer) {
+            newPlayerIdMap.set(player.player_id, insertedPlayer.player_id);
+          }
+        })
+      );
+
+      const playersToUpdate = players.filter((player) => {
+        if (isTempId(player.player_id)) return false;
+        const initialPlayer = initialPlayers.find((p) => p.player_id === player.player_id);
+        if (!initialPlayer) return false;
+        return (
+          initialPlayer.name !== player.name ||
+          initialPlayer.team_id !== resolveMappedId(player.team_id, newTeamIdMap) ||
+          initialPlayer.tier_id !== resolveMappedId(player.tier_id, newTierIdMap) ||
+          initialPlayer.is_free_agent !== player.is_free_agent ||
+          initialPlayer.is_hidden !== player.is_hidden
+        );
+      });
+
+      await Promise.all(
+        playersToUpdate.map(async (player) => {
+          const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+          const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+          const { error } = await supabase
+            .from('players')
+            .update({
+              name: player.name,
+              tier_id: resolvedTierId,
+              team_id: player.is_free_agent ? null : resolvedTeamId,
+              is_free_agent: player.is_free_agent,
+              is_hidden: player.is_hidden ?? false,
+            })
+            .eq('player_id', player.player_id);
+          if (error) handleError(error, 'Failed to update player');
+        })
+      );
+
+      const playerIdsToDelete = initialPlayers
+        .filter((player) => !players.some((currentPlayer) => currentPlayer.player_id === player.player_id))
+        .map((player) => player.player_id);
+      if (playerIdsToDelete.length) {
+        const { error } = await supabase.from('players').delete().in('player_id', playerIdsToDelete as number[]);
+        if (error) handleError(error, 'Failed to delete players');
+      }
+
+      const finalPlayers = players.map((player) => {
+        const resolvedTeamId = resolveMappedId(player.team_id, newTeamIdMap);
+        const resolvedTierId = resolveMappedId(player.tier_id, newTierIdMap);
+        const finalPlayerId = isTempId(player.player_id)
+          ? newPlayerIdMap.get(player.player_id as string) ?? null
+          : player.player_id;
+
+        return {
+          ...player,
+          player_id: finalPlayerId,
+          team_id: player.is_free_agent ? null : resolvedTeamId,
+          tier_id: resolvedTierId,
+        };
+      }).filter((player) => player.player_id !== null);
+
+      // Step 3: Create a new season
       const newSeasonId = await createNewSeason();
       if (!newSeasonId) throw new Error('Failed to start a new season.');
-  
-      // Step 3: Create new player instances for the new season in bulk
-      if (!players || players.length === 0) {
-        throw new Error('No players available to create new instances.');
+      startedSeasonId = newSeasonId;
+
+      // Step 4: Create new player instances for the new season in bulk
+      if (finalPlayers.length > 0) {
+        const playerInstances = finalPlayers.map((player) => ({
+          player_id: player.player_id,
+          season_id: newSeasonId,
+          shots_left: shotCount,
+          score: 0,
+        }));
+
+        const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
+
+        if (playerInstanceError)
+          handleError(playerInstanceError, 'Failed to create player instances for the new season');
       }
-  
-      const playerInstances = players.map((player) => ({
-        player_id: player.player_id,
-        season_id: newSeasonId,
-        shots_left: shotCount,
-        score: 0,
-      }));
-  
-      const { error: playerInstanceError } = await supabase.from('player_instance').insert(playerInstances);
-  
-      if (playerInstanceError)
-        handleError(playerInstanceError, 'Failed to create player instances for the new season');
-  
+
       // Close modal and notify parent component
       onClose();
       onStartSeason();
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      // Optionally handle user feedback for the error here
+      if (closedSeasonId && !startedSeasonId) {
+        const { error: reopenError } = await supabase
+          .from('seasons')
+          .update({ end_date: null })
+          .eq('season_id', closedSeasonId);
+        if (reopenError) {
+          console.error('Failed to reopen the previous season after an error:', reopenError);
+        }
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
   // Check if the modal should be rendered. If `isOpen` is false, return null to avoid rendering.
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalBackdrop} aria-modal="true" role="dialog" tabIndex={-1}>
+    <div
+      className={styles.modalBackdrop}
+      aria-modal="true"
+      role="dialog"
+      tabIndex={-1}
+      aria-label="Plan next season"
+    >
       <div className={styles.modal}>
         {/* Close button to close the modal */}
         <button onClick={onClose} className={styles.closeButton}>X</button>
@@ -602,85 +866,193 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
           />
         </div>
 
-        {/* Teams Management Section */}
-        <div className={styles.listSection}>
-          <h3>Teams</h3>
-          <div className={styles.scrollableList}>
-            {teams.map((team) => (
-              <div key={team.team_id} className={styles.listItem}>
-                {team.team_name}
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditTeamModal(team)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteTeam(team.team_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+        <div className={styles.formSection}>
+          <label>Competition Format</label>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggleControl} htmlFor="teamTournament">
+              <input
+                id="teamTournament"
+                aria-label="Team Tournament"
+                className={styles.toggleInput}
+                type="checkbox"
+                checked={isTeamTournament}
+                onChange={(e) => setIsTeamTournament(e.target.checked)}
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+            <span className={styles.toggleText}>Team Tournament</span>
           </div>
-          <button className={styles.addButton} onClick={handleAddTeam}>
-            Add Team
-          </button>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggleControl} htmlFor="ffaTournament">
+              <input
+                id="ffaTournament"
+                aria-label="FFA (Free for All) Tournament"
+                className={styles.toggleInput}
+                type="checkbox"
+                checked={isFfaTournament}
+                onChange={(e) => setIsFfaTournament(e.target.checked)}
+              />
+              <span className={styles.toggleTrack} aria-hidden="true" />
+            </label>
+            <span className={styles.toggleText}>FFA Tournament (Free for All)</span>
+          </div>
+          <p className={styles.helperText}>
+            Player stats are recorded when either tournament option is enabled. Leave both unchecked for draft seasons; their stats
+            will be cleared when the next season starts.
+          </p>
         </div>
 
-        {/* Tiers Management Section */}
-        <div className={styles.listSection}>
-          <h3>Tiers</h3>
-          <div className={styles.scrollableList}>
-            {tiers.map((tier) => (
-              <div key={tier.tier_id} className={styles.listItem}>
-                {tier.tier_name} (Color: {tier.color})
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditTierModal(tier)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteTier(tier.tier_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+        <div className={styles.modalGrid}>
+          {/* Teams Management Section */}
+          <div className={styles.listSection}>
+            <div className={styles.sectionHeader}>
+              <h3>Teams</h3>
+              <button className={styles.addButton} onClick={handleAddTeam}>
+                Add Team
+              </button>
+            </div>
+            <div className={styles.scrollableList}>
+              {teams.map((team) => (
+                <div key={team.team_id} className={styles.listItem}>
+                  <input
+                    className={styles.inlineInput}
+                    value={team.team_name}
+                    onChange={(e) => handleTeamFieldChange(team.team_id, { team_name: e.target.value })}
+                    aria-label={`Edit ${team.team_name} name`}
+                  />
+                  <div className={styles.itemActions}>
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={team.is_hidden || false}
+                        onChange={(e) => handleTeamFieldChange(team.team_id, { is_hidden: e.target.checked })}
+                      />
+                      Hide from standings
+                    </label>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteTeam(team.team_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <button className={styles.addButton} onClick={handleAddTier}>
-            Add Tier
-          </button>
+
+          {/* Tiers Management Section */}
+          <div className={styles.listSection}>
+            <div className={styles.sectionHeader}>
+              <h3>Tiers</h3>
+              <button className={styles.addButton} onClick={handleAddTier}>
+                Add Tier
+              </button>
+            </div>
+            <div className={styles.scrollableList}>
+              {tiers.map((tier) => (
+                <div
+                  key={tier.tier_id}
+                  className={styles.listItem}
+                  draggable
+                  onDragStart={() => setDraggedTierId(tier.tier_id)}
+                  onDragEnter={() => handleReorderTier(tier.tier_id)}
+                  onDragEnd={() => setDraggedTierId(null)}
+                >
+                  <span className={styles.dragHandle} aria-label="Reorder tier">
+                    ⋮⋮
+                  </span>
+                  <span className={styles.tierDetails}>
+                    {tier.tier_name} (Color: {tier.color})
+                  </span>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => handleOpenEditTierModal(tier)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteTier(tier.tier_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Players Management Section */}
         <div className={styles.listSection}>
-          <h3>Players</h3>
-          <div className={styles.scrollableList}>
-            {players.map((player) => (
-              <div key={player.player_id} className={styles.listItem}>
-                {player.name}
-                <button
-                  className={styles.editButton}
-                  onClick={() => handleOpenEditPlayerModal(player)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeletePlayer(player.player_id)}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+          <div className={styles.sectionHeader}>
+            <h3>Players</h3>
+            <button className={styles.addButton} onClick={handleAddPlayer}>
+              Add Player
+            </button>
           </div>
-          <button className={styles.addButton} onClick={handleAddPlayer}>
-            Add Player
-          </button>
+          <div className={styles.playersTable}>
+            <div className={styles.playersHeader}>
+              <span>Name</span>
+              <span>Team</span>
+              <span>Tier</span>
+              <span>Visibility</span>
+              <span className={styles.headerActions}>Actions</span>
+            </div>
+            <div className={styles.playersBody}>
+              {players.map((player) => (
+                <div key={player.player_id} className={styles.playersRow}>
+                  <input
+                    className={styles.inlineInput}
+                    value={player.name}
+                    onChange={(e) => handleUpdatePlayerFields(player.player_id, { name: e.target.value })}
+                    aria-label={`Edit name for ${player.name}`}
+                  />
+                  <select
+                    value={player.is_free_agent ? 'free-agent' : player.team_id ?? 'free-agent'}
+                    onChange={(e) => handlePlayerTeamChange(player.player_id, e.target.value)}
+                    aria-label={`Change team for ${player.name}`}
+                  >
+                    <option value="free-agent">Free Agent</option>
+                    {teams.map((team) => (
+                      <option key={team.team_id} value={team.team_id}>
+                        {team.team_name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={player.tier_id}
+                    onChange={(e) => handlePlayerTierChange(player.player_id, e.target.value)}
+                    aria-label={`Change tier for ${player.name}`}
+                  >
+                    {tiers.map((tier) => (
+                      <option key={tier.tier_id} value={tier.tier_id}>
+                        {tier.tier_name}
+                      </option>
+                    ))}
+                  </select>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={player.is_hidden || false}
+                      onChange={(e) => handleUpdatePlayerFields(player.player_id, { is_hidden: e.target.checked })}
+                    />
+                    Hide from standings
+                  </label>
+                  <div className={styles.itemActions}>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeletePlayer(player.player_id)}
+                    >
+                      X
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Shot Count Adjustment Section */}
@@ -694,39 +1066,9 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         </div>
 
         {/* Submit Button */}
-        <button className={styles.globalButton} onClick={handleSubmit}>
+        <button className={styles.globalButton} onClick={handleSubmit} disabled={isProcessing}>
           Start Season
         </button>
-
-        {/* Edit Player Modal */}
-        {isEditPlayerModalOpen && (
-          <EditPlayerModal
-            isOpen={isEditPlayerModalOpen}
-            onClose={handleCloseEditPlayerModal}
-            player={selectedPlayer}
-            tiers={tiers}
-            teams={teams}
-            onUpdate={(updatedPlayer) => {
-              setPlayers((prevPlayers) =>
-                prevPlayers.map((p) => (p.player_id === updatedPlayer.player_id ? updatedPlayer : p))
-              );
-            }}
-          />
-        )}
-
-        {/* Edit Team Modal */}
-        {isEditTeamModalOpen && (
-          <EditTeamModal
-            isOpen={isEditTeamModalOpen}
-            onClose={handleCloseEditTeamModal}
-            team={selectedTeam}
-            onUpdate={(updatedTeam) => {
-              setTeams((prevTeams) =>
-                prevTeams.map((t) => (t.team_id === updatedTeam.team_id ? updatedTeam : t))
-              );
-            }}
-          />
-        )}
 
         {/* Edit Tier Modal */}
         {isEditTierModalOpen && (

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from './NextSeason.module.css'; // Import CSS module for styling
-import { supabase } from '@/supabaseClient'; // Supabase client for database interactions
 
 /**
  * Props interface for the EditTeamModal component
@@ -42,19 +41,9 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({
    * Updates the team's name in the database and triggers the `onUpdate` callback.
    */
   const handleUpdateTeam = async () => {
-    // Update the team name in the Supabase database
-    const { error } = await supabase
-      .from('teams')
-      .update({ team_name: teamName }) // Update only the team name
-      .eq('team_id', team.team_id); // Match the team by its ID
-
-    if (error) {
-      console.error('Error updating team:', error); // Log any errors
-    } else {
-      // Trigger the `onUpdate` callback with the updated team data
-      onUpdate({ ...team, team_name: teamName });
-      onClose(); // Close the modal after saving
-    }
+    // Trigger the `onUpdate` callback with the updated team data
+    onUpdate({ ...team, team_name: teamName });
+    onClose(); // Close the modal after saving
   };
 
   // Render nothing if the modal is not open

@@ -146,37 +146,21 @@
 }
 
 .players {
-   grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  justify-content: stretch;
-  align-items: start;
+  grid-column: span 4;
+  display: flex;
+  justify-content: space-around;
   margin-bottom: 20px;
-  width: 100%;
 }
-
-
 
 /* Column for players */
 .column {
-   display: flex;
+  display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  min-width: 260px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: white;
+  align-items: center;
 }
 
-
 .header {
-  grid-column: 1 / -1;
   font-weight: bold;
-  font-size: 1.2rem;
-  text-align: center;
   margin-bottom: 10px;
 }
 
@@ -184,20 +168,15 @@
   border: 1px solid #ccc;
   padding: 10px;
   border-radius: 8px;
+  width: 100px;
   text-align: center;
-  background-color: #fafafa;
+  margin-bottom: 10px;
   transition: background-color 0.3s ease;
-  display: flex;
-  justify-content: center;
-  white-space: nowrap;
 }
-
-
 
 .box:hover {
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
 }
-
 
 /* Top right section, e.g. for additional buttons */
 .topRight {

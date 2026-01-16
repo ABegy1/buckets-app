@@ -121,6 +121,23 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
   };
 
   /**
+   * Ensures an empty player name defaults to "Unknown Player" on blur.
+   *
+   * @param playerId - The ID of the player being validated.
+   */
+  const handlePlayerNameBlur = (playerId: number) => {
+    const player = players.find((p) => p.player_id === playerId);
+
+    if (!player) return;
+
+    const trimmedName = (player.name || '').trim();
+
+    if (trimmedName === '') {
+      handlePlayerNameChange(playerId, 'Unknown Player');
+    }
+  };
+
+  /**
    * Toggles a player's visibility (`is_hidden`).
    *
    * @param playerId - The ID of the player being updated.
@@ -194,8 +211,10 @@ const AdjustTeams: React.FC<AdjustTeamsProps> = ({ isOpen }) => {
                       <td>
                         <input
                           type="text"
-                          value={player.name || 'Unknown Player'}
+                          value={player.name ?? ''}
+                          placeholder="Unknown Player"
                           onChange={(e) => handlePlayerNameChange(player.player_id, e.target.value)}
+                          onBlur={() => handlePlayerNameBlur(player.player_id)}
                         />
                       </td>
                       <td>

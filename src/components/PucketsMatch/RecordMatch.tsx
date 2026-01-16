@@ -1,6 +1,6 @@
 'use server'
 
-import { Match } from '@/app/Puckets/page';
+import { Match } from '@/app/Puckets/Standings/page';
 import { revalidateTag } from 'next/cache';
 import { supabase } from '@/supabaseClient'; // Supabase client import
 import { ConsoleLogWriter } from 'drizzle-orm';

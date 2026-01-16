@@ -6,11 +6,8 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
-<<<<<<< HEAD
 import PucketsMatchModal from '@/components/PucketsMatch/PucketsMatchModal'
-=======
 import AdminShotHistory from '@/components/AdminShotHistory';
->>>>>>> main
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
 

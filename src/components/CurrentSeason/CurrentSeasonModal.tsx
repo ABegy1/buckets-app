@@ -7,7 +7,6 @@ import AdjustScores from '../AdjustScores';
 import AdjustTiers from '../AdjustTier';
 import AddPlayers from '../AddPlayers';
 import AdjustRules from '../AdjustRules';
-import AdjustMonthlyShotLimit from '../AdjustMonthlyShotLimit';
 
 // Type definition for the component's props
 interface CurrentSeasonModalProps {
@@ -53,7 +52,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
 
   const controls = [
     { key: 'Adjust Shots', label: 'Adjust Shots', description: 'Update shot attempts and completions.' },
-    { key: 'Monthly Shot Limit', label: 'Monthly Shot Limit', description: 'Update the monthly shot cap for players.' },
     { key: 'Shots Left Dashes', label: 'Shots Left Dashes', description: 'Assign up to two dashes under shots left.' },
     { key: 'Teams', label: 'Team/Player Edit', description: 'Manage teams and player rosters.' },
     { key: 'Adjust Scores', label: 'Adjust Scores', description: 'Modify scores and results.' },
@@ -159,7 +157,6 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
         <div className={styles.contentWrapper}>
           <div className={styles.content}>
             {activeTab === 'Adjust Shots' && <AdjustShots isOpen={isOpen} />}
-            {activeTab === 'Monthly Shot Limit' && <AdjustMonthlyShotLimit isOpen={isOpen} />}
             {activeTab === 'Shots Left Dashes' && <AdjustShotsDashes isOpen={isOpen} />}
             {activeTab === 'Teams' && <AdjustTeams isOpen={isOpen} />}
             {activeTab === 'Adjust Scores' && <AdjustScores isOpen={isOpen} />}

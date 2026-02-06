@@ -32,33 +32,6 @@
   font-size: 1.1rem;
 }
 
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.monthly-shots-left {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.monthly-shots-value {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #1d4ed8;
-}
-
 .modal-title {
   margin: 4px auto 8px;
   font-size: 1.8rem;
@@ -285,6 +258,7 @@
 .close-button {
   position: sticky;
   top: 0;
+  align-self: flex-end;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 50%;

@@ -18,7 +18,6 @@ interface ModalProps {
  * and handling specific shot scenarios like Moneyball or Double points.
  */
 const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
-  const defaultMonthlyShotLimit = 40;
   // State variables for managing modal interactions and player data
   const [points, setPoints] = useState<number | null>(null); // Points for the shot
   const [isMoneyball, setIsMoneyball] = useState<boolean>(false); // Tracks if the current shot is a Moneyball
@@ -30,9 +29,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
   const [shotsLeftDashes, setShotsLeftDashes] = useState<number | null>(null); // Remaining dash shots
   const [shotsTakenToday, setShotsTakenToday] = useState<number | null>(null); // Shots taken in the current calendar day
   const [todaysScore, setTodaysScore] = useState<number | null>(null); // Points earned today
-  const [monthlyShotLimit, setMonthlyShotLimit] = useState<number | null>(null); // Monthly shot limit for the season
-  const [monthlyShotsTaken, setMonthlyShotsTaken] = useState<number | null>(null); // Shots taken in the current month
-  const [monthlyShotsLeft, setMonthlyShotsLeft] = useState<number | null>(null); // Remaining monthly shots
   const [useDash, setUseDash] = useState<boolean>(false); // Spend a dash on submit
   const sound = new Howl({ src: ['/sounds/shot.mp3'] }); // Sound effect for shots
   const shotSound = useMemo(() => new Howl({ src: ['/sounds/onfire.mp3'] }), []);
@@ -74,9 +70,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setShotsLeftDashes(null);
     setShotsTakenToday(null);
     setTodaysScore(null);
-    setMonthlyShotLimit(null);
-    setMonthlyShotsTaken(null);
-    setMonthlyShotsLeft(null);
     setUseDash(false);
   };
   const calculateShotsMadeInRow = async (playerInstanceId: number) => {
@@ -183,39 +176,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     }
   }, []);
 
-  const fetchMonthlyShotsTaken = useCallback(async (instanceId: number, limit: number) => {
-    try {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const startOfNextMonth = new Date(startOfMonth);
-      startOfNextMonth.setMonth(startOfNextMonth.getMonth() + 1);
-
-      const { data, error } = await supabase
-        .from('shots')
-        .select('shot_id')
-        .eq('instance_id', instanceId)
-        .gte('shot_date', startOfMonth.toISOString())
-        .lt('shot_date', startOfNextMonth.toISOString());
-
-      if (error) {
-        console.error("Error fetching this month's shots:", error);
-        setMonthlyShotsTaken(null);
-        setMonthlyShotsLeft(null);
-        return;
-      }
-
-      const totalShotsThisMonth = data?.length ?? 0;
-      setMonthlyShotsTaken(totalShotsThisMonth);
-      setMonthlyShotsLeft(limit - totalShotsThisMonth);
-    } catch (error) {
-      console.error("Unexpected error fetching this month's shots:", error);
-      setMonthlyShotsTaken(null);
-      setMonthlyShotsLeft(null);
-    }
-  }, []);
-
   /**
    * Handles closing the modal and resetting its state.
    */
@@ -232,7 +192,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       // Fetch the current season
       const { data: currentSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, monthly_shot_limit')
+        .select('season_id')
         .is('end_date', null)
         .single();
 
@@ -240,9 +200,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         console.error('Error fetching current season:', seasonError);
         return;
       }
-
-      const seasonMonthlyLimit = Number(currentSeason.monthly_shot_limit) || defaultMonthlyShotLimit;
-      setMonthlyShotLimit(seasonMonthlyLimit);
 
       // Fetch player instance details
       const { data: playerInstance, error: instanceError } = await supabase
@@ -263,7 +220,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       setShotsLeft(playerInstance.shots_left);
       setShotsLeftDashes(playerInstance.shots_left_dashes ?? 0);
       fetchShotsTakenToday(playerInstance.player_instance_id);
-      fetchMonthlyShotsTaken(playerInstance.player_instance_id, seasonMonthlyLimit);
 
       // Fetch the player's tier ID
       const { data: player, error: playerError } = await supabase
@@ -281,7 +237,7 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     } catch (error) {
       console.error('Unexpected error:', error);
     }
-  }, [fetchMonthlyShotsTaken, fetchShotsTakenToday, playerId]);
+  }, [fetchShotsTakenToday, playerId]);
 
   /**
    * Fetch data when the modal is opened and set up real-time updates for player instance changes.
@@ -300,29 +256,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
       supabase.removeChannel(playerInstanceChannel);
     };
   }, [isOpen, fetchPlayerInstanceAndTier]);
-
-  useEffect(() => {
-    if (!isOpen || !playerInstanceId) return;
-
-    const monthlyShotsChannel = supabase
-      .channel('monthly-shots-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, () => {
-        fetchMonthlyShotsTaken(playerInstanceId, monthlyShotLimit ?? defaultMonthlyShotLimit);
-      })
-      .subscribe();
-
-    const seasonLimitChannel = supabase
-      .channel('monthly-shot-limit-changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'seasons' }, () => {
-        fetchPlayerInstanceAndTier();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(monthlyShotsChannel);
-      supabase.removeChannel(seasonLimitChannel);
-    };
-  }, [fetchMonthlyShotsTaken, fetchPlayerInstanceAndTier, isOpen, monthlyShotLimit, playerInstanceId]);
 
   /**
    * Automatically set the Moneyball flag based on specific shot counts.
@@ -354,24 +287,11 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     return finalPoints;
   }, [points, isMoneyball, isDouble]);
 
-  const monthlyShotsLeftDisplay = useMemo(() => {
-    if (monthlyShotsLeft === null) return '--';
-    return Math.max(0, monthlyShotsLeft);
-  }, [monthlyShotsLeft]);
-
   /**
    * Handles the submission of the shot and updates player data in the database.
    */
   const handleSubmit = async () => {
     if (points === null || playerInstanceId === null || tierId === null) return;
-
-    if (monthlyShotsLeft !== null && monthlyShotsLeft <= 0) {
-      const confirmOverride = window.confirm(
-        'This player has already reached their monthly shot limit. Submit this shot anyway?'
-      );
-
-      if (!confirmOverride) return;
-    }
   
     const shouldPlayNotification = (points === 1 || points === 2) && isMoneyball;
   
@@ -458,15 +378,9 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
         className={`modal-content ${isMoneyball ? 'highlight-modal-border' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
-          <div className="monthly-shots-left" aria-live="polite">
-            <span className="monthly-shots-label">Monthly Shots Left:</span>
-            <span className="monthly-shots-value">{monthlyShotsLeftDisplay}</span>
-          </div>
-          <button className="close-button" onClick={handleClose} aria-label="Close player modal">
-            ×
-          </button>
-        </div>
+        <button className="close-button" onClick={handleClose} aria-label="Close player modal">
+          ×
+        </button>
 
         <h2 className="modal-title">{name}</h2>
 

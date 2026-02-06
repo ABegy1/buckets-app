@@ -576,6 +576,9 @@ const StandingsPage: React.FC = () => {
                         {player.name === 'A. Begy' && (
                           <span className={styles.crownIcon}>👑</span>
                         )}
+                        {player.shots_left % 10 === 1 && (
+                          <span className={styles.moneyballIcon}>💲</span>
+                        )}
                         {/* Fire Icon: 3+ Consecutive Makes */}
                         {player.shots_made_in_row >= 3 && (
                           <span className={styles.fireIcon}>

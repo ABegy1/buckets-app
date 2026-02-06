@@ -583,6 +583,7 @@ const NextSeasonModal: React.FC<NextSeasonModalProps> = ({ isOpen, onClose, onSt
         start_date: currentDate.toISOString(),
         end_date: null,
         shot_total: shotCount,
+        monthly_shot_limit: 40,
         rules: seasonRules || 'Default Rules',
         is_official: shouldRecordStats,
       })

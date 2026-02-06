@@ -1,5 +1,5 @@
 'use client'; 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './adminPage.module.css'; // Import the combined CSS module
 import Modal from '@/components/Modal/Modal';
@@ -63,6 +63,7 @@ const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
   const [userView, setUserView] = useState<string>(''); // User's current view setting
+  const [waiverByPlayerId, setWaiverByPlayerId] = useState<Record<number, boolean>>({});
 
   const pageOptions = ['Standings', 'FreeAgent', 'Rules', 'Shot History'];
 
@@ -177,6 +178,95 @@ const AdminPage = () => {
 
     fetchSeasonName();
   }, []);
+
+  const fetchWaiverStatus = useCallback(async () => {
+    try {
+      const { data: activeSeason, error: seasonError } = await supabase
+        .from('seasons')
+        .select('season_id')
+        .is('end_date', null)
+        .maybeSingle();
+
+      if (seasonError) {
+        throw seasonError;
+      }
+
+      if (!activeSeason) {
+        setWaiverByPlayerId({});
+        return;
+      }
+
+      const { data: instances, error: instanceError } = await supabase
+        .from('player_instance')
+        .select('player_instance_id, player_id')
+        .eq('season_id', activeSeason.season_id);
+
+      if (instanceError) {
+        throw instanceError;
+      }
+
+      if (!instances || instances.length === 0) {
+        setWaiverByPlayerId({});
+        return;
+      }
+
+      const instanceIds = instances.map((instance) => instance.player_instance_id);
+      const instanceToPlayer = new Map(
+        instances.map((instance) => [instance.player_instance_id, instance.player_id]),
+      );
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const startOfNextDay = new Date(startOfDay);
+      startOfNextDay.setDate(startOfNextDay.getDate() + 1);
+
+      const { data: shots, error: shotsError } = await supabase
+        .from('shots')
+        .select('instance_id')
+        .in('instance_id', instanceIds)
+        .gte('shot_date', startOfDay.toISOString())
+        .lt('shot_date', startOfNextDay.toISOString());
+
+      if (shotsError) {
+        throw shotsError;
+      }
+
+      const shotsByPlayer = new Map<number, number>();
+      (shots || []).forEach((shot) => {
+        const playerId = instanceToPlayer.get(shot.instance_id);
+        if (!playerId) return;
+        shotsByPlayer.set(playerId, (shotsByPlayer.get(playerId) || 0) + 1);
+      });
+
+      const nextWaiverByPlayer: Record<number, boolean> = {};
+      shotsByPlayer.forEach((count, playerId) => {
+        nextWaiverByPlayer[playerId] = count >= 4;
+      });
+
+      setWaiverByPlayerId(nextWaiverByPlayer);
+    } catch (error) {
+      console.error('Error fetching waiver status:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWaiverStatus();
+
+    const shotsChannel = supabase
+      .channel('waiver-status-shot-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, fetchWaiverStatus)
+      .subscribe();
+
+    const instanceChannel = supabase
+      .channel('waiver-status-instance-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, fetchWaiverStatus)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(shotsChannel);
+      supabase.removeChannel(instanceChannel);
+    };
+  }, [fetchWaiverStatus]);
 
   // Modal handlers
   const handleOpenModal = (playerId: number, name: string) => {
@@ -318,7 +408,12 @@ const AdminPage = () => {
                           onClick={() => handleOpenModal(player.player_id, player.name)}
                           style={{ color: tier.color }}
                         >
-                          {player.name}
+                          <span className={styles.playerName}>{player.name}</span>
+                          {waiverByPlayerId[player.player_id] && (
+                            <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
+                              W
+                            </span>
+                          )}
                         </div>
                       ))}
                   </div>

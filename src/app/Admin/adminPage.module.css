@@ -190,6 +190,28 @@
   display: flex;
   justify-content: center;
   white-space: nowrap;
+  position: relative;
+}
+
+.playerName {
+  padding-right: 18px;
+}
+
+.waiverBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #e76f51;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
 }
 
 

@@ -16,6 +16,10 @@ interface Player {
   is_hidden: boolean; 
 }
 
+interface FreeAgent extends Player {
+  tierColor: string | null;
+}
+
 interface TierWithPlayers {
   tier_name: string;
   color: string;
@@ -53,6 +57,7 @@ const AdminPage = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null); // Tracks logged-in user
   const [tiers, setTiers] = useState<TierWithPlayers[]>([]); // Stores tiers and players
+  const [freeAgents, setFreeAgents] = useState<FreeAgent[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility
   const [selectedName, setSelectedName] = useState(''); // Selected player's name for modal
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null); // Selected player's ID for modal
@@ -109,17 +114,26 @@ const AdminPage = () => {
   // 2. Fetch tiers and players (and include is_hidden in the select)
   useEffect(() => {
     const fetchTiersAndPlayers = async () => {
-      const { data: tiersData, error: tiersError } = await supabase
-        .from('tiers')
-        .select(`
-          tier_name,
-          color,
-          players (
-            player_id,
-            name,
-            is_hidden
-          )
-        `);
+      const [tiersResponse, freeAgentsResponse] = await Promise.all([
+        supabase
+          .from('tiers')
+          .select(`
+            tier_name,
+            color,
+            players (
+              player_id,
+              name,
+              is_hidden
+            )
+          `),
+        supabase
+          .from('players')
+          .select('player_id, name, is_hidden, tiers(color)')
+          .eq('is_free_agent', true),
+      ]);
+
+      const { data: tiersData, error: tiersError } = tiersResponse;
+      const { data: freeAgentsData, error: freeAgentsError } = freeAgentsResponse;
 
       if (tiersError) {
         console.error('Error fetching tiers:', tiersError);
@@ -130,6 +144,17 @@ const AdminPage = () => {
         }));
 
         setTiers(sortedTiers); // Update state with fetched data
+      }
+
+      if (freeAgentsError) {
+        console.error('Error fetching free agents:', freeAgentsError);
+      } else {
+        const sortedFreeAgents = sortPlayersByName(freeAgentsData || []).map((player) => ({
+          ...player,
+          tierColor: player.tiers?.color ?? null,
+        }));
+
+        setFreeAgents(sortedFreeAgents);
       }
     };
 
@@ -280,7 +305,13 @@ const AdminPage = () => {
       {/* Main Content */}
       <main className={styles.adminContent}>
         <div className={styles.container}>
-          <h2>{userView === 'Shot History' ? 'Shot History' : `${seasonName} Standings`}</h2>
+          <h2>
+            {userView === 'Shot History'
+              ? 'Shot History'
+              : userView === 'FreeAgent'
+                ? 'Free Agents'
+                : `${seasonName} Standings`}
+          </h2>
           <div className={styles.secondaryScreenOptions}>
             <button className={styles.button} onClick={handleOpenSidebar}>
               Settings
@@ -302,6 +333,27 @@ const AdminPage = () => {
 
           {userView === 'Shot History' ? (
             <AdminShotHistory />
+          ) : userView === 'FreeAgent' ? (
+            <div className={styles.players}>
+              <div className={styles.column}>
+                <div className={styles.header}>Free Agents</div>
+                {freeAgents.filter((player) => !player.is_hidden).length === 0 && (
+                  <div className={styles.box}>No free agents available.</div>
+                )}
+                {freeAgents
+                  .filter((player) => !player.is_hidden)
+                  .map((player) => (
+                    <div
+                      key={player.player_id}
+                      className={styles.box}
+                      onClick={() => handleOpenModal(player.player_id, player.name)}
+                      style={{ color: player.tierColor ?? '#333' }}
+                    >
+                      {player.name}
+                    </div>
+                  ))}
+              </div>
+            </div>
           ) : (
             <div className={styles.players}>
               {tiers

@@ -39,7 +39,6 @@ export const seasonsTable = pgTable('seasons', {
   startDate: timestamp('start_date').notNull(),
   endDate: timestamp('end_date').notNull(),
   shotTotal: integer('shot_total').notNull(),
-  monthlyShotLimit: integer('monthly_shot_limit').notNull().default(40),
   rules: text('rules').notNull()
 });
 

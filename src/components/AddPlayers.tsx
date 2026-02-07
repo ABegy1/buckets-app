@@ -3,9 +3,8 @@
  *
  * This component allows administrators to add new players to an active season.
  * Features include:
- * - Fetching active season data, players, teams, and tiers from the Supabase backend.
+ * - Fetching active season data, teams, and tiers from the Supabase backend.
  * - Adding a player to the selected team and tier or marking them as a free agent.
- * - Dynamically updating the list of current players in real-time.
  * - Support for assigning players a specific number of shots for the season.
  *
  * Props:
@@ -22,7 +21,6 @@ interface AddPlayersProps {
 
 const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
   // State management for players, teams, tiers, and form inputs
-  const [players, setPlayers] = useState<any[]>([]); // List of players
   const [teams, setTeams] = useState<any[]>([]); // List of teams
   const [tiers, setTiers] = useState<any[]>([]); // List of tiers
   const [newPlayerName, setNewPlayerName] = useState<string>(''); // Input for new player name
@@ -56,15 +54,6 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
       }
     };
 
-    const fetchPlayers = async () => {
-      const { data, error } = await supabase.from('players').select('*');
-      if (error) {
-        console.error('Error fetching players:', error);
-      } else {
-        setPlayers(data || []); // Update the players list
-      }
-    };
-
     const fetchTeams = async () => {
       const { data, error } = await supabase.from('teams').select('*');
       if (error) {
@@ -88,7 +77,6 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
     };
 
     fetchActiveSeason();
-    fetchPlayers();
     fetchTeams();
     fetchTiers();
   }, [isOpen, isFreeAgent]);
@@ -142,7 +130,6 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
       console.error('Error adding player instance:', playerInstanceError);
       setSubmitStatus('Player was added, but shots could not be assigned.');
     } else {
-      setPlayers([...players, newPlayer]); // Add new player to the local state
       setNewPlayerName(''); // Clear the input field
       setSubmitStatus('Player added to the active season.');
     }
@@ -228,18 +215,6 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
           }}
         />
       </label>
-
-      {/* List of current players */}
-      <h3>Current Players</h3>
-      <div className={styles.playersSection}>
-        <ul>
-          {players.map((player) => (
-            <li key={player.player_id}>
-              {player.name} (Team: {player.team_id}, Tier: {player.tier_id}, Free Agent: {player.is_free_agent ? 'Yes' : 'No'})
-            </li>
-          ))}
-        </ul>
-      </div>
 
       {/* Button to add a new player */}
       {submitStatus && <p>{submitStatus}</p>}

@@ -11,24 +11,11 @@
 }
 
 
-.addPlayers h2,
-.addPlayers h3 {
+.addPlayers h2 {
   text-align: center;
   margin-bottom: 15px;
   font-size: 1.5em;
   color: #333;
-}
-
-.addPlayers .formSection,
-.addPlayers .playersSection {
-  overflow-y: auto;
-}
-
-.addPlayers .playersSection {
-  flex: 1 1 auto;
-  max-height: 300px; /* Set a height limit for the players section */
-  overflow-y: auto;
-  margin-bottom: 10px; /* Add space between list and button */
 }
 
 .addPlayers label {
@@ -51,23 +38,6 @@
 
 .addPlayers label input[type="checkbox"] {
   margin-left: 10px;
-}
-
-.addPlayers ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-.addPlayers ul li {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.addPlayers ul li:nth-child(even) {
-  background-color: #fafafa;
 }
 
 .addPlayers .globalButton {
@@ -93,8 +63,7 @@
     padding: 15px;
   }
 
-  .addPlayers h2,
-  .addPlayers h3 {
+  .addPlayers h2 {
     font-size: 1.2em;
     margin-bottom: 10px;
   }
@@ -119,8 +88,7 @@
     margin-bottom: 8px;
   }
 
-  .addPlayers h2,
-  .addPlayers h3 {
+  .addPlayers h2 {
     font-size: 1.3em;
   }
 

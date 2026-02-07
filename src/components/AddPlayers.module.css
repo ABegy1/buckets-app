@@ -39,6 +39,7 @@
 }
 
 .addPlayers label input[type="text"],
+.addPlayers label input[type="number"],
 .addPlayers label select {
   width: 100%;
   padding: 6px 10px;

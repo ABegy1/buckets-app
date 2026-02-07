@@ -133,6 +133,12 @@
   margin-bottom: 20px;
 }
 
+.secondaryButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .arrow {
   margin-left: 10px;
 }
@@ -245,4 +251,41 @@
 
 .button:hover {
   background-color: #21867a;
+}
+
+.addPlayerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.addPlayerModal {
+  position: relative;
+  width: min(720px, 95vw);
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 20px 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.modalCloseButton:hover {
+  color: #111;
 }

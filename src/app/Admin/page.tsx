@@ -67,7 +67,7 @@ const AdminPage = () => {
   const [userView, setUserView] = useState<string>(''); // User's current view setting
   const [waiverByPlayerId, setWaiverByPlayerId] = useState<Record<number, boolean>>({});
 
-  const pageOptions = ['Standings', 'FreeAgent', 'Rules', 'Shot History'];
+  const pageOptions = ['Standings', 'Rules', 'Shot History'];
 
   // 1. Verify user is admin
   useEffect(() => {
@@ -89,7 +89,8 @@ const AdminPage = () => {
           router.push('/');
         } else {
           setIsAdmin(true);
-          setUserView(data.View || 'Standings'); // Set default user view
+          const nextView = pageOptions.includes(data.View) ? data.View : 'Standings';
+          setUserView(nextView); // Set default user view
         }
       }
       setLoading(false);// Mark loading as complete

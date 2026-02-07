@@ -236,6 +236,21 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
     [seasonRows, initialRows],
   );
 
+  const sortedSeasonRows = useMemo(() => {
+    const getLastName = (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return '';
+      const parts = trimmed.split(/\s+/);
+      return parts[parts.length - 1]?.toLowerCase() ?? '';
+    };
+
+    return [...seasonRows].sort((a, b) => {
+      const lastNameCompare = getLastName(a.playerName).localeCompare(getLastName(b.playerName));
+      if (lastNameCompare !== 0) return lastNameCompare;
+      return a.playerName.toLowerCase().localeCompare(b.playerName.toLowerCase());
+    });
+  }, [seasonRows]);
+
   return (
     // Modal container with dynamic class based on `isOpen` prop
     <div
@@ -292,15 +307,19 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
             <thead>
               <tr>
                 <th scope="col">Player Name</th>
-                <th scope="col">Shots Left</th>
-                <th scope="col">Score</th>
+                <th scope="col" className={styles.smallColumn}>
+                  Shots Left
+                </th>
+                <th scope="col" className={styles.smallColumn}>
+                  Score
+                </th>
                 <th scope="col">Team</th>
                 <th scope="col">Tier</th>
                 <th scope="col">Dashes</th>
               </tr>
             </thead>
             <tbody>
-              {seasonRows.map((row) => (
+              {sortedSeasonRows.map((row) => (
                 <tr key={row.playerInstanceId}>
                   <td>
                     <input
@@ -309,7 +328,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                       onChange={(event) => handleRowUpdate(row.playerInstanceId, { playerName: event.target.value })}
                     />
                   </td>
-                  <td>
+                  <td className={styles.smallColumn}>
                     <input
                       className={styles.cellInput}
                       type="number"
@@ -322,7 +341,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                       }
                     />
                   </td>
-                  <td>
+                  <td className={styles.smallColumn}>
                     <input
                       className={styles.cellInput}
                       type="number"

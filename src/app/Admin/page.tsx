@@ -39,7 +39,7 @@ const getSortableLastName = (name: string) => {
   return nameParts[nameParts.length - 1];
 };
 
-const sortPlayersByName = (players: Player[] = []) =>
+const sortPlayersByName = <T extends { name: string }>(players: T[] = []) =>
   [...players].sort((a, b) => {
     const lastNameComparison = getSortableLastName(a.name).localeCompare(
       getSortableLastName(b.name),

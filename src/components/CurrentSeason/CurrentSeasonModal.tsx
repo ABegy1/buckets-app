@@ -197,7 +197,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
         }
 
         const mappedRows: SeasonRow[] = (playerInstancesResponse.data || []).map((instance) => {
-          const playerRecord = instance.players?.[0];
+          const playerRecord = Array.isArray(instance.players) ? instance.players[0] : instance.players;
 
           return {
             playerInstanceId: instance.player_instance_id,
@@ -343,7 +343,7 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
                         })
                       }
                     >
-                      <option value="">Unassigned</option>
+                      <option value="">Free Agency</option>
                       {teams.map((team) => (
                         <option key={team.team_id} value={team.team_id}>
                           {team.team_name || 'Unknown Team'}

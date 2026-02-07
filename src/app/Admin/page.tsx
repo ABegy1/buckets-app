@@ -21,6 +21,13 @@ interface TierWithPlayers {
   players: Player[];
 }
 
+interface FreeAgentPlayer {
+  player_id: number;
+  name: string;
+  is_hidden: boolean;
+  tier_color: string;
+}
+
 const getSortableLastName = (name: string) => {
   const trimmedName = name.trim();
   const nameParts = trimmedName.split(/\s+/);
@@ -30,7 +37,7 @@ const getSortableLastName = (name: string) => {
   return nameParts[nameParts.length - 1];
 };
 
-const sortPlayersByName = (players: Player[] = []) =>
+const sortPlayersByName = <T extends { name: string }>(players: T[] = []) =>
   [...players].sort((a, b) => {
     const lastNameComparison = getSortableLastName(a.name).localeCompare(
       getSortableLastName(b.name),
@@ -62,6 +69,7 @@ const AdminPage = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
   const [waiverByPlayerId, setWaiverByPlayerId] = useState<Record<number, boolean>>({});
+  const [freeAgents, setFreeAgents] = useState<FreeAgentPlayer[]>([]);
 
   // 1. Verify user is admin
   useEffect(() => {
@@ -100,50 +108,80 @@ const AdminPage = () => {
   }, [router]);
 
   // 2. Fetch tiers and players (and include is_hidden in the select)
+  const fetchTiersAndPlayers = useCallback(async () => {
+    const { data: tiersData, error: tiersError } = await supabase
+      .from('tiers')
+      .select(`
+        tier_name,
+        color,
+        players (
+          player_id,
+          name,
+          is_hidden
+        )
+      `);
+
+    if (tiersError) {
+      console.error('Error fetching tiers:', tiersError);
+    } else {
+      const sortedTiers = (tiersData || []).map((tier) => ({
+        ...tier,
+        players: sortPlayersByName(tier.players || []),
+      }));
+
+      setTiers(sortedTiers); // Update state with fetched data
+    }
+  }, []);
+
+  const fetchFreeAgents = useCallback(async () => {
+    const { data: freeAgentData, error: freeAgentError } = await supabase
+      .from('players')
+      .select('player_id, name, is_hidden, tiers(color)')
+      .eq('is_free_agent', true);
+
+    if (freeAgentError) {
+      console.error('Error fetching free agents:', freeAgentError);
+      return;
+    }
+
+    const freeAgentPlayers = (freeAgentData || [])
+      .map((player) => ({
+        player_id: player.player_id,
+        name: player.name,
+        is_hidden: player.is_hidden,
+        tier_color: player.tiers?.[0]?.color ?? '#333',
+      }))
+      .filter((player) => !player.is_hidden);
+
+    setFreeAgents(sortPlayersByName(freeAgentPlayers));
+  }, []);
+
   useEffect(() => {
-    const fetchTiersAndPlayers = async () => {
-      const { data: tiersData, error: tiersError } = await supabase
-        .from('tiers')
-        .select(`
-          tier_name,
-          color,
-          players (
-            player_id,
-            name,
-            is_hidden
-          )
-        `);
-
-      if (tiersError) {
-        console.error('Error fetching tiers:', tiersError);
-      } else {
-        const sortedTiers = (tiersData || []).map((tier) => ({
-          ...tier,
-          players: sortPlayersByName(tier.players || []),
-        }));
-
-        setTiers(sortedTiers); // Update state with fetched data
-      }
-    };
-
     fetchTiersAndPlayers();
+    fetchFreeAgents();
 
     // 3. Set up realtime channels to refresh when tiers/players change
     const tiersChannel = supabase
       .channel('tiers-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, fetchTiersAndPlayers)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tiers' }, () => {
+        fetchTiersAndPlayers();
+        fetchFreeAgents();
+      })
       .subscribe();
 
     const playersChannel = supabase
       .channel('players-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTiersAndPlayers)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
+        fetchTiersAndPlayers();
+        fetchFreeAgents();
+      })
       .subscribe();
 
     return () => {
       supabase.removeChannel(tiersChannel);
       supabase.removeChannel(playersChannel);
     };
-  }, []);
+  }, [fetchFreeAgents, fetchTiersAndPlayers]);
 
   // 4. Fetch the active season name
   useEffect(() => {
@@ -382,6 +420,62 @@ const AdminPage = () => {
                 </div>
               ))}
           </div>
+
+          {userView === 'Shot History' ? (
+            <AdminShotHistory />
+          ) : userView === 'FreeAgent' ? (
+            <div className={styles.players}>
+              <div className={styles.column}>
+                <div className={styles.header}>Free Agents</div>
+                {freeAgents.length === 0 ? (
+                  <div className={styles.emptyState}>No free agents available.</div>
+                ) : (
+                  freeAgents.map((player) => (
+                    <div
+                      key={player.player_id}
+                      className={styles.box}
+                      onClick={() => handleOpenModal(player.player_id, player.name)}
+                      style={{ color: player.tier_color }}
+                    >
+                      <span className={styles.playerName}>{player.name}</span>
+                      {waiverByPlayerId[player.player_id] && (
+                        <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
+                          W
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.players}>
+              {tiers
+                .filter((tier) => tier.players.some((player) => !player.is_hidden))
+                .map((tier) => (
+                  <div key={tier.tier_name} className={styles.column}>
+                    <div className={styles.header}>{tier.tier_name}</div>
+                    {tier.players
+                      .filter((player) => !player.is_hidden)
+                      .map((player) => (
+                        <div
+                          key={player.player_id}
+                          className={styles.box}
+                          onClick={() => handleOpenModal(player.player_id, player.name)}
+                          style={{ color: tier.color }}
+                        >
+                          <span className={styles.playerName}>{player.name}</span>
+                          {waiverByPlayerId[player.player_id] && (
+                            <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
+                              W
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* Modals */}

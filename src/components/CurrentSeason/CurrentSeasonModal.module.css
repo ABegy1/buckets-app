@@ -132,6 +132,11 @@
   color: #111827;
 }
 
+.smallColumn {
+  width: 88px;
+  min-width: 88px;
+}
+
 .topCloseBtn {
   position: sticky;
   top: 0;

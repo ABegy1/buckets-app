@@ -81,7 +81,7 @@
   font-size: 0.95rem;
 }
 
-.quickSelect {
+.utilityMenu {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -94,6 +94,23 @@
   border: 1px solid #d1d5db;
   background: #fff;
   min-width: 140px;
+}
+
+.tableMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #4b5563;
+  padding-top: 4px;
+}
+
+.pendingBadge {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
 }
 
 .controlsTable {
@@ -113,53 +130,6 @@
   background: #f3f4f6;
   font-weight: 700;
   color: #111827;
-}
-
-.controlsTable tbody tr:hover {
-  background: #f8fafc;
-}
-
-.inlineActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.inlineEditBtn {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.inlineEditBtn:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-}
-
-.activeRow {
-  background: #eef2ff;
-}
-
-.contentWrapper {
-  flex: 1;
-  min-height: 0;
-  border: 1px dashed #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  background: #f9fafb;
-}
-
-.content {
-  flex: 1;
-  min-height: 0;
-  padding: 4px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
 }
 
 .topCloseBtn {
@@ -190,6 +160,7 @@
   bottom: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 40%);
   padding-bottom: 8px;
+  align-items: center;
 }
 
 .primaryBtn {
@@ -225,6 +196,80 @@
 
 .secondaryBtn:hover {
   background-color: #d1d5db;
+}
+
+.cellInput {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.cellSelect {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+}
+
+.emptyState {
+  text-align: center;
+  color: #6b7280;
+  padding: 24px 16px;
+}
+
+.utilityPanel {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.utilityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.utilityHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.utilityClose {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.utilityContent {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+}
+
+.submitStatus {
+  margin-right: auto;
+  color: #4b5563;
+  font-size: 0.95rem;
 }
 
 .confirmationOverlay {

@@ -159,7 +159,7 @@ const AdminPage = () => {
         player_id: player.player_id,
         name: player.name,
         is_hidden: player.is_hidden,
-        tier_color: player.tiers?.color ?? '#333',
+        tier_color: player.tiers?.[0]?.color ?? '#333',
       }))
       .filter((player) => !player.is_hidden);
 

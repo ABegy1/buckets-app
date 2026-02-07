@@ -6,6 +6,7 @@ import Modal from '@/components/Modal/Modal';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
+import AddPlayers from '@/components/AddPlayers';
 import AdminShotHistory from '@/components/AdminShotHistory';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
 import { User } from '@supabase/supabase-js';
@@ -59,6 +60,7 @@ const AdminPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar visibility
   const [isCurrentSeasonModalOpen, setIsCurrentSeasonModalOpen] = useState(false); // Current season modal visibility
   const [isNextSeasonModalOpen, setIsNextSeasonModalOpen] = useState<boolean>(false); // Next season modal visibility
+  const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
   const [loading, setLoading] = useState(true); // Page loading state
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
@@ -334,6 +336,14 @@ const AdminPage = () => {
     setIsNextSeasonModalOpen(false);
   };
 
+  const handleOpenAddPlayerModal = () => {
+    setIsAddPlayerModalOpen(true);
+  };
+
+  const handleCloseAddPlayerModal = () => {
+    setIsAddPlayerModalOpen(false);
+  };
+
   const handleStartSeason = () => {
     console.log("Start Season clicked");
     setIsNextSeasonModalOpen(false);
@@ -372,9 +382,14 @@ const AdminPage = () => {
         <div className={styles.container}>
           <h2>{userView === 'Shot History' ? 'Shot History' : `${seasonName} Standings`}</h2>
           <div className={styles.secondaryScreenOptions}>
-            <button className={styles.button} onClick={handleOpenSidebar}>
-              Settings
-            </button>
+            <div className={styles.secondaryButtons}>
+              <button className={styles.button} onClick={handleOpenSidebar}>
+                Settings
+              </button>
+              <button className={styles.button} onClick={handleOpenAddPlayerModal}>
+                Add Player
+              </button>
+            </div>
 
             {/* Dropdown for Page Options */}
             <select
@@ -439,6 +454,20 @@ const AdminPage = () => {
           isOpen={isCurrentSeasonModalOpen}
           onClose={handleCloseCurrentSeasonModal}
         />
+        {isAddPlayerModalOpen && (
+          <div className={styles.addPlayerOverlay} role="dialog" aria-modal="true" aria-label="Add player">
+            <div className={styles.addPlayerModal}>
+              <button
+                className={styles.modalCloseButton}
+                onClick={handleCloseAddPlayerModal}
+                aria-label="Close add player"
+              >
+                ×
+              </button>
+              <AddPlayers isOpen={isAddPlayerModalOpen} />
+            </div>
+          </div>
+        )}
         <NextSeasonModal
           isOpen={isNextSeasonModalOpen}
           onClose={handleCloseNextSeasonModal}

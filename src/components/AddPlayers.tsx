@@ -31,6 +31,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
   const [shotCount, setShotCount] = useState<number>(40); // Initial shot count for the player
   const [seasonId, setSeasonId] = useState<number | null>(null); // Active season ID
   const [isFreeAgent, setIsFreeAgent] = useState<boolean>(false); // Indicates if the player is a free agent
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
 
   /**
    * Effect to fetch data when the component is opened.
@@ -40,6 +41,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
    */
   useEffect(() => {
     if (!isOpen) return; // Exit if the component is not open
+    setSubmitStatus(null);
 
     const fetchActiveSeason = async () => {
       const { data, error } = await supabase
@@ -102,7 +104,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
     }
 
     if (!newPlayerName || !selectedTier || (!selectedTeam && !isFreeAgent)) {
-      console.error('Player name, team, or tier is missing.');
+      setSubmitStatus('Please provide a name, team (or Free Agency), and tier.');
       return;
     }
 
@@ -122,6 +124,7 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
 
     if (error || !newPlayer) {
       console.error('Error adding player:', error);
+      setSubmitStatus('Unable to add the player. Please try again.');
       return;
     }
 
@@ -137,9 +140,11 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
 
     if (playerInstanceError) {
       console.error('Error adding player instance:', playerInstanceError);
+      setSubmitStatus('Player was added, but shots could not be assigned.');
     } else {
       setPlayers([...players, newPlayer]); // Add new player to the local state
       setNewPlayerName(''); // Clear the input field
+      setSubmitStatus('Player added to the active season.');
     }
   };
 
@@ -157,50 +162,71 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
         <input
           type="text"
           value={newPlayerName}
-          onChange={(e) => setNewPlayerName(e.target.value)}
+          onChange={(e) => {
+            setNewPlayerName(e.target.value);
+            setSubmitStatus(null);
+          }}
           placeholder="Enter player name"
         />
       </label>
 
-      {/* Checkbox for free agent status */}
+      {/* Team dropdown */}
       <label>
-        Free Agent:
-        <input
-          type="checkbox"
-          checked={isFreeAgent}
+        Team:
+        <select
+          value={isFreeAgent ? 'free-agent' : selectedTeam ?? ''}
           onChange={(e) => {
-            setIsFreeAgent(e.target.checked);
-            if (e.target.checked) {
-              setSelectedTeam(null); // Reset team selection when free agent is checked
+            if (e.target.value === 'free-agent') {
+              setIsFreeAgent(true);
+              setSelectedTeam(null);
+              setSubmitStatus(null);
+              return;
             }
+            setIsFreeAgent(false);
+            setSelectedTeam(Number(e.target.value));
+            setSubmitStatus(null);
           }}
-        />
+        >
+          <option value="free-agent">Free Agency</option>
+          {teams.map((team) => (
+            <option key={team.team_id} value={team.team_id}>
+              {team.team_name}
+            </option>
+          ))}
+        </select>
       </label>
-
-      {/* Team dropdown (hidden if free agent) */}
-      {!isFreeAgent && (
-        <label>
-          Team:
-          <select value={selectedTeam || ''} onChange={(e) => setSelectedTeam(Number(e.target.value))}>
-            {teams.map((team) => (
-              <option key={team.team_id} value={team.team_id}>
-                {team.team_name}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
 
       {/* Tier dropdown */}
       <label>
         Tier:
-        <select value={selectedTier || ''} onChange={(e) => setSelectedTier(Number(e.target.value))}>
+        <select
+          value={selectedTier || ''}
+          onChange={(e) => {
+            setSelectedTier(Number(e.target.value));
+            setSubmitStatus(null);
+          }}
+        >
           {tiers.map((tier) => (
             <option key={tier.tier_id} value={tier.tier_id}>
               {tier.tier_name}
             </option>
           ))}
         </select>
+      </label>
+
+      {/* Shots input */}
+      <label>
+        Shots Left:
+        <input
+          type="number"
+          min={0}
+          value={shotCount}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            setShotCount(Number.isNaN(value) ? 0 : value);
+            setSubmitStatus(null);
+          }}
+        />
       </label>
 
       {/* List of current players */}
@@ -216,8 +242,9 @@ const AddPlayers: React.FC<AddPlayersProps> = ({ isOpen }) => {
       </div>
 
       {/* Button to add a new player */}
+      {submitStatus && <p>{submitStatus}</p>}
       <button className={styles.globalButton} onClick={handleAddPlayer}>
-        Add Player
+        Submit Player
       </button>
     </div>
   );

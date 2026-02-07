@@ -196,16 +196,20 @@ const CurrentSeasonModal: React.FC<CurrentSeasonModalProps> = ({ isOpen, onClose
           console.error('Error fetching player data:', playerInstancesResponse.error);
         }
 
-        const mappedRows: SeasonRow[] = (playerInstancesResponse.data || []).map((instance) => ({
-          playerInstanceId: instance.player_instance_id,
-          playerId: instance.player_id,
-          playerName: instance.players?.name ?? 'Unknown Player',
-          shotsLeft: instance.shots_left ?? 0,
-          score: instance.score ?? 0,
-          teamId: instance.players?.team_id ?? null,
-          tierId: instance.players?.tier_id ?? null,
-          dashes: instance.shots_left_dashes ?? 0,
-        }));
+        const mappedRows: SeasonRow[] = (playerInstancesResponse.data || []).map((instance) => {
+          const playerRecord = instance.players?.[0];
+
+          return {
+            playerInstanceId: instance.player_instance_id,
+            playerId: instance.player_id,
+            playerName: playerRecord?.name ?? 'Unknown Player',
+            shotsLeft: instance.shots_left ?? 0,
+            score: instance.score ?? 0,
+            teamId: playerRecord?.team_id ?? null,
+            tierId: playerRecord?.tier_id ?? null,
+            dashes: instance.shots_left_dashes ?? 0,
+          };
+        });
 
         setSeasonRows(mappedRows);
         setInitialRows(mappedRows.map((row) => ({ ...row })));

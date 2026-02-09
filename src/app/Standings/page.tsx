@@ -225,7 +225,6 @@ const updateTeamScores = async () => {
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
- const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
  const [season, setSeason] = useState<Season>({
   season_id: -1,
   season_name: '',
@@ -234,16 +233,8 @@ const StandingsPage: React.FC = () => {
  }); // Current season info
  const router = useRouter(); // Router for navigation
 
-  /**
-   * Signs out the current user and redirects to the home page.
-   */
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      router.push('/');
-    } else {
-      console.error('Sign out error:', error.message);
-    }
+  const handleOpenAdmin = () => {
+    router.push('/Admin');
   };
 
     /**
@@ -398,63 +389,6 @@ const StandingsPage: React.FC = () => {
   //   initializeAudioContext();
   // }, [audioContext, sound]);
 
- /**
-   * Fetches the current user's view from the database.
-   */
-  const fetchUserView = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase
-        .from('users')
-        .select('View')
-        .eq('email', session?.user?.email)
-        .single();
-
-      if (error || !data) {
-        console.error('Error fetching user view:', error);
-        return;
-      }
-
-      setUserView(data.View);
-    } catch (err) {
-      console.error('Error fetching user view:', err);
-    }
-  };
-
- /**
-   * Subscribes to user view changes in real time and updates state accordingly.
-   */
-  useEffect(() => {
-    const subscribeToUserViewChanges = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { user } = session;
-
-     // Subscribe to updates on the user's View field
-      const userViewChannel = supabase
-        .channel('user-view-changes')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
-          (payload) => {
-            const updatedView = payload.new.View;
-            setUserView(updatedView);
-          }
-        )
-        .subscribe();
-
-      // Fetch initial view
-      fetchUserView();
-
-      return () => {
-        supabase.removeChannel(userViewChannel);
-      };
-    };
-
-    subscribeToUserViewChanges();
-  }, []);
-
   useEffect(() => {
 
       // Initial fetch and update
@@ -512,7 +446,7 @@ const StandingsPage: React.FC = () => {
         supabase.removeChannel(playerChannel);
         supabase.removeChannel(shotChannel);
       };
-  }, [userView ]);
+  }, []);
 
  return (
   <div className={styles.userContainer}>
@@ -621,8 +555,8 @@ const StandingsPage: React.FC = () => {
     {/* Footer Section */}
     <footer className={styles.userFooter}>
       <p>&copy; 2025 Buckets Game. All rights reserved.</p>
-      <button className={styles.signOutButton} onClick={handleSignOut}>
-        Sign Out
+      <button className={styles.signOutButton} onClick={handleOpenAdmin}>
+        Open Admin
       </button>
     </footer>
   </div>

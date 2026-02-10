@@ -35,7 +35,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ### Important Notes:
 - **Google Authentication Redirection Issue**: While running locally, logging in with Google redirects to the live hosted web domain address. This is a high-priority issue to enable seamless local component testing. For now, ensure your environment variables are correctly set for testing locally.
 - The app uses real-time updates extensively through Supabase, so ensure your local Supabase instance or connection is correctly configured.
-
+- test
 ---
 
 ## File Structure

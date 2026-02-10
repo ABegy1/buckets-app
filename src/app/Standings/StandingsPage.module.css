@@ -367,6 +367,7 @@
 
 .flameSvg {
   display: block;
+  transform: translateY(-2px);
   width: 1.12em;
   height: 1.12em;
   overflow: visible;

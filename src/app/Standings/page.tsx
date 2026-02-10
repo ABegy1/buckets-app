@@ -4,6 +4,7 @@ import styles from './StandingsPage.module.css'; // Updated path for combined st
 import { supabase } from '@/supabaseClient';
 import { FaFireFlameCurved } from "react-icons/fa6";
 import { FaSnowflake } from "react-icons/fa6"; 
+import { FaDollarSign } from "react-icons/fa";
 import { useRouter } from 'next/navigation';
 import Image, { StaticImageData } from 'next/image';
 
@@ -577,7 +578,9 @@ const StandingsPage: React.FC = () => {
                           <span className={styles.crownIcon}>👑</span>
                         )}
                         {player.shots_left % 10 === 1 && (
-                          <span className={styles.moneyballIcon}>💲</span>
+                          <span className={styles.moneyballIcon} aria-label="Moneyball shot">
+                            <FaDollarSign />
+                          </span>
                         )}
                         {/* Fire Icon: 3+ Consecutive Makes */}
                         {player.shots_made_in_row >= 3 && (

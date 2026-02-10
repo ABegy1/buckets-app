@@ -165,6 +165,7 @@
   width: 1em;
   height: 1em;
   font-size: 24px;
+  overflow: visible;
 }
 
 .coldIcon {
@@ -351,6 +352,7 @@
   width: 100%;
   height: 100%;
   line-height: 1;
+  overflow: visible;
 }
 
 .flameSvg {
@@ -361,55 +363,90 @@
   transform: translateY(1px);
 }
 
-.flameMain {
-  transform-origin: center;
-  animation: flameWobble 2s ease infinite;
+/* IMPORTANT for SVG: make transforms apply per-path instead of “as a group” */
+.flameMain,
+.flame {
+  transform-box: fill-box;
+  transform-origin: 50% 50% 0;
+  will-change: transform, opacity;
 }
 
-.flame {
-  transform-origin: center;
-  animation: flamefly 2s ease infinite;
+/* “Main” layered flame wobble (de-synced like the pen) */
+.flameMain {
+  animation-name: flameWobble;
+  animation-duration: 3s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  fill: #f36e21;
 }
 
 .flameMain.one {
-  fill: #f97316;
+  fill: #f6891f;
+  animation-duration: 4s;
+  animation-delay: -0.6s;
+}
+
+.flameMain.two {
+  fill: #ffd04a;
+  animation-duration: 3s;
+  animation-delay: -1.3s;
+}
+
+.flameMain.three {
+  fill: #fdba16;
+  animation-duration: 2.1s;
+  animation-delay: -2s;
+}
+
+.flameMain.four {
+  fill: #f36e21;
+  animation-duration: 3.2s;
+  animation-delay: -2.7s;
+}
+
+.flameMain.five {
+  fill: #fdba16;
+  animation-duration: 2.5s;
+  animation-delay: -3.4s;
+}
+
+/* Ember particles (start hidden, fade in mid-flight, fly upward/left) */
+.flame {
+  animation-name: flamefly;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0;
+  fill: #f36e21;
+}
+
+.flame.one {
+  animation-delay: -0.7s;
+  animation-duration: 2.8s;
 }
 
 .flame.two {
-  fill: #fde047;
-  animation-duration: 2.1s;
+  animation-delay: -1.4s;
+  animation-duration: 3.6s;
 }
 
-.flame.three,
-.flame.four {
-  fill: #fb923c;
-  animation-duration: 2.3s;
-}
-
-.flame.five {
-  fill: #fff7ae;
-  animation-duration: 1.8s;
-}
-
+/* Scaled-down version of the CodePen motion (uses em so it scales with font-size) */
 @keyframes flameWobble {
   50% {
-    transform: scale(1, 1.12) translate(0, -1px) rotate(-2deg);
+    transform: scale(1, 1.2) translate(0, -0.35em) rotate(-2deg);
   }
 }
 
 @keyframes flamefly {
   0% {
-    opacity: 1;
-    transform: translate(0, 0) rotate(0deg);
+    transform: translate(0, 0) rotate(180deg);
   }
-
   50% {
-    opacity: 0.55;
+    opacity: 1;
   }
-
   100% {
+    transform: translate(-0.25em, -1.6em) rotate(180deg);
     opacity: 0;
-    transform: translate(0, -12px) rotate(20deg);
   }
 }
 
@@ -417,5 +454,6 @@
   .flameMain,
   .flame {
     animation: none;
+    opacity: 1;
   }
 }

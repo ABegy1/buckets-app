@@ -158,8 +158,13 @@
   width: 100%;
 }
 .fireIcon {
-  margin-left: 5px;
-  font-size: 18px;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-size: 22px;
   color: red;
 }
 
@@ -341,15 +346,20 @@
 }
 
 .flameWrap {
-  display: inline-block;
-  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
 }
 
 .flameSvg {
   display: block;
-  width: 1em;
-  height: 1em;
+  width: 1.12em;
+  height: 1.12em;
   overflow: visible;
+  transform: translateY(1px);
 }
 
 .flameMain {

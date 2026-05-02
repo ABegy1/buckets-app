@@ -610,15 +610,19 @@ const StandingsPage: React.FC = () => {
           <div className={styles.teams}>
             {teams.map((team, index) => {
               const isFreeForAll = isFfaSeason || isFfaTeam(team.team_name);
+              const isFakeFfaTeam = isFfaTeam(team.team_name);
+              const showTeamRankBadge = !isFakeFfaTeam;
 
               return (
               <div
                 key={index}
-                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''} ${index === 0 ? styles.teamLeader : ''}`}
+                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''} ${index === 0 && !isFakeFfaTeam ? styles.teamLeader : ''}`}
               >
                 {/* Team Title */}
                 <div className={styles.teamHeader}>
-                  <span className={`${styles.teamRankBadge} ${rankClassByIndex(index)}`}>#{index + 1}</span>
+                  {showTeamRankBadge && (
+                    <span className={`${styles.teamRankBadge} ${rankClassByIndex(index)}`}>#{index + 1}</span>
+                  )}
                   {teamLogoMap[team.team_name] && (
                     <div className={styles.teamLogoWrap}>
                     <Image

@@ -21,6 +21,7 @@ interface Team {
 }
 
 interface TeamWithPlayers {
+  team_id?: number;
   team_name: string;
   players: {
     shots_taken: number;
@@ -288,6 +289,9 @@ const StandingsPage: React.FC = () => {
   rules: ''
  }); // Current season info
  const router = useRouter(); // Router for navigation
+ const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
+  || season.season_name.toLowerCase().includes('free for all');
+ const isFfaTeam = (teamName: string) => teamName === 'Free For All';
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -404,6 +408,7 @@ const StandingsPage: React.FC = () => {
           const teamPointsPerShot = totalShotsTaken > 0 ? team.team_score / totalShotsTaken : 0;
 
           return {
+            team_id: team.team_id,
             team_name: team.team_name,
             players: playersWithStats,
             team_pps: teamPointsPerShot,
@@ -606,19 +611,71 @@ const StandingsPage: React.FC = () => {
                     <span className={styles.statValue}>{team.total_shots}</span>
                   </div>
                   <div className={styles.statBox}>
-                    <span className={styles.statLabel}>PPS</span>
+                    <span className={styles.statLabel}>{(isFfaSeason || isFfaTeam(team.team_name)) ? 'Avg PPS' : 'PPS'}</span>
                     <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
                   </div>
                 </div>
                 {/* Table Headers */}
-                <div className={styles.row}>
-                  <span className={styles.columnHeader}>Name</span>
-                  <span className={styles.columnHeader}>Score</span>
-                  <span className={styles.columnHeader}>SL</span>
-                  <span className={styles.columnHeader}>PPS</span>
-                </div>
-                {team.players.map((player, playerIndex) => (
-                  <div key={playerIndex} className={styles.row}>
+                {(isFfaSeason || isFfaTeam(team.team_name)) ? (
+                  <>
+                    <div className={`${styles.row} ${styles.ffaHeaderRow}`}>
+                      <span className={styles.columnHeader}>#</span>
+                      <span className={styles.columnHeader}>Player</span>
+                      <span className={styles.columnHeader}>Score</span>
+                      <span className={styles.columnHeader}>SL</span>
+                      <span className={styles.columnHeader}>PPS</span>
+                    </div>
+                    {[...team.players]
+                      .sort((a, b) => {
+                        if (b.player_score !== a.player_score) return b.player_score - a.player_score;
+                        if (b.pps !== a.pps) return b.pps - a.pps;
+                        if (a.shots_left !== b.shots_left) return a.shots_left - b.shots_left;
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map((player, playerIndex) => (
+                      <div
+                        key={playerIndex}
+                        className={`${styles.row} ${styles.ffaRow} ${playerIndex === 0 ? styles.ffaLeaderRow : ''}`}
+                      >
+                        <span className={styles.ffaRankBadge}>{playerIndex + 1}</span>
+                        <div className={styles.playerNameColumn}>
+                          <div
+                            className={styles.playerName}
+                            style={{
+                              backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
+                            }}
+                          >
+                            <span className={styles.playerNameText}>{player.name}</span>
+                          </div>
+                        </div>
+                        <span className={styles.totalPoints}>{player.player_score}</span>
+                        <div className={styles.shotsLeft}>
+                          <span className={styles.shotsLeftValue}>{player.shots_left}</span>
+                          {player.shots_left_dashes > 0 && (
+                            <span
+                              className={styles.shotsLeftDashes}
+                              aria-label={`${player.shots_left_dashes} shots left dashes`}
+                            >
+                              {Array.from({ length: player.shots_left_dashes }).map((_, index) => (
+                                <span key={index} className={styles.shotsLeftDash} />
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                        <span className={styles.pps}>{player.pps.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.row}>
+                      <span className={styles.columnHeader}>Name</span>
+                      <span className={styles.columnHeader}>Score</span>
+                      <span className={styles.columnHeader}>SL</span>
+                      <span className={styles.columnHeader}>PPS</span>
+                    </div>
+                    {team.players.map((player, playerIndex) => (
+                      <div key={playerIndex} className={styles.row}>
                     {/* Player Name and Icons */}
                     <div className={styles.playerNameColumn}>
                       <div
@@ -668,7 +725,9 @@ const StandingsPage: React.FC = () => {
                   </div>
                   <span className={styles.pps}>{player.pps.toFixed(2)}</span>
                 </div>
-              ))}
+                    ))}
+                  </>
+                )}
               </div>
             ))}
           </div>

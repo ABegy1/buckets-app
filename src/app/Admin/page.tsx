@@ -475,28 +475,33 @@ const AdminPage = () => {
             <div className={styles.players}>
               {tiers
                 .filter((tier) => tier.players.some((player) => !player.is_hidden))
-                .map((tier) => (
-                  <div key={tier.tier_name} className={styles.column}>
-                    <div className={styles.header}>{tier.tier_name}</div>
-                    {tier.players
-                      .filter((player) => !player.is_hidden)
-                      .map((player) => (
-                        <div
-                          key={player.player_id}
-                          className={styles.box}
-                          onClick={() => handleOpenModal(player.player_id, player.name)}
-                          style={{ color: tier.color }}
-                        >
-                          <span className={styles.playerName}>{player.name}</span>
-                          {waiverByPlayerId[player.player_id] && (
-                            <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
-                              W
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                ))}
+                .map((tier) => {
+                  const visiblePlayers = tier.players.filter((player) => !player.is_hidden);
+                  const usePlayerGrid = visiblePlayers.length > 6;
+
+                  return (
+                    <div key={tier.tier_name} className={styles.column}>
+                      <div className={styles.header}>{tier.tier_name}</div>
+                      <div className={usePlayerGrid ? styles.playerGrid : styles.playerList}>
+                        {visiblePlayers.map((player) => (
+                          <div
+                            key={player.player_id}
+                            className={styles.box}
+                            onClick={() => handleOpenModal(player.player_id, player.name)}
+                            style={{ color: tier.color }}
+                          >
+                            <span className={styles.playerName}>{player.name}</span>
+                            {waiverByPlayerId[player.player_id] && (
+                              <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
+                                W
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

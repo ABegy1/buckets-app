@@ -79,7 +79,7 @@
 /* Footer styling */
 .adminFooter {
   width: 100%;
-  padding: 10px;
+  padding: 14px 12px;
   text-align: center;
   background-color: #2a9d8f;
   color: white;
@@ -178,6 +178,19 @@
 }
 
 
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.playerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
 .header {
   grid-column: 1 / -1;
   font-weight: bold;
@@ -195,6 +208,8 @@
   transition: background-color 0.3s ease;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 56px;
   white-space: nowrap;
   position: relative;
 }

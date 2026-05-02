@@ -583,7 +583,10 @@ const StandingsPage: React.FC = () => {
         {/* Standings View*/}
         <div className={styles.container}>
           <div className={styles.teams}>
-            {teams.map((team, index) => (
+            {teams.map((team, index) => {
+              const isFreeForAll = isFfaSeason || isFfaTeam(team.team_name);
+
+              return (
               <div
                 key={index}
                 className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''}`}
@@ -601,22 +604,24 @@ const StandingsPage: React.FC = () => {
                     />
                   )}
                 </div>
-                <div className={styles.teamStatsGrid}>
-                  <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Total Score</span>
-                    <span className={styles.statValue}>{team.team_score}</span>
+                {!isFreeForAll && (
+                  <div className={styles.teamStatsGrid}>
+                    <div className={styles.statBox}>
+                      <span className={styles.statLabel}>Total Score</span>
+                      <span className={styles.statValue}>{team.team_score}</span>
+                    </div>
+                    <div className={styles.statBox}>
+                      <span className={styles.statLabel}>Shots Left</span>
+                      <span className={styles.statValue}>{team.total_shots}</span>
+                    </div>
+                    <div className={styles.statBox}>
+                      <span className={styles.statLabel}>PPS</span>
+                      <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className={styles.statBox}>
-                    <span className={styles.statLabel}>Shots Left</span>
-                    <span className={styles.statValue}>{team.total_shots}</span>
-                  </div>
-                  <div className={styles.statBox}>
-                    <span className={styles.statLabel}>{(isFfaSeason || isFfaTeam(team.team_name)) ? 'Avg PPS' : 'PPS'}</span>
-                    <span className={styles.statValue}>{team.team_pps.toFixed(2)}</span>
-                  </div>
-                </div>
+                )}
                 {/* Table Headers */}
-                {(isFfaSeason || isFfaTeam(team.team_name)) ? (
+                {isFreeForAll ? (
                   <>
                     <div className={`${styles.row} ${styles.ffaHeaderRow}`}>
                       <span className={styles.columnHeader}>#</span>
@@ -729,7 +734,8 @@ const StandingsPage: React.FC = () => {
                   </>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
     </main>

@@ -1,497 +1,131 @@
-/* General container styles for the entire user page */
 .userContainer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
-  padding: 0;
-  background-color: #f0f0f0;
-  color: #333;
+  background: radial-gradient(circle at top, #f8fbff 0%, #edf2f7 45%, #e7edf4 100%);
+  color: #1f2933;
 }
 
-/* Header styling */
-.userHeader {
-  width: 100%;
-  padding: 8px 10px;
-  text-align: center;
-  background-color: #264653; /* Darker color for better contrast */
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.userHeader h1 {
-  margin: 0;
-  font-size: 2.5rem;
-  font-weight: bold;
-}
-
-/* Content area styling */
 .userContent {
-  width: 100%; 
+  width: 100%;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px;
+  padding: 16px;
 }
 
-/* Footer styling */
-.userFooter {
-  width: 100%;
-  padding: 5px;
-  text-align: center;
-  background-color: #264653; /* Darker color for better contrast */
-  color: #fff;
-  flex-shrink: 0;
+.container {
+  width: min(1300px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pageSummary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.userFooter p {
-  margin: 0;
-  font-size: 1rem;
-}
-
-/* Button styling */
-.btn {
-  background-color: #c1121f; /* Darker color for better contrast */
-  color: white;
-  padding: 12px 24px;
-  font-size: 1.2rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btn:hover {
-  background-color: #a11a1a;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr; /* Name gets more space than stats */
-  align-items: center; /* Ensure vertical alignment */
-  padding: 12px 2px;
-  font-size: 1.5rem;
-  border-bottom: 1px solid #ddd;
-}
-
-.ffaHeaderRow,
-.ffaRow {
-  grid-template-columns: 0.7fr 2fr 1fr 1fr 1fr;
-}
-
-.ffaRow:nth-child(even) {
-  background-color: #f7f9fb;
-}
-
-.ffaLeaderRow {
-  background-color: #edf6f9;
-}
-
-.ffaRankBadge {
-  justify-self: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background-color: #264653;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #264653 0%, #1f3b47 100%);
   color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(20, 37, 47, 0.24);
 }
 
-.playerName{
-  display: inline-flex; /* Ensures the circle and name stay on the same line */
-  align-items: center;  /* Vertically aligns the circle and name */
-  flex-basis: 33%;
-  gap: 6px;
-  white-space: nowrap;
-  overflow: visible;
-  padding: 4px 10px;
-  border-radius: 999px;
-  color: #1f2933;
-}
+.summaryTitle { font-size: 1.15rem; font-weight: 700; }
+.summaryMeta { display: flex; gap: 12px; flex-wrap: wrap; color: rgba(255,255,255,0.88); font-size: 0.95rem; }
+.ffaChip { background: rgba(255,255,255,0.16); padding: 6px 10px; border-radius: 999px; font-weight: 700; letter-spacing: .04em; }
 
-.playerNameText {
-  white-space: nowrap;
-}
-.shotsLeft,
-.totalPoints,
-.pps {
-  flex-basis: 25%; /* Ensure each column gets equal width */
-  text-align: center;
-}
-
-.shotsLeft {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.shotsLeftValue {
-  font-weight: 600;
-}
-
-.shotsLeftDashes {
-  display: flex;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.shotsLeftDash {
-  width: 16px;
-  height: 4px;
-  border-radius: 999px;
-  background-color: #52606d;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  display: inline-block;
-}
-
-/* Ensure that the columns are evenly spaced and aligned */
-.columnHeader {
-  flex-basis: 25%;
-  text-align: center;
-  font-weight: bold;
-}
-.players {
-  margin-top: 15px;
-}
-
-
-/* Season standings section styling */
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 100%;
-  margin-top: 20px;
-  box-sizing: border-box;
-}
-
-
-/* Teams container */
 .teams {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
   width: 100%;
 }
-.fireIcon {
-  margin-left: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  width: 1em;
-  height: 1em;
-  font-size: 24px;
-  overflow: visible;
-}
 
-.coldIcon {
-  margin-left: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font-size: 18px;
-  color: blue;  /* Blue for the cold icon */
-}
-
-.crownIcon {
-  margin-left: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font-size: 18px;
-}
-
-.moneyballIcon {
-  margin-left: 0;
-  font-size: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  color: #22c55e;
-  text-shadow:
-    0 0 4px rgba(34, 197, 94, 0.45),
-    0 0 10px rgba(22, 163, 74, 0.35);
-  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.45));
-  transform-origin: center;
-  animation: moneyballPop 1.9s ease-in-out infinite;
-}
-
-@keyframes moneyballPop {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.14);
-  }
-}
-
-/* Individual team card */
 .team {
   display: flex;
   flex-direction: column;
-  border: 2px solid var(--team-border-primary, #ddd);
-  padding: 15px;
-  border-radius: 10px;
-  background-color: #fafafa;
-  box-sizing: border-box;
-  box-shadow: 0 0 0 2px var(--team-border-secondary, #ddd);
+  border: 2px solid var(--team-border-primary, #d8dee9);
+  border-radius: 16px;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px var(--team-border-secondary, #f0f4f8), 0 10px 24px rgba(15, 23, 42, 0.08);
 }
+.teamLeader { transform: translateY(-2px); box-shadow: 0 0 0 3px #fff3bf, 0 18px 28px rgba(100, 70, 0, 0.18); }
 
-.teamNightmares {
-  --team-border-primary: #f4c542;
-  --team-border-secondary: #7a1e2c;
-}
+.teamNightmares { --team-border-primary: #f4c542; --team-border-secondary: #7a1e2c1f; }
+.teamDirewolves { --team-border-primary: #f26a21; --team-border-secondary: #0b1f3a1f; }
+.teamMonstars { --team-border-primary: #3fae2a; --team-border-secondary: #1111111a; }
+.teamSpartans { --team-border-primary: #4b5320; --team-border-secondary: #6b8e231f; }
 
-.teamDirewolves {
-  --team-border-primary: #f26a21;
-  --team-border-secondary: #0b1f3a;
-}
-
-.teamMonstars {
-  --team-border-primary: #3fae2a;
-  --team-border-secondary: #111111;
-}
-
-.teamSpartans {
-  --team-border-primary: #4b5320;
-  --team-border-secondary: #6b8e23;
-}
+.teamHeader { display:flex; justify-content: space-between; align-items:center; gap:10px; margin-bottom: 10px; }
+.teamLogoWrap { display:flex; align-items:center; justify-content:center; min-height: 72px; }
+.teamLogo { width:auto; height:72px; object-fit:contain; }
+.teamRankBadge { font-weight: 800; font-size: .9rem; letter-spacing:.05em; padding:6px 10px; border-radius: 999px; background:#f1f5f9; color:#0f172a; }
+.medalGold { background: linear-gradient(135deg,#ffef99,#eab308); color:#422006; }
+.medalSilver { background: linear-gradient(135deg,#f1f5f9,#cbd5e1); color:#334155; }
+.medalBronze { background: linear-gradient(135deg,#fdba74,#c2410c); color:#431407; }
 
 .teamStatsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 8px 0 14px;
-  background-color: #fff;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.statBox { border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; text-align:center; background:#f8fafc; }
+.statLabel { font-size: .7rem; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: .06em; }
+.statValue { font-size: 1.35rem; font-weight: 800; color: #0f172a; }
+
+.row { display:grid; grid-template-columns: 2.1fr .9fr .9fr .9fr; align-items:center; gap:8px; padding: 10px 6px; border-bottom:1px solid #e5e7eb; }
+.row:last-child { border-bottom: none; }
+.ffaHeaderRow, .ffaRow { grid-template-columns: .7fr 2.2fr .9fr .9fr .9fr; }
+.ffaRow:nth-child(even) { background:#f8fafc; }
+.ffaLeaderRow { background: linear-gradient(90deg, #fff7d6 0%, #ffffff 90%); }
+
+.columnHeader { text-align:center; font-size:.8rem; font-weight:800; text-transform:uppercase; color:#64748b; letter-spacing:.05em; }
+.tableHeader { position: sticky; top: 0; z-index: 2; background: #fff; border-top: 1px solid #e2e8f0; }
+
+.ffaRankBadge { justify-self:center; width: 30px; height:30px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-size:.9rem; font-weight:800; background:#264653; color:#fff; }
+
+.playerNameColumn { min-width:0; display:flex; }
+.playerName { display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius:999px; min-width:0; }
+.playerNameText { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+.totalPoints, .pps { text-align:center; font-weight:700; }
+.totalPoints { font-size: 1.2rem; }
+.shotsLeft { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.shotsLeftDashes { display:flex; gap:3px; }
+.shotsLeftDash { width:14px; height:4px; border-radius:999px; background:#64748b; }
+
+.coldIcon,.moneyballIcon,.crownIcon,.fireIcon { display:inline-flex; align-items:center; justify-content:center; }
+.coldIcon { color:#2563eb; }
+.moneyballIcon { color:#22c55e; }
+
+.userFooter { width:100%; padding:6px 12px; background:#264653; color:#fff; display:flex; justify-content:space-between; align-items:center; }
+.signOutButton { background:#c1121f; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; }
+
+@media (max-width: 900px) {
+  .teams { grid-template-columns: 1fr; }
+  .pageSummary { flex-direction: column; align-items:flex-start; }
+}
+@media (max-width: 640px) {
+  .userContent { padding: 10px; }
+  .row { grid-template-columns: 1.8fr .8fr .8fr .8fr; font-size: .95rem; }
+  .ffaHeaderRow, .ffaRow { grid-template-columns: .6fr 1.9fr .8fr .8fr .8fr; }
+  .teamLogo { height:56px; }
+  .teamStatsGrid { grid-template-columns: 1fr 1fr 1fr; }
 }
 
-.statBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 8px;
-  gap: 6px;
-}
-
-.statBox:not(:last-child) {
-  border-right: 1px solid #ddd;
-}
-
-.statLabel {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #666;
-}
-
-.statValue {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #264653;
-}
-
-.teamHeader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
-}
-
-.teamLogo {
-  width: auto;
-  height: 202px;
-  object-fit: contain;
-}
-
-/* Header row for player stats */
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.5rem;
-  font-weight: bold;
-  border-bottom: 2px solid #333;
-  padding: 10px 0;
-}
-
-/* Updated Sign Out button styling */
-.signOutButton {
-  background-color: #c1121f; /* Darker color for better contrast */
-  color: white;
-  padding: 8px 16px;
-  font-size: 1.1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.playerNameColumn {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  min-width: 0;
-}
-
-.signOutButton:hover {
-  background-color: #a11a1a;
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-}
-.signOutButton:active {
-  background-color: #8b0000;
-  box-shadow: none;
-}
-
-/* Player row styling */
-.player {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.5rem;
-  padding: 10px 0;
-  border-bottom: 1px solid #ddd;
-}
-
-
-@media (max-width: 600px) {
-  .navbarTitle {
-    font-size: 1.5rem;
-  }
-
-  .seasonTitle {
-    font-size: 2rem;
-  }
-}
-
-.flameWrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform: translateY(-.17em);
-  width: 100%;
-  height: 100%;
-  line-height: 1;
-  overflow: visible;
-}
-
-.flameSvg {
-  display: block;
-  width: 1.12em;
-  height: 1.12em;
-  overflow: visible;
-  transform: none;
-}
-
-/* IMPORTANT for SVG: make transforms apply per-path instead of “as a group” */
-.flameMain,
-.flame {
-  transform-box: fill-box;
-  transform-origin: 50% 50% 0;
-  will-change: transform, opacity;
-}
-
-/* “Main” layered flame wobble (de-synced like the pen) */
-.flameMain {
-  animation-name: flameWobble;
-  animation-duration: 3s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  fill: #f36e21;
-}
-
-.flameMain.one {
-  fill: #f6891f;
-  animation-duration: 4s;
-  animation-delay: -0.6s;
-}
-
-.flameMain.two {
-  fill: #ffd04a;
-  animation-duration: 3s;
-  animation-delay: -1.3s;
-}
-
-.flameMain.three {
-  fill: #fdba16;
-  animation-duration: 2.1s;
-  animation-delay: -2s;
-}
-
-.flameMain.four {
-  fill: #f36e21;
-  animation-duration: 3.2s;
-  animation-delay: -2.7s;
-}
-
-.flameMain.five {
-  fill: #fdba16;
-  animation-duration: 2.5s;
-  animation-delay: -3.4s;
-}
-
-/* Ember particles (start hidden, fade in mid-flight, fly upward/left) */
-.flame {
-  animation-name: flamefly;
-  animation-duration: 2s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  opacity: 0;
-  fill: #f36e21;
-}
-
-.flame.one {
-  animation-delay: -0.7s;
-  animation-duration: 2.8s;
-}
-
-.flame.two {
-  animation-delay: -1.4s;
-  animation-duration: 3.6s;
-}
-
-/* Scaled-down version of the CodePen motion (uses em so it scales with font-size) */
-@keyframes flameWobble {
-  50% {
-    transform: scale(1, 1.2) translate(0, -0.35em) rotate(-2deg);
-  }
-}
-
-@keyframes flamefly {
-  0% {
-    transform: translate(0, 0) rotate(180deg);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-0.25em, -1.6em) rotate(180deg);
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flameMain,
-  .flame {
-    animation: none;
-    opacity: 1;
-  }
-}
+.flameWrap { display:inline-flex; width:1em; height:1em; }
+.flameSvg { width:1em; height:1em; }
+.flameMain,.flame { transform-box: fill-box; transform-origin: 50% 50% 0; }
+.flameMain { fill:#f36e21; animation: flameWobble 3s linear infinite; }
+.flameMain.one { fill:#f6891f; }
+.flameMain.two,.flameMain.three,.flameMain.five { fill:#fdba16; }
+.flame { fill:#f36e21; animation: flamefly 2s linear infinite; opacity:0; }
+@keyframes flameWobble { 50% { transform: scale(1,1.2) translate(0,-0.25em) rotate(-2deg); } }
+@keyframes flamefly { 0%{transform:translate(0,0) rotate(180deg);}50%{opacity:1;}100%{transform:translate(-0.2em,-1.4em) rotate(180deg);opacity:0;} }
+@media (prefers-reduced-motion: reduce) { .flameMain,.flame { animation:none; opacity:1; } }

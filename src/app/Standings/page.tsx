@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaSnowflake } from "react-icons/fa6"; 
@@ -282,6 +282,7 @@ const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
  const [userView, setUserView] = useState<string>('Standings'); // Tracks the current user view (e.g., Standings, FreeAgent, Rules)
+ const [isLoading, setIsLoading] = useState<boolean>(true);
  const [season, setSeason] = useState<Season>({
   season_id: -1,
   season_name: '',
@@ -292,6 +293,14 @@ const StandingsPage: React.FC = () => {
  const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
   || season.season_name.toLowerCase().includes('free for all');
  const isFfaTeam = (teamName: string) => teamName === 'Free For All';
+ const rankClassByIndex = (index: number) => {
+  if (index === 0) return styles.medalGold;
+  if (index === 1) return styles.medalSilver;
+  if (index === 2) return styles.medalBronze;
+  return '';
+ };
+
+ const totalPlayers = useMemo(() => teams.reduce((acc, team) => acc + team.players.length, 0), [teams]);
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -311,6 +320,7 @@ const StandingsPage: React.FC = () => {
    */
   const fetchTeamsAndPlayers = async () => {
     try {
+      setIsLoading(true);
             // Fetch active season details
 
       const { data: activeSeason, error: seasonError } = await supabase
@@ -423,6 +433,8 @@ const StandingsPage: React.FC = () => {
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error('Error fetching teams, players, and season info:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -582,6 +594,19 @@ const StandingsPage: React.FC = () => {
     <main className={styles.userContent}>
         {/* Standings View*/}
         <div className={styles.container}>
+          <section className={styles.pageSummary} aria-label="Standings summary">
+            <div>
+              <div className={styles.summaryTitle}>{isFfaSeason ? 'Free For All Leaderboard' : 'Team Standings'}</div>
+              <div className={styles.summaryMeta}>
+                <span>{teams.length} {isFfaSeason ? 'group' : 'teams'}</span>
+                <span>{totalPlayers} players</span>
+                <span>{season.shot_total} total shots</span>
+              </div>
+            </div>
+            {isFfaSeason && <span className={styles.ffaChip}>INDIVIDUAL COMPETITION</span>}
+          </section>
+          {isLoading && <section className={styles.pageSummary}><div className={styles.summaryTitle}>Loading standings…</div></section>}
+          {!isLoading && teams.length === 0 && <section className={styles.pageSummary}><div className={styles.summaryTitle}>No visible teams or players yet.</div></section>}
           <div className={styles.teams}>
             {teams.map((team, index) => {
               const isFreeForAll = isFfaSeason || isFfaTeam(team.team_name);
@@ -589,11 +614,13 @@ const StandingsPage: React.FC = () => {
               return (
               <div
                 key={index}
-                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''}`}
+                className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''} ${index === 0 ? styles.teamLeader : ''}`}
               >
                 {/* Team Title */}
                 <div className={styles.teamHeader}>
+                  <span className={`${styles.teamRankBadge} ${rankClassByIndex(index)}`}>#{index + 1}</span>
                   {teamLogoMap[team.team_name] && (
+                    <div className={styles.teamLogoWrap}>
                     <Image
                       className={styles.teamLogo}
                       src={teamLogoMap[team.team_name]}
@@ -602,6 +629,7 @@ const StandingsPage: React.FC = () => {
                       height={teamLogoSizeMap[team.team_name] ?? 202}
                       sizes={`${teamLogoSizeMap[team.team_name] ?? 202}px`}
                     />
+                    </div>
                   )}
                 </div>
                 {!isFreeForAll && (
@@ -623,7 +651,7 @@ const StandingsPage: React.FC = () => {
                 {/* Table Headers */}
                 {isFreeForAll ? (
                   <>
-                    <div className={`${styles.row} ${styles.ffaHeaderRow}`}>
+                    <div className={`${styles.row} ${styles.ffaHeaderRow} ${styles.tableHeader}`}>
                       <span className={styles.columnHeader}>#</span>
                       <span className={styles.columnHeader}>Player</span>
                       <span className={styles.columnHeader}>Score</span>
@@ -673,7 +701,7 @@ const StandingsPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <div className={styles.row}>
+                    <div className={`${styles.row} ${styles.tableHeader}`}>
                       <span className={styles.columnHeader}>Name</span>
                       <span className={styles.columnHeader}>Score</span>
                       <span className={styles.columnHeader}>SL</span>

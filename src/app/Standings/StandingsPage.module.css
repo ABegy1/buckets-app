@@ -77,6 +77,33 @@
   border-bottom: 1px solid #ddd;
 }
 
+.ffaHeaderRow,
+.ffaRow {
+  grid-template-columns: 0.7fr 2fr 1fr 1fr 1fr;
+}
+
+.ffaRow:nth-child(even) {
+  background-color: #f7f9fb;
+}
+
+.ffaLeaderRow {
+  background-color: #edf6f9;
+}
+
+.ffaRankBadge {
+  justify-self: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background-color: #264653;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .playerName{
   display: inline-flex; /* Ensures the circle and name stay on the same line */
   align-items: center;  /* Vertically aligns the circle and name */

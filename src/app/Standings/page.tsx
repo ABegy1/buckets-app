@@ -133,6 +133,31 @@ const FlameIcon = () => (
   </span>
 );
 
+const PlayerStatusIcons: React.FC<{ player: TeamWithPlayers['players'][number] }> = ({ player }) => (
+  <>
+    {player.name === 'A. Begy' && (
+      <span className={styles.crownIcon}>👑</span>
+    )}
+    {player.shots_left % 10 === 1 && (
+      <span className={styles.moneyballIcon} aria-label="Moneyball shot">
+        <FaDollarSign />
+      </span>
+    )}
+    {/* Fire Icon: 3+ Consecutive Makes */}
+    {player.shots_made_in_row >= 3 && (
+      <span className={styles.fireIcon}>
+        <FlameIcon />
+      </span>
+    )}
+    {/* Cold Icon: 4+ Consecutive Misses */}
+    {player.shots_missed_in_row >= 4 && (
+      <span className={styles.coldIcon}>
+        <FaSnowflake />
+      </span>
+    )}
+  </>
+);
+
 
 // Function to calculate the current streak of consecutive made shots
 const calculateShotsMadeInRow = async (playerInstanceId: number) => {
@@ -754,6 +779,7 @@ const StandingsPage: React.FC = () => {
                             }}
                           >
                             <span className={styles.playerNameText}>{player.name}</span>
+                            <PlayerStatusIcons player={player} />
                           </div>
                         </div>
                         <span className={styles.totalPoints}>{player.player_score}</span>
@@ -793,27 +819,7 @@ const StandingsPage: React.FC = () => {
                         }}
                       >
                         <span className={styles.playerNameText}>{player.name}</span>
-                        {player.name === 'A. Begy' && (
-                          <span className={styles.crownIcon}>👑</span>
-                        )}
-                        {player.shots_left % 10 === 1 && (
-                          <span className={styles.moneyballIcon} aria-label="Moneyball shot">
-                            <FaDollarSign />
-                          </span>
-                        )}
-                        {/* Fire Icon: 3+ Consecutive Makes */}
-                        {player.shots_made_in_row >= 3 && (
-                          <span className={styles.fireIcon}>
-                            <FlameIcon />
-                          </span>
-                        )}
-
-                        {/* Cold Icon: 4+ Consecutive Misses */}
-                        {player.shots_missed_in_row >= 4 && (
-                          <span className={styles.coldIcon}>
-                            <FaSnowflake />
-                          </span>
-                        )}
+                        <PlayerStatusIcons player={player} />
                       </div>
                   </div>
                     {/* Player Stats */}

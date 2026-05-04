@@ -23,6 +23,15 @@
   gap: 18px;
 }
 
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.standingsPanel { min-width: 0; }
+
 .pageSummary {
   display: flex;
   justify-content: space-between;
@@ -45,6 +54,32 @@
   gap: 16px;
   width: 100%;
 }
+
+.shotHistoryPanel {
+  background: #ffffff;
+  border: 2px solid #d8dee9;
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px #f0f4f8, 0 10px 24px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+}
+.shotHistoryHeader { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+.shotHistoryTitle { margin: 0; font-size: 1.2rem; font-weight: 800; color:#0f172a; }
+.livePill { background:#dcfce7; color:#166534; border-radius:999px; padding:4px 10px; font-size:.75rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.shotHistorySubtle { margin: 0 0 10px; color:#64748b; font-size:.92rem; }
+.shotHistoryState { border:1px dashed #cbd5e1; border-radius:12px; padding:14px; color:#475569; display:flex; flex-direction:column; gap:4px; }
+.shotHistoryList { list-style:none; margin:0; padding:0; overflow:auto; display:flex; flex-direction:column; gap:10px; }
+.shotHistoryItem { border:1px solid #e2e8f0; border-radius:12px; padding:10px; background:#f8fafc; }
+.shotTopRow { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.shotPlayerWrap { display:flex; align-items:center; gap:8px; min-width:0; }
+.shotPlayer { font-size:1rem; font-weight:700; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tierChip { display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; color:#fff; font-size:.72rem; font-weight:700; }
+.shotResult { font-weight:800; font-size:1rem; }
+.shotMade { color:#166534; }
+.shotMiss { color:#7f1d1d; }
+.shotMeta { margin-top:6px; color:#64748b; font-size:.84rem; }
 
 .team {
   display: flex;
@@ -108,8 +143,10 @@
 .signOutButton { background:#c1121f; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; }
 
 @media (max-width: 900px) {
+  .contentGrid { grid-template-columns: 1fr; }
   .teams { grid-template-columns: 1fr; }
   .pageSummary { flex-direction: column; align-items:flex-start; }
+  .shotHistoryPanel { max-height: none; }
 }
 @media (max-width: 640px) {
   .userContent { padding: 10px; }

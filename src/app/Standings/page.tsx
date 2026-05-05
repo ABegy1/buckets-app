@@ -662,9 +662,6 @@ const StandingsPage: React.FC = () => {
               }
               await fetchTeamsAndPlayers();
               await updateTeamScores();
-              if (season.season_id !== -1) {
-                await fetchShotHistory(season.season_id);
-              }
             } catch (error) {
               console.error('Error processing shot change:', error);
             }

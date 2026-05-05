@@ -522,8 +522,11 @@ const StandingsPage: React.FC = () => {
  /**
    * Subscribes to user view changes in real time and updates state accordingly.
    */
-  const refreshStandings = useCallback(async () => {
+  const refreshStandings = useCallback(async (seasonId?: number) => {
     await fetchTeamsAndPlayers();
+    if (seasonId && seasonId !== -1) {
+      await fetchShotHistory(seasonId);
+    }
   }, [fetchTeamsAndPlayers]);
 
   useEffect(() => {
@@ -599,8 +602,7 @@ const StandingsPage: React.FC = () => {
               // sound.play();
             }
           }
-
-          await refreshStandings();
+          await refreshStandings(season.season_id);
         } catch (error) {
           console.error('Error processing shot change:', error);
         }
@@ -614,7 +616,7 @@ const StandingsPage: React.FC = () => {
       supabase.removeChannel(shotChannel);
       isRealtimeSubscribingRef.current = false;
     };
-  }, [refreshStandings]);
+  }, [refreshStandings, season.season_id]);
 
  return (
   <div className={styles.userContainer}>

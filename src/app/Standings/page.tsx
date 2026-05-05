@@ -284,7 +284,7 @@ const StandingsPage: React.FC = () => {
   return `${result}`;
  };
 
- const fetchShotHistory = async (seasonId: number) => {
+ const fetchShotHistory = useCallback(async (seasonId: number) => {
   try {
     setIsShotHistoryLoading(true);
     setShotHistoryError(null);
@@ -324,7 +324,7 @@ const StandingsPage: React.FC = () => {
   } finally {
     setIsShotHistoryLoading(false);
   }
- };
+ }, []);
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -527,7 +527,7 @@ const StandingsPage: React.FC = () => {
     if (seasonId && seasonId !== -1) {
       await fetchShotHistory(seasonId);
     }
-  }, [fetchTeamsAndPlayers]);
+  }, [fetchTeamsAndPlayers, fetchShotHistory]);
 
   useEffect(() => {
     let userViewChannel: ReturnType<typeof supabase.channel> | null = null;

@@ -49,6 +49,31 @@ interface ShotFeedItem {
   tier_color: string | null;
 }
 
+interface ShotHistoryPanelProps {
+  recentShots: ShotFeedItem[];
+  isLoading: boolean;
+  error: string | null;
+  formatShotTime: (shotDate: string) => string;
+  formatShotResult: (result: number) => string;
+}
+
+const areShotFeedItemsEqual = (current: ShotFeedItem[], next: ShotFeedItem[]) => {
+  if (current.length !== next.length) return false;
+
+  return current.every((shot, index) => {
+    const nextShot = next[index];
+
+    return (
+      shot.shot_id === nextShot.shot_id
+      && shot.shot_date === nextShot.shot_date
+      && shot.result === nextShot.result
+      && shot.player_name === nextShot.player_name
+      && shot.tier_name === nextShot.tier_name
+      && shot.tier_color === nextShot.tier_color
+    );
+  });
+};
+
 
 interface LeaderboardRow {
   team_id: number;
@@ -169,6 +194,59 @@ const PlayerStatusIcons: React.FC<{ player: TeamWithPlayers['players'][number] }
   </>
 );
 
+const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
+  recentShots,
+  isLoading,
+  error,
+  formatShotTime,
+  formatShotResult,
+}: ShotHistoryPanelProps) {
+  return (
+    <aside className={styles.shotHistoryPanel} aria-label="Live shot history">
+      <div className={styles.shotHistoryHeader}>
+        <h2 className={styles.shotHistoryTitle}>Shot History</h2>
+        <span className={styles.livePill}>Live</span>
+      </div>
+      <p className={styles.shotHistorySubtle}>Recent makes and misses for this season.</p>
+      {isLoading && (
+        <div className={styles.shotHistoryState}>Loading live feed…</div>
+      )}
+      {!isLoading && error && (
+        <div className={styles.shotHistoryState}>{error}</div>
+      )}
+      {!isLoading && !error && recentShots.length === 0 && (
+        <div className={styles.shotHistoryState}>
+          <strong>No shots recorded yet.</strong>
+          <span>Shot activity will appear here live.</span>
+        </div>
+      )}
+      {!isLoading && !error && recentShots.length > 0 && (
+        <ul className={styles.shotHistoryList}>
+          {recentShots.map((shot) => (
+            <li key={shot.shot_id} className={styles.shotHistoryItem}>
+              <div className={styles.shotTopRow}>
+                <div className={styles.shotPlayerWrap}>
+                  <span className={styles.shotPlayer}>{shot.player_name}</span>
+                  {shot.tier_color && (
+                    <span className={styles.tierChip} style={{ backgroundColor: shot.tier_color }}>
+                      {shot.tier_name || 'Tier'}
+                    </span>
+                  )}
+                </div>
+                <span className={`${styles.shotResult} ${shot.result > 0 ? styles.shotMade : styles.shotMiss}`}>
+                  {shot.result > 1 ? '🔥 ' : ''}{formatShotResult(shot.result)}
+                </span>
+              </div>
+              <div className={styles.shotMeta}>
+                {formatShotTime(shot.shot_date)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </aside>
+  );
+});
 
 const StandingsPage: React.FC = () => {
  // State variables
@@ -201,21 +279,23 @@ const StandingsPage: React.FC = () => {
  };
 
  const totalPlayers = useMemo(() => teams.reduce((acc, team) => acc + team.players.length, 0), [teams]);
- const formatShotTime = (shotDate: string) => {
+ const formatShotTime = useCallback((shotDate: string) => {
   const parsed = new Date(shotDate);
   if (Number.isNaN(parsed.getTime())) return 'Unknown time';
   return parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
- };
+ }, []);
 
- const formatShotResult = (result: number) => {
+ const formatShotResult = useCallback((result: number) => {
   if (result > 0) return `+${result}`;
   if (result === 0) return 'Miss';
   return `${result}`;
- };
+ }, []);
 
- const fetchShotHistory = useCallback(async (seasonId: number) => {
+ const fetchShotHistory = useCallback(async (seasonId: number, showLoading = false) => {
   try {
-    setIsShotHistoryLoading(true);
+    if (showLoading) {
+      setIsShotHistoryLoading(true);
+    }
     setShotHistoryError(null);
     const { data, error } = await supabase
       .from('shots')
@@ -245,7 +325,9 @@ const StandingsPage: React.FC = () => {
       tier_color: shot.tiers?.color ?? null,
     }));
 
-    setRecentShots(mapped);
+    setRecentShots((currentShots) => (
+      areShotFeedItemsEqual(currentShots, mapped) ? currentShots : mapped
+    ));
   } catch (error) {
     console.error('Error fetching shot history:', error);
     setShotHistoryError('Unable to load live shot feed.');
@@ -695,49 +777,13 @@ const StandingsPage: React.FC = () => {
               })}
               </div>
             </section>
-            <aside className={styles.shotHistoryPanel} aria-label="Live shot history">
-              <div className={styles.shotHistoryHeader}>
-                <h2 className={styles.shotHistoryTitle}>Shot History</h2>
-                <span className={styles.livePill}>Live</span>
-              </div>
-              <p className={styles.shotHistorySubtle}>Recent makes and misses for this season.</p>
-              {isShotHistoryLoading && (
-                <div className={styles.shotHistoryState}>Loading live feed…</div>
-              )}
-              {!isShotHistoryLoading && shotHistoryError && (
-                <div className={styles.shotHistoryState}>{shotHistoryError}</div>
-              )}
-              {!isShotHistoryLoading && !shotHistoryError && recentShots.length === 0 && (
-                <div className={styles.shotHistoryState}>
-                  <strong>No shots recorded yet.</strong>
-                  <span>Shot activity will appear here live.</span>
-                </div>
-              )}
-              {!isShotHistoryLoading && !shotHistoryError && recentShots.length > 0 && (
-                <ul className={styles.shotHistoryList}>
-                  {recentShots.map((shot, index) => (
-                    <li key={`${shot.shot_id}-${index}`} className={styles.shotHistoryItem}>
-                      <div className={styles.shotTopRow}>
-                        <div className={styles.shotPlayerWrap}>
-                          <span className={styles.shotPlayer}>{shot.player_name}</span>
-                          {shot.tier_color && (
-                            <span className={styles.tierChip} style={{ backgroundColor: shot.tier_color }}>
-                              {shot.tier_name || 'Tier'}
-                            </span>
-                          )}
-                        </div>
-                        <span className={`${styles.shotResult} ${shot.result > 0 ? styles.shotMade : styles.shotMiss}`}>
-                          {shot.result > 1 ? '🔥 ' : ''}{formatShotResult(shot.result)}
-                        </span>
-                      </div>
-                      <div className={styles.shotMeta}>
-                        {formatShotTime(shot.shot_date)}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </aside>
+            <ShotHistoryPanel
+              recentShots={recentShots}
+              isLoading={isShotHistoryLoading}
+              error={shotHistoryError}
+              formatShotTime={formatShotTime}
+              formatShotResult={formatShotResult}
+            />
           </div>
         </div>
     </main>

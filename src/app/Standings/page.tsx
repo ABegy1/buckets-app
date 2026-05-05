@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaSnowflake } from "react-icons/fa6"; 
@@ -327,6 +327,8 @@ const StandingsPage: React.FC = () => {
  const [isShotHistoryLoading, setIsShotHistoryLoading] = useState<boolean>(true);
  const [shotHistoryError, setShotHistoryError] = useState<string | null>(null);
  const router = useRouter(); // Router for navigation
+ const hasInitializedRef = useRef(false);
+ const isRealtimeSubscribingRef = useRef(false);
  const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
   || season.season_name.toLowerCase().includes('free for all');
  const isFfaTeam = (teamName: string) => teamName === 'Free For All';
@@ -408,7 +410,7 @@ const StandingsPage: React.FC = () => {
    * Fetches teams and their players for the Standings view.
    * Includes player stats like shots left, scores, and streaks.
    */
-  const fetchTeamsAndPlayers = async () => {
+  const fetchTeamsAndPlayers = useCallback(async () => {
     try {
       setIsLoading(true);
             // Fetch active season details
@@ -527,7 +529,7 @@ const StandingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // useEffect(() => {
   //   // Function to unlock and keep AudioContext alive
@@ -587,98 +589,102 @@ const StandingsPage: React.FC = () => {
  /**
    * Subscribes to user view changes in real time and updates state accordingly.
    */
+  const refreshStandings = useCallback(async (seasonId?: number) => {
+    await fetchTeamsAndPlayers();
+    await updateTeamScores();
+    if (seasonId && seasonId !== -1) {
+      await fetchShotHistory(seasonId);
+    }
+  }, [fetchTeamsAndPlayers]);
+
   useEffect(() => {
-    const subscribeToUserViewChanges = async () => {
+    let userViewChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    const loadSeasonAndUserView = async () => {
+      if (hasInitializedRef.current) return;
+      hasInitializedRef.current = true;
+
+      await Promise.all([fetchUserView(), refreshStandings()]);
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session?.user?.email) return;
 
-      const { user } = session;
-
-     // Subscribe to updates on the user's View field
-      const userViewChannel = supabase
-        .channel('user-view-changes')
+      userViewChannel = supabase
+        .channel(`user-view-changes-${session.user.email}`)
         .on(
           'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${session.user.email}` },
           (payload) => {
             const updatedView = payload.new.View;
             setUserView(updatedView);
           }
         )
         .subscribe();
-
-      // Fetch initial view
-      fetchUserView();
-
-      return () => {
-        supabase.removeChannel(userViewChannel);
-      };
     };
 
-    subscribeToUserViewChanges();
-  }, []);
+    loadSeasonAndUserView();
+
+    return () => {
+      if (userViewChannel) {
+        supabase.removeChannel(userViewChannel);
+      }
+      hasInitializedRef.current = false;
+    };
+  }, [refreshStandings]);
 
   useEffect(() => {
+    if (isRealtimeSubscribingRef.current) return;
+    isRealtimeSubscribingRef.current = true;
 
-      // Initial fetch and update
-      fetchTeamsAndPlayers();
-      updateTeamScores();
+    const playerInstanceChannel = supabase
+      .channel('player-instance-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      // Subscribe to changes in player_instance, team, player
-      const playerInstanceChannel = supabase
-        .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, () => {
-          fetchTeamsAndPlayers();
-          updateTeamScores();
-        })
-        .subscribe();
+    const teamChannel = supabase
+      .channel('team-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      const teamChannel = supabase
-        .channel('team-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeamsAndPlayers)
-        .subscribe();
+    const playerChannel = supabase
+      .channel('player-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      const playerChannel = supabase
-        .channel('player-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
-        .subscribe();
+    const shotChannel = supabase
+      .channel('shots-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, async (payload) => {
+        try {
+          const newRow = payload.new as { result: number; instance_id: number };
+          const { result, instance_id } = newRow;
 
-      // **Shots** subscription: check new shot, if 3rd consecutive => play sound
-      const shotChannel = supabase
-        .channel('shots-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
-          async (payload) => {
-            try {
-              // Cast payload.new to a ShotsRow-like object
-              const newRow = payload.new as { result: number; instance_id: number };
-
-              const { result, instance_id } = newRow;
-              // If it's a made shot (non-zero)
-              if (result !== 0) {
-                const newStreak = await calculateShotsMadeInRow(instance_id);
-                if (newStreak === 3) {
-                  // sound.play();
-                }
-              }
-              await fetchTeamsAndPlayers();
-              await updateTeamScores();
-              if (season.season_id !== -1) {
-                await fetchShotHistory(season.season_id);
-              }
-            } catch (error) {
-              console.error('Error processing shot change:', error);
+          if (result !== 0) {
+            const newStreak = await calculateShotsMadeInRow(instance_id);
+            if (newStreak === 3) {
+              // sound.play();
             }
           }
-        )
-        .subscribe();
+          await refreshStandings(season.season_id);
+        } catch (error) {
+          console.error('Error processing shot change:', error);
+        }
+      })
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(playerInstanceChannel);
-        supabase.removeChannel(teamChannel);
-        supabase.removeChannel(playerChannel);
-        supabase.removeChannel(shotChannel);
-      };
-  }, [userView, season.season_id ]);
+    return () => {
+      supabase.removeChannel(playerInstanceChannel);
+      supabase.removeChannel(teamChannel);
+      supabase.removeChannel(playerChannel);
+      supabase.removeChannel(shotChannel);
+      isRealtimeSubscribingRef.current = false;
+    };
+  }, [refreshStandings, season.season_id]);
 
  return (
   <div className={styles.userContainer}>

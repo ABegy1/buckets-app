@@ -60,7 +60,7 @@ DECLARE
   updated_player public.player_instance%ROWTYPE;
 BEGIN
   INSERT INTO public.shots (instance_id, shot_date, result, tier_id)
-  VALUES (p_instance_id, now(), p_result, p_tier_id)
+  VALUES (p_instance_id, now(), p_result::text, p_tier_id)
   RETURNING * INTO inserted_shot;
 
   UPDATE public.player_instance pi

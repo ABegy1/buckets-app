@@ -13,13 +13,6 @@ import monstarsLogo from '@/assets/images/Monstars - Clear BG.png';
 import nightmaresLogo from '@/assets/images/Nightmares - Clear BG Needs Fixed.png';
 import spartansLogo from '@/assets/images/Spartans-hoodie-illustrated-transparent-small.png';
 
-interface Team {
-  team_id: number;
-  team_name: string;
-  team_score: number;
-  is_hidden?: boolean;
-}
-
 interface TeamWithPlayers {
   team_id?: number;
   team_name: string;
@@ -54,6 +47,24 @@ interface ShotFeedItem {
   player_name: string;
   tier_name: string | null;
   tier_color: string | null;
+}
+
+
+interface LeaderboardRow {
+  team_id: number;
+  team_name: string;
+  player_id: number;
+  player_instance_id: number;
+  player_name: string;
+  player_score: number;
+  shots_left: number;
+  shots_left_dashes: number;
+  shots_taken: number;
+  pps: number;
+  tier_color: string | null;
+  shots_made_in_row: number;
+  shots_missed_in_row: number;
+  reached_score_at: string | null;
 }
 
 const teamLogoMap: Record<string, StaticImageData> = {
@@ -159,91 +170,6 @@ const PlayerStatusIcons: React.FC<{ player: TeamWithPlayers['players'][number] }
 );
 
 
-// Function to calculate the current streak of consecutive made shots
-const calculateShotsMadeInRow = async (playerInstanceId: number) => {
-  try {
-    const { data: shots, error: shotsError } = await supabase
-      .from('shots')
-      .select('result')
-      .eq('instance_id', playerInstanceId)
-      .order('shot_date', { ascending: true });
-
-    if (shotsError || !shots) throw shotsError;
-
-    // Walk backwards from the most recent shot
-    let makeStreak = 0;
-    for (let i = shots.length - 1; i >= 0; i--) {
-      if (shots[i].result !== 0) {
-        makeStreak++;
-      } else {
-        break;
-      }
-    }
-
-    return makeStreak;
-  } catch (error) {
-    console.error('Error calculating shots made in a row:', error);
-    return 0;
-  }
-};
-
-
-const calculateShotDetails = async (
-  playerInstanceId: number,
-  targetScore: number,
-) => {
-  try {
-    const { data: shots, error: shotsError } = await supabase
-      .from('shots')
-      .select('result, shot_date')
-      .eq('instance_id', playerInstanceId)
-      .order('shot_date', { ascending: true });
-
-    if (shotsError || !shots) throw shotsError;
-
-    let makeStreak = 0;
-    let missStreak = 0;
-    let cumulativeScore = 0;
-    let reachedScoreAt: string | null = null;
-
-    for (let i = shots.length - 1; i >= 0; i--) {
-      const shotResult = Number(shots[i].result) || 0;
-      if (shotResult !== 0) {
-        makeStreak++;
-      } else {
-        break;
-      }
-    }
-
-    for (let i = shots.length - 1; i >= 0; i--) {
-      const shotResult = Number(shots[i].result) || 0;
-      if (shotResult === 0) {
-        missStreak++;
-      } else {
-        break;
-      }
-    }
-
-    shots.forEach((shot) => {
-      const shotResult = Number(shot.result) || 0;
-      cumulativeScore += shotResult;
-      if (!reachedScoreAt && cumulativeScore >= targetScore) {
-        reachedScoreAt = shot.shot_date;
-      }
-    });
-
-    return {
-      shotsMadeInRow: makeStreak,
-      shotsMissedInRow: missStreak,
-      reachedScoreAt,
-    };
-  } catch (error) {
-    console.error('Error calculating shot details:', error);
-    return { shotsMadeInRow: 0, shotsMissedInRow: 0, reachedScoreAt: null };
-  }
-};
-
-
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
@@ -261,6 +187,9 @@ const StandingsPage: React.FC = () => {
  const router = useRouter(); // Router for navigation
  const hasInitializedRef = useRef(false);
  const isRealtimeSubscribingRef = useRef(false);
+ const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const refreshInFlightRef = useRef(false);
+ const refreshQueuedRef = useRef(false);
  const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
   || season.season_name.toLowerCase().includes('free for all');
  const isFfaTeam = (teamName: string) => teamName === 'Free For All';
@@ -345,7 +274,6 @@ const StandingsPage: React.FC = () => {
   const fetchTeamsAndPlayers = useCallback(async () => {
     try {
       setIsLoading(true);
-            // Fetch active season details
 
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
@@ -357,104 +285,78 @@ const StandingsPage: React.FC = () => {
       if (!activeSeason) {
         setSeason({ season_id: -1, season_name: 'No Active Season', shot_total: 0, rules: '' });
         setTeams([]);
+        setRecentShots([]);
         return;
       }
 
-      const activeSeasonId = activeSeason.season_id;
       setSeason(activeSeason);
-      await fetchShotHistory(activeSeasonId);
-        // Fetch teams
+      await fetchShotHistory(activeSeason.season_id);
 
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('teams')
-        .select('team_name, team_id, is_hidden');
+      const { data: leaderboardRows, error: leaderboardError } = await supabase
+        .rpc('get_leaderboard', { p_season_id: activeSeason.season_id });
 
-      if (teamsError) throw teamsError;
-      const visibleTeams = (teamsData || []).filter((team) => !team.is_hidden);
-        // Enrich teams with their players and stats
+      if (leaderboardError) throw leaderboardError;
 
-      const teamsWithPlayers: TeamWithPlayers[] = await Promise.all(
-        visibleTeams.map(async (team: any) => {
-          const { data: players, error: playersError } = await supabase
-            .from('players')
-            .select('*, tiers(color)')
-            .eq('team_id', team.team_id);
-          if (playersError) throw playersError;
+      const teamsById = new Map<number, TeamWithPlayers>();
 
-          const visiblePlayers = (players || []).filter((player: any) => !player.is_hidden);
+      (leaderboardRows ?? []).forEach((row: LeaderboardRow) => {
+        const team = teamsById.get(row.team_id) ?? {
+          team_id: row.team_id,
+          team_name: row.team_name,
+          players: [],
+          team_pps: 0,
+          total_shots: 0,
+          team_score: 0,
+        };
 
-          const playersWithStats = await Promise.all(
-            visiblePlayers.map(async (player: any) => {
-              const { data: playerInstance, error: piError } = await supabase
-                .from('player_instance')
-                .select('player_instance_id, shots_left, shots_left_dashes, score')
-                .eq('player_id', player.player_id)
-                .eq('season_id', activeSeasonId)
-                .single();
+        team.players.push({
+          name: row.player_name,
+          shots_left: Number(row.shots_left) || 0,
+          shots_left_dashes: Math.max(0, Math.min(2, Number(row.shots_left_dashes) || 0)),
+          player_score: Number(row.player_score) || 0,
+          shots_taken: Number(row.shots_taken) || 0,
+          pps: Number(row.pps) || 0,
+          tier_color: row.tier_color || '#000',
+          shots_made_in_row: Number(row.shots_made_in_row) || 0,
+          shots_missed_in_row: Number(row.shots_missed_in_row) || 0,
+          reached_score_at: row.reached_score_at,
+        });
 
-              if (piError || !playerInstance) throw piError;
-              // Calculate streaks
+        teamsById.set(row.team_id, team);
+      });
 
-              const { shotsMadeInRow, shotsMissedInRow, reachedScoreAt } = await calculateShotDetails(
-                playerInstance.player_instance_id,
-                playerInstance.score,
-              );
-              console.log(shotsMadeInRow, shotsMissedInRow);
-              const shotsTaken = Math.max(0, activeSeason.shot_total - playerInstance.shots_left);
-              const shotsLeftDashes = Math.max(0, Math.min(2, playerInstance.shots_left_dashes ?? 0));
-              return {
-                name: player.name,
-                shots_left: playerInstance.shots_left,
-                shots_left_dashes: shotsLeftDashes,
-                player_score: playerInstance.score,
-                shots_taken: shotsTaken,
-                pps: shotsTaken > 0 ? playerInstance.score / shotsTaken : 0,
-                tier_color: player.tiers?.color || '#000',
-                shots_made_in_row: shotsMadeInRow,
-                shots_missed_in_row: shotsMissedInRow,
-                reached_score_at: reachedScoreAt,
-              };
-            })
-          );
+      const teamsWithPlayers = Array.from(teamsById.values()).map((team) => {
+        team.players.sort((a, b) => {
+          if (b.player_score !== a.player_score) {
+            return b.player_score - a.player_score;
+          }
 
-          // Sort players by their score, descending. Break ties with PPS and then by who reached the score first.
-          playersWithStats.sort((a, b) => {
-            if (b.player_score !== a.player_score) {
-              return b.player_score - a.player_score;
-            }
+          if (b.pps !== a.pps) {
+            return b.pps - a.pps;
+          }
 
-            if (b.pps !== a.pps) {
-              return b.pps - a.pps;
-            }
+          const aReachedScoreAt = a.reached_score_at ? new Date(a.reached_score_at).getTime() : Infinity;
+          const bReachedScoreAt = b.reached_score_at ? new Date(b.reached_score_at).getTime() : Infinity;
 
-            const aReachedScoreAt = a.reached_score_at ? new Date(a.reached_score_at).getTime() : Infinity;
-            const bReachedScoreAt = b.reached_score_at ? new Date(b.reached_score_at).getTime() : Infinity;
+          if (aReachedScoreAt !== bReachedScoreAt) {
+            return aReachedScoreAt - bReachedScoreAt;
+          }
 
-            if (aReachedScoreAt !== bReachedScoreAt) {
-              return aReachedScoreAt - bReachedScoreAt;
-            }
+          return a.name.localeCompare(b.name);
+        });
 
-            return a.name.localeCompare(b.name);
-          });
-          // Calculate total shots left for the team
+        const totalShots = team.players.reduce((acc, player) => acc + player.shots_left, 0);
+        const totalShotsTaken = team.players.reduce((acc, player) => acc + player.shots_taken, 0);
+        const teamScore = team.players.reduce((acc, player) => acc + player.player_score, 0);
 
-          const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
-          const totalShotsTaken = playersWithStats.reduce((acc, player) => acc + player.shots_taken, 0);
-          const teamScore = playersWithStats.reduce((acc, player) => acc + player.player_score, 0);
-          const teamPointsPerShot = totalShotsTaken > 0 ? teamScore / totalShotsTaken : 0;
+        return {
+          ...team,
+          team_pps: totalShotsTaken > 0 ? teamScore / totalShotsTaken : 0,
+          total_shots: totalShots,
+          team_score: teamScore,
+        };
+      });
 
-          return {
-            team_id: team.team_id,
-            team_name: team.team_name,
-            players: playersWithStats,
-            team_pps: teamPointsPerShot,
-            total_shots: totalShots,
-            team_score: teamScore,
-          };
-        })
-      );
-  
-      // Sort the teams by team_score in descending order
       teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
       setTeams(teamsWithPlayers);
     } catch (error) {
@@ -462,7 +364,7 @@ const StandingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchShotHistory]);
 
   // useEffect(() => {
   //   // Function to unlock and keep AudioContext alive
@@ -522,12 +424,36 @@ const StandingsPage: React.FC = () => {
  /**
    * Subscribes to user view changes in real time and updates state accordingly.
    */
-  const refreshStandings = useCallback(async (seasonId?: number) => {
-    await fetchTeamsAndPlayers();
-    if (seasonId && seasonId !== -1) {
-      await fetchShotHistory(seasonId);
+  const refreshStandings = useCallback(async () => {
+    if (refreshInFlightRef.current) {
+      refreshQueuedRef.current = true;
+      return;
     }
-  }, [fetchTeamsAndPlayers, fetchShotHistory]);
+
+    refreshInFlightRef.current = true;
+
+    try {
+      await fetchTeamsAndPlayers();
+    } finally {
+      refreshInFlightRef.current = false;
+
+      if (refreshQueuedRef.current) {
+        refreshQueuedRef.current = false;
+        await refreshStandings();
+      }
+    }
+  }, [fetchTeamsAndPlayers]);
+
+  const queueStandingsRefresh = useCallback(() => {
+    if (refreshDebounceRef.current) {
+      clearTimeout(refreshDebounceRef.current);
+    }
+
+    refreshDebounceRef.current = setTimeout(() => {
+      refreshDebounceRef.current = null;
+      refreshStandings();
+    }, 350);
+  }, [refreshStandings]);
 
   useEffect(() => {
     let userViewChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -560,6 +486,10 @@ const StandingsPage: React.FC = () => {
       if (userViewChannel) {
         supabase.removeChannel(userViewChannel);
       }
+      if (refreshDebounceRef.current) {
+        clearTimeout(refreshDebounceRef.current);
+        refreshDebounceRef.current = null;
+      }
       hasInitializedRef.current = false;
     };
   }, [refreshStandings]);
@@ -570,43 +500,23 @@ const StandingsPage: React.FC = () => {
 
     const playerInstanceChannel = supabase
       .channel('player-instance-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, async () => {
-        await refreshStandings();
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'player_instance' }, queueStandingsRefresh)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'player_instance' }, queueStandingsRefresh)
       .subscribe();
 
     const teamChannel = supabase
       .channel('team-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, async () => {
-        await refreshStandings();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, queueStandingsRefresh)
       .subscribe();
 
     const playerChannel = supabase
       .channel('player-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, async () => {
-        await refreshStandings();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, queueStandingsRefresh)
       .subscribe();
 
     const shotChannel = supabase
       .channel('shots-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, async (payload) => {
-        try {
-          const newRow = payload.new as { result: number; instance_id: number };
-          const { result, instance_id } = newRow;
-
-          if (result !== 0) {
-            const newStreak = await calculateShotsMadeInRow(instance_id);
-            if (newStreak === 3) {
-              // sound.play();
-            }
-          }
-          await refreshStandings(season.season_id);
-        } catch (error) {
-          console.error('Error processing shot change:', error);
-        }
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shots' }, queueStandingsRefresh)
       .subscribe();
 
     return () => {
@@ -616,7 +526,7 @@ const StandingsPage: React.FC = () => {
       supabase.removeChannel(shotChannel);
       isRealtimeSubscribingRef.current = false;
     };
-  }, [refreshStandings, season.season_id]);
+  }, [queueStandingsRefresh]);
 
  return (
   <div className={styles.userContainer}>

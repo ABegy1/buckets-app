@@ -11,6 +11,17 @@ interface ModalProps {
   playerId: number; // Player ID associated with the modal
 }
 
+
+interface RecordedShotResult {
+  score: number;
+  shots_left: number;
+  shots_left_dashes: number;
+  shots_taken_today: number;
+  todays_score: number;
+  current_make_streak: number;
+  current_miss_streak: number;
+}
+
 /**
  * Modal Component
  * 
@@ -72,63 +83,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     setTodaysScore(null);
     setUseDash(false);
   };
-  const calculateShotsMadeInRow = async (playerInstanceId: number) => {
-    try {
-      const { data: shots, error: shotsError } = await supabase
-        .from('shots')
-        .select('result')
-        .eq('instance_id', playerInstanceId)
-        .order('shot_date', { ascending: true });
-  
-      if (shotsError || !shots) throw shotsError;
-  
-      let currentStreak = 0;
-  
-      for (let i = shots.length - 1; i >= 0; i--) {
-        const result = Number(shots[i].result);
-        if (result !== 0) {
-          currentStreak++;
-        } else {
-          break;
-        }
-      }
-  
-      return currentStreak;
-    } catch (error) {
-      console.error('Error calculating shots made in a row:', error);
-      return 0;
-    }
-  };
-  
-  
-
-  const calculateShotsMissedInRow = async (playerInstanceId: number) => {
-    try {
-      const { data: shots, error: shotsError } = await supabase
-        .from('shots')
-        .select('result')
-        .eq('instance_id', playerInstanceId)
-        .order('shot_date', { ascending: true });
-  
-      if (shotsError || !shots) throw shotsError;
-  
-      let missStreak = 0;
-  
-      for (let i = shots.length - 1; i >= 0; i--) {
-        const result = Number(shots[i].result);
-        if (result === 0) {
-          missStreak++;
-        } else {
-          break;
-        }
-      }
-  
-      return missStreak;
-    } catch (error) {
-      return 0;
-    }
-  };
-  
   /**
    * Plays a notification sound when a shot is successfully recorded.
    */
@@ -300,42 +254,33 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
     if (isMoneyball) finalPoints *= 2;
     if (isDouble) finalPoints *= 2;
   
-    const shotId = parseInt(`${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-9), 10);
-  
     try {
-      const { error: shotError } = await supabase.from('shots').insert({
-        instance_id: playerInstanceId,
-        shot_date: new Date().toISOString(),
-        result: finalPoints,
-        tier_id: tierId,
-        shot_id: shotId,
-      });
-  
-      if (shotError) {
-        console.error('Error recording shot:', shotError);
-        return;
-      }
-  
-      const newScore = currentScore + finalPoints;
-      const newShotsLeft = (shotsLeft || 0) - 1;
-      const nextShotsLeftDashes = Math.max(0, (shotsLeftDashes ?? 0) - (useDash ? 1 : 0));
-
-      const { error: updateScoreError } = await supabase
-        .from('player_instance')
-        .update({
-          score: newScore,
-          shots_left: newShotsLeft,
-          shots_left_dashes: nextShotsLeftDashes,
+      const { data: recordedShot, error: recordShotError } = await supabase
+        .rpc('record_shot', {
+          p_instance_id: playerInstanceId,
+          p_tier_id: tierId,
+          p_result: finalPoints,
+          p_use_dash: useDash,
         })
-        .eq('player_instance_id', playerInstanceId);
+        .single();
   
-      if (updateScoreError) {
-        console.error('Error updating player:', updateScoreError);
+      if (recordShotError || !recordedShot) {
+        console.error('Error recording shot:', recordShotError);
         return;
       }
   
-      const newStreak = await calculateShotsMadeInRow(playerInstanceId);
-      const missStreak = await calculateShotsMissedInRow(playerInstanceId);
+      const shotResult = recordedShot as RecordedShotResult;
+      const updatedScore = Number(shotResult.score) || 0;
+      const updatedShotsLeft = Number(shotResult.shots_left) || 0;
+      const updatedShotsLeftDashes = Number(shotResult.shots_left_dashes) || 0;
+      const newStreak = Number(shotResult.current_make_streak) || 0;
+      const missStreak = Number(shotResult.current_miss_streak) || 0;
+
+      setCurrentScore(updatedScore);
+      setShotsLeft(updatedShotsLeft);
+      setShotsLeftDashes(updatedShotsLeftDashes);
+      setShotsTakenToday(Number(shotResult.shots_taken_today) || 0);
+      setTodaysScore(Number(shotResult.todays_score) || 0);
   
       if (missStreak === 4) {
         sadsound.play();
@@ -353,9 +298,6 @@ const Modal: React.FC<ModalProps> = ({ name, isOpen, onClose, playerId }) => {
           }
         }
       }
-
-      setShotsTakenToday((prev) => (prev !== null ? prev + 1 : null));
-      setTodaysScore((prev) => (prev !== null ? prev + finalPoints : null));
 
       handleClose();
     } catch (error) {

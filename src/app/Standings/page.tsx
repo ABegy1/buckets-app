@@ -244,74 +244,6 @@ const calculateShotDetails = async (
 };
 
 
-// Update each team's total score based on its players' scores for the active season
-const updateTeamScores = async () => {
-  try {
-    // Fetch the active season (where end_date is null)
-    const { data: activeSeason, error: seasonError } = await supabase
-      .from('seasons')
-      .select('season_id')
-      .is('end_date', null)
-      .maybeSingle();
-
-    if (seasonError) throw seasonError;
-    if (!activeSeason) return;
-    const activeSeasonId = activeSeason.season_id;
-
-    // Fetch all teams
-    const { data: teamsData, error: teamsError } = await supabase
-      .from('teams')
-      .select('team_id, team_score, is_hidden');
-
-    if (teamsError) throw teamsError;
-
-    const visibleTeams = (teamsData || []).filter((team: any) => !team.is_hidden);
-
-    await Promise.all(
-      visibleTeams.map(async (team: any) => {
-        // Fetch players for the current team
-        const { data: players, error: playersError } = await supabase
-          .from('players')
-          .select('player_id')
-          .eq('team_id', team.team_id);
-
-        if (playersError) throw playersError;
-
-        let teamScore = 0;
-        // Sum up the score for each player's instance in the active season
-        await Promise.all(
-          players.map(async (player: any) => {
-            const { data: playerInstances, error: piError } = await supabase
-              .from('player_instance')
-              .select('score')
-              .eq('player_id', player.player_id)
-              .eq('season_id', activeSeasonId);
-
-            if (piError) throw piError;
-
-            const playerTotalScore = playerInstances.reduce(
-              (acc: number, instance: any) => acc + instance.score,
-              0
-            );
-            teamScore += playerTotalScore;
-          })
-        );
-
-        // Update the team's total score
-        const { error: updateError } = await supabase
-          .from('teams')
-          .update({ team_score: teamScore })
-          .eq('team_id', team.team_id);
-
-        if (updateError) throw updateError;
-        console.log(`Team ${team.team_id} score updated to ${teamScore}`);
-      })
-    );
-  } catch (error) {
-    console.error('Error updating team scores:', error);
-  }
-};
-
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
@@ -352,7 +284,7 @@ const StandingsPage: React.FC = () => {
   return `${result}`;
  };
 
- const fetchShotHistory = async (seasonId: number) => {
+ const fetchShotHistory = useCallback(async (seasonId: number) => {
   try {
     setIsShotHistoryLoading(true);
     setShotHistoryError(null);
@@ -392,7 +324,7 @@ const StandingsPage: React.FC = () => {
   } finally {
     setIsShotHistoryLoading(false);
   }
- };
+ }, []);
 
   /**
    * Signs out the current user and redirects to the home page.
@@ -435,7 +367,7 @@ const StandingsPage: React.FC = () => {
 
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('team_name, team_score, team_id, is_hidden');
+        .select('team_name, team_id, is_hidden');
 
       if (teamsError) throw teamsError;
       const visibleTeams = (teamsData || []).filter((team) => !team.is_hidden);
@@ -508,7 +440,8 @@ const StandingsPage: React.FC = () => {
 
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
           const totalShotsTaken = playersWithStats.reduce((acc, player) => acc + player.shots_taken, 0);
-          const teamPointsPerShot = totalShotsTaken > 0 ? team.team_score / totalShotsTaken : 0;
+          const teamScore = playersWithStats.reduce((acc, player) => acc + player.player_score, 0);
+          const teamPointsPerShot = totalShotsTaken > 0 ? teamScore / totalShotsTaken : 0;
 
           return {
             team_id: team.team_id,
@@ -516,7 +449,7 @@ const StandingsPage: React.FC = () => {
             players: playersWithStats,
             team_pps: teamPointsPerShot,
             total_shots: totalShots,
-            team_score: team.team_score,
+            team_score: teamScore,
           };
         })
       );
@@ -591,11 +524,10 @@ const StandingsPage: React.FC = () => {
    */
   const refreshStandings = useCallback(async (seasonId?: number) => {
     await fetchTeamsAndPlayers();
-    await updateTeamScores();
     if (seasonId && seasonId !== -1) {
       await fetchShotHistory(seasonId);
     }
-  }, [fetchTeamsAndPlayers]);
+  }, [fetchTeamsAndPlayers, fetchShotHistory]);
 
   useEffect(() => {
     let userViewChannel: ReturnType<typeof supabase.channel> | null = null;

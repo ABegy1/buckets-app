@@ -1,5 +1,5 @@
 'use client'; // Required in Next.js App Router
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StandingsPage.module.css'; // Updated path for combined styles
 import { supabase } from '@/supabaseClient';
 import { FaSnowflake } from "react-icons/fa6"; 
@@ -244,74 +244,6 @@ const calculateShotDetails = async (
 };
 
 
-// Update each team's total score based on its players' scores for the active season
-const updateTeamScores = async () => {
-  try {
-    // Fetch the active season (where end_date is null)
-    const { data: activeSeason, error: seasonError } = await supabase
-      .from('seasons')
-      .select('season_id')
-      .is('end_date', null)
-      .maybeSingle();
-
-    if (seasonError) throw seasonError;
-    if (!activeSeason) return;
-    const activeSeasonId = activeSeason.season_id;
-
-    // Fetch all teams
-    const { data: teamsData, error: teamsError } = await supabase
-      .from('teams')
-      .select('team_id, team_score, is_hidden');
-
-    if (teamsError) throw teamsError;
-
-    const visibleTeams = (teamsData || []).filter((team: any) => !team.is_hidden);
-
-    await Promise.all(
-      visibleTeams.map(async (team: any) => {
-        // Fetch players for the current team
-        const { data: players, error: playersError } = await supabase
-          .from('players')
-          .select('player_id')
-          .eq('team_id', team.team_id);
-
-        if (playersError) throw playersError;
-
-        let teamScore = 0;
-        // Sum up the score for each player's instance in the active season
-        await Promise.all(
-          players.map(async (player: any) => {
-            const { data: playerInstances, error: piError } = await supabase
-              .from('player_instance')
-              .select('score')
-              .eq('player_id', player.player_id)
-              .eq('season_id', activeSeasonId);
-
-            if (piError) throw piError;
-
-            const playerTotalScore = playerInstances.reduce(
-              (acc: number, instance: any) => acc + instance.score,
-              0
-            );
-            teamScore += playerTotalScore;
-          })
-        );
-
-        // Update the team's total score
-        const { error: updateError } = await supabase
-          .from('teams')
-          .update({ team_score: teamScore })
-          .eq('team_id', team.team_id);
-
-        if (updateError) throw updateError;
-        console.log(`Team ${team.team_id} score updated to ${teamScore}`);
-      })
-    );
-  } catch (error) {
-    console.error('Error updating team scores:', error);
-  }
-};
-
 const StandingsPage: React.FC = () => {
  // State variables
  const [teams, setTeams] = useState<TeamWithPlayers[]>([]); // Stores the list of teams and their players
@@ -327,6 +259,8 @@ const StandingsPage: React.FC = () => {
  const [isShotHistoryLoading, setIsShotHistoryLoading] = useState<boolean>(true);
  const [shotHistoryError, setShotHistoryError] = useState<string | null>(null);
  const router = useRouter(); // Router for navigation
+ const hasInitializedRef = useRef(false);
+ const isRealtimeSubscribingRef = useRef(false);
  const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
   || season.season_name.toLowerCase().includes('free for all');
  const isFfaTeam = (teamName: string) => teamName === 'Free For All';
@@ -408,7 +342,7 @@ const StandingsPage: React.FC = () => {
    * Fetches teams and their players for the Standings view.
    * Includes player stats like shots left, scores, and streaks.
    */
-  const fetchTeamsAndPlayers = async () => {
+  const fetchTeamsAndPlayers = useCallback(async () => {
     try {
       setIsLoading(true);
             // Fetch active season details
@@ -433,7 +367,7 @@ const StandingsPage: React.FC = () => {
 
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('team_name, team_score, team_id, is_hidden');
+        .select('team_name, team_id, is_hidden');
 
       if (teamsError) throw teamsError;
       const visibleTeams = (teamsData || []).filter((team) => !team.is_hidden);
@@ -506,7 +440,8 @@ const StandingsPage: React.FC = () => {
 
           const totalShots = playersWithStats.reduce((acc, player) => acc + player.shots_left, 0);
           const totalShotsTaken = playersWithStats.reduce((acc, player) => acc + player.shots_taken, 0);
-          const teamPointsPerShot = totalShotsTaken > 0 ? team.team_score / totalShotsTaken : 0;
+          const teamScore = playersWithStats.reduce((acc, player) => acc + player.player_score, 0);
+          const teamPointsPerShot = totalShotsTaken > 0 ? teamScore / totalShotsTaken : 0;
 
           return {
             team_id: team.team_id,
@@ -514,7 +449,7 @@ const StandingsPage: React.FC = () => {
             players: playersWithStats,
             team_pps: teamPointsPerShot,
             total_shots: totalShots,
-            team_score: team.team_score,
+            team_score: teamScore,
           };
         })
       );
@@ -527,7 +462,7 @@ const StandingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // useEffect(() => {
   //   // Function to unlock and keep AudioContext alive
@@ -587,98 +522,99 @@ const StandingsPage: React.FC = () => {
  /**
    * Subscribes to user view changes in real time and updates state accordingly.
    */
+  const refreshStandings = useCallback(async () => {
+    await fetchTeamsAndPlayers();
+  }, [fetchTeamsAndPlayers]);
+
   useEffect(() => {
-    const subscribeToUserViewChanges = async () => {
+    let userViewChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    const loadSeasonAndUserView = async () => {
+      if (hasInitializedRef.current) return;
+      hasInitializedRef.current = true;
+
+      await Promise.all([fetchUserView(), refreshStandings()]);
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session?.user?.email) return;
 
-      const { user } = session;
-
-     // Subscribe to updates on the user's View field
-      const userViewChannel = supabase
-        .channel('user-view-changes')
+      userViewChannel = supabase
+        .channel(`user-view-changes-${session.user.email}`)
         .on(
           'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${user.email}` },
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `email=eq.${session.user.email}` },
           (payload) => {
             const updatedView = payload.new.View;
             setUserView(updatedView);
           }
         )
         .subscribe();
-
-      // Fetch initial view
-      fetchUserView();
-
-      return () => {
-        supabase.removeChannel(userViewChannel);
-      };
     };
 
-    subscribeToUserViewChanges();
-  }, []);
+    loadSeasonAndUserView();
+
+    return () => {
+      if (userViewChannel) {
+        supabase.removeChannel(userViewChannel);
+      }
+      hasInitializedRef.current = false;
+    };
+  }, [refreshStandings]);
 
   useEffect(() => {
+    if (isRealtimeSubscribingRef.current) return;
+    isRealtimeSubscribingRef.current = true;
 
-      // Initial fetch and update
-      fetchTeamsAndPlayers();
-      updateTeamScores();
+    const playerInstanceChannel = supabase
+      .channel('player-instance-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      // Subscribe to changes in player_instance, team, player
-      const playerInstanceChannel = supabase
-        .channel('player-instance-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_instance' }, () => {
-          fetchTeamsAndPlayers();
-          updateTeamScores();
-        })
-        .subscribe();
+    const teamChannel = supabase
+      .channel('team-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      const teamChannel = supabase
-        .channel('team-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, fetchTeamsAndPlayers)
-        .subscribe();
+    const playerChannel = supabase
+      .channel('player-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, async () => {
+        await refreshStandings();
+      })
+      .subscribe();
 
-      const playerChannel = supabase
-        .channel('player-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, fetchTeamsAndPlayers)
-        .subscribe();
+    const shotChannel = supabase
+      .channel('shots-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, async (payload) => {
+        try {
+          const newRow = payload.new as { result: number; instance_id: number };
+          const { result, instance_id } = newRow;
 
-      // **Shots** subscription: check new shot, if 3rd consecutive => play sound
-      const shotChannel = supabase
-        .channel('shots-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'shots' }, 
-          async (payload) => {
-            try {
-              // Cast payload.new to a ShotsRow-like object
-              const newRow = payload.new as { result: number; instance_id: number };
-
-              const { result, instance_id } = newRow;
-              // If it's a made shot (non-zero)
-              if (result !== 0) {
-                const newStreak = await calculateShotsMadeInRow(instance_id);
-                if (newStreak === 3) {
-                  // sound.play();
-                }
-              }
-              await fetchTeamsAndPlayers();
-              await updateTeamScores();
-              if (season.season_id !== -1) {
-                await fetchShotHistory(season.season_id);
-              }
-            } catch (error) {
-              console.error('Error processing shot change:', error);
+          if (result !== 0) {
+            const newStreak = await calculateShotsMadeInRow(instance_id);
+            if (newStreak === 3) {
+              // sound.play();
             }
           }
-        )
-        .subscribe();
 
-      return () => {
-        supabase.removeChannel(playerInstanceChannel);
-        supabase.removeChannel(teamChannel);
-        supabase.removeChannel(playerChannel);
-        supabase.removeChannel(shotChannel);
-      };
-  }, [userView, season.season_id ]);
+          await refreshStandings();
+        } catch (error) {
+          console.error('Error processing shot change:', error);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playerInstanceChannel);
+      supabase.removeChannel(teamChannel);
+      supabase.removeChannel(playerChannel);
+      supabase.removeChannel(shotChannel);
+      isRealtimeSubscribingRef.current = false;
+    };
+  }, [refreshStandings]);
 
  return (
   <div className={styles.userContainer}>

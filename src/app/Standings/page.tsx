@@ -52,10 +52,6 @@ interface ShotFeedItem {
   tier_color: string | null;
 }
 
-interface ShotMenuPosition {
-  x: number;
-  y: number;
-}
 
 interface ShotHistoryPanelProps {
   recentShots: ShotFeedItem[];
@@ -63,11 +59,9 @@ interface ShotHistoryPanelProps {
   error: string | null;
   deleteStatus: string | null;
   deletingShotId: number | null;
-  selectedShotId: number | null;
   formatShotTime: (shotDate: string) => string;
   formatShotResult: (result: number) => string;
   onShotContextMenu: (event: React.MouseEvent<HTMLLIElement>, shot: ShotFeedItem) => void;
-  onRequestDeleteShot: (shot: ShotFeedItem) => void;
 }
 
 const areShotFeedItemsEqual = (current: ShotFeedItem[], next: ShotFeedItem[]) => {
@@ -304,11 +298,9 @@ const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
   error,
   deleteStatus,
   deletingShotId,
-  selectedShotId,
   formatShotTime,
   formatShotResult,
   onShotContextMenu,
-  onRequestDeleteShot,
 }: ShotHistoryPanelProps) {
   return (
     <aside className={styles.shotHistoryPanel} aria-label="Live shot history">
@@ -317,7 +309,6 @@ const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
         <span className={styles.livePill}>Live</span>
       </div>
       <p className={styles.shotHistorySubtle}>Recent makes and misses for this season.</p>
-      <p className={styles.shotHistoryInstruction}>Right-click a shot to delete, or use its Delete button.</p>
       {deleteStatus && (
         <div className={styles.shotDeleteStatus} role="status">{deleteStatus}</div>
       )}
@@ -338,7 +329,7 @@ const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
           {recentShots.map((shot) => (
             <li
               key={shot.shot_id}
-              className={`${styles.shotHistoryItem} ${selectedShotId === shot.shot_id ? styles.shotHistoryItemSelected : ''}`}
+              className={`${styles.shotHistoryItem} ${deletingShotId === shot.shot_id ? styles.shotHistoryItemSelected : ''}`}
               onContextMenu={(event) => onShotContextMenu(event, shot)}
             >
               <div className={styles.shotTopRow}>
@@ -356,15 +347,6 @@ const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
               </div>
               <div className={styles.shotMetaRow}>
                 <span className={styles.shotMeta}>{formatShotTime(shot.shot_date)}</span>
-                <button
-                  type="button"
-                  className={styles.shotRowDeleteButton}
-                  onClick={() => onRequestDeleteShot(shot)}
-                  disabled={deletingShotId === shot.shot_id}
-                  aria-label={`Delete shot for ${shot.player_name}`}
-                >
-                  {deletingShotId === shot.shot_id ? 'Deleting…' : 'Delete'}
-                </button>
               </div>
             </li>
           ))}
@@ -388,8 +370,6 @@ const StandingsPage: React.FC = () => {
  const [recentShots, setRecentShots] = useState<ShotFeedItem[]>([]);
  const [isShotHistoryLoading, setIsShotHistoryLoading] = useState<boolean>(true);
  const [shotHistoryError, setShotHistoryError] = useState<string | null>(null);
- const [selectedShot, setSelectedShot] = useState<ShotFeedItem | null>(null);
- const [shotMenuPosition, setShotMenuPosition] = useState<ShotMenuPosition | null>(null);
  const [deletingShotId, setDeletingShotId] = useState<number | null>(null);
  const [shotDeleteStatus, setShotDeleteStatus] = useState<string | null>(null);
  const router = useRouter(); // Router for navigation
@@ -589,22 +569,8 @@ const StandingsPage: React.FC = () => {
     }
   }, [fetchShotHistory]);
 
-  const closeShotContextMenu = useCallback(() => {
-    setSelectedShot(null);
-    setShotMenuPosition(null);
-  }, []);
-
-  const handleShotContextMenu = useCallback((event: React.MouseEvent<HTMLLIElement>, shot: ShotFeedItem) => {
-    event.preventDefault();
-    setSelectedShot(shot);
-    setShotMenuPosition({ x: event.clientX, y: event.clientY });
-    setShotDeleteStatus(null);
-  }, []);
-
   const handleDeleteShot = useCallback(async (shot: ShotFeedItem | null) => {
     if (!shot || deletingShotId !== null) return;
-
-    closeShotContextMenu();
 
     const pointsToRemove = Number(shot.result) || 0;
     const shouldDelete = window.confirm(
@@ -649,26 +615,12 @@ const StandingsPage: React.FC = () => {
     } finally {
       setDeletingShotId(null);
     }
-  }, [closeShotContextMenu, deletingShotId, fetchTeamsAndPlayers]);
+  }, [deletingShotId, fetchTeamsAndPlayers]);
 
-  useEffect(() => {
-    if (!shotMenuPosition) return;
-
-    const handleDocumentPointerDown = () => closeShotContextMenu();
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeShotContextMenu();
-      }
-    };
-
-    document.addEventListener('pointerdown', handleDocumentPointerDown);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('pointerdown', handleDocumentPointerDown);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [closeShotContextMenu, shotMenuPosition]);
+  const handleShotContextMenu = useCallback((event: React.MouseEvent<HTMLLIElement>, shot: ShotFeedItem) => {
+    event.preventDefault();
+    void handleDeleteShot(shot);
+  }, [handleDeleteShot]);
 
   // useEffect(() => {
   //   // Function to unlock and keep AudioContext alive
@@ -761,14 +713,13 @@ const StandingsPage: React.FC = () => {
 
   const handleShotRealtimeChange = useCallback((payload: { eventType?: string }) => {
     if (payload.eventType === 'DELETE') {
-      closeShotContextMenu();
       setShotDeleteStatus('A shot was deleted. Standings and shot history are up to date.');
     } else if (payload.eventType === 'INSERT') {
       setShotDeleteStatus(null);
     }
 
     queueStandingsRefresh();
-  }, [closeShotContextMenu, queueStandingsRefresh]);
+  }, [queueStandingsRefresh]);
 
   useEffect(() => {
     let userViewChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -965,31 +916,10 @@ const StandingsPage: React.FC = () => {
               error={shotHistoryError}
               deleteStatus={shotDeleteStatus}
               deletingShotId={deletingShotId}
-              selectedShotId={selectedShot?.shot_id ?? null}
               formatShotTime={formatShotTime}
               formatShotResult={formatShotResult}
               onShotContextMenu={handleShotContextMenu}
-              onRequestDeleteShot={handleDeleteShot}
             />
-            {shotMenuPosition && selectedShot && (
-              <div
-                className={styles.shotContextMenu}
-                style={{ top: shotMenuPosition.y, left: shotMenuPosition.x }}
-                role="menu"
-                aria-label={`Shot actions for ${selectedShot.player_name}`}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  className={styles.shotContextDeleteButton}
-                  role="menuitem"
-                  onClick={() => handleDeleteShot(selectedShot)}
-                  disabled={deletingShotId === selectedShot.shot_id}
-                >
-                  {deletingShotId === selectedShot.shot_id ? 'Deleting…' : 'Delete shot'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
     </main>

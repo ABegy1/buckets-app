@@ -17,6 +17,8 @@ interface TeamWithPlayers {
   team_id?: number;
   team_name: string;
   players: {
+    player_id: number;
+    player_instance_id: number;
     shots_taken: number;
     shots_made_in_row: number;
     shots_missed_in_row: number;
@@ -73,6 +75,54 @@ const areShotFeedItemsEqual = (current: ShotFeedItem[], next: ShotFeedItem[]) =>
     );
   });
 };
+
+type TeamPlayer = TeamWithPlayers['players'][number];
+
+interface StandingsPlayerRowProps {
+  player: TeamPlayer;
+  rank?: number;
+  isFfa?: boolean;
+}
+
+const arePlayersEqual = (current: TeamPlayer, next: TeamPlayer) => (
+  current.player_id === next.player_id
+  && current.player_instance_id === next.player_instance_id
+  && current.shots_taken === next.shots_taken
+  && current.shots_made_in_row === next.shots_made_in_row
+  && current.shots_missed_in_row === next.shots_missed_in_row
+  && current.tier_color === next.tier_color
+  && current.name === next.name
+  && current.shots_left === next.shots_left
+  && current.shots_left_dashes === next.shots_left_dashes
+  && current.player_score === next.player_score
+  && current.pps === next.pps
+  && current.reached_score_at === next.reached_score_at
+);
+
+const areTeamsEqual = (current: TeamWithPlayers[], next: TeamWithPlayers[]) => {
+  if (current.length !== next.length) return false;
+
+  return current.every((team, teamIndex) => {
+    const nextTeam = next[teamIndex];
+
+    return (
+      team.team_id === nextTeam.team_id
+      && team.team_name === nextTeam.team_name
+      && team.team_pps === nextTeam.team_pps
+      && team.total_shots === nextTeam.total_shots
+      && team.team_score === nextTeam.team_score
+      && team.players.length === nextTeam.players.length
+      && team.players.every((player, playerIndex) => arePlayersEqual(player, nextTeam.players[playerIndex]))
+    );
+  });
+};
+
+const areSeasonsEqual = (current: Season, next: Season) => (
+  current.season_id === next.season_id
+  && current.season_name === next.season_name
+  && current.shot_total === next.shot_total
+  && current.rules === next.rules
+);
 
 
 interface LeaderboardRow {
@@ -169,7 +219,7 @@ const FlameIcon = () => (
   </span>
 );
 
-const PlayerStatusIcons: React.FC<{ player: TeamWithPlayers['players'][number] }> = ({ player }) => (
+const PlayerStatusIcons: React.FC<{ player: TeamPlayer }> = ({ player }) => (
   <>
     {player.name === 'A. Begy' && (
       <span className={styles.crownIcon}>👑</span>
@@ -193,6 +243,48 @@ const PlayerStatusIcons: React.FC<{ player: TeamWithPlayers['players'][number] }
     )}
   </>
 );
+
+const StandingsPlayerRow = React.memo(function StandingsPlayerRow({
+  player,
+  rank,
+  isFfa = false,
+}: StandingsPlayerRowProps) {
+  return (
+    <div className={`${styles.row} ${isFfa ? styles.ffaRow : ''} ${rank === 0 ? styles.ffaLeaderRow : ''}`}>
+      {isFfa && <span className={styles.ffaRankBadge}>{(rank ?? 0) + 1}</span>}
+      <div className={styles.playerNameColumn}>
+        <div
+          className={styles.playerName}
+          style={{
+            backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
+          }}
+        >
+          <span className={styles.playerNameText}>{player.name}</span>
+          <PlayerStatusIcons player={player} />
+        </div>
+      </div>
+      <span className={styles.totalPoints}>{player.player_score}</span>
+      <div className={styles.shotsLeft}>
+        <span className={styles.shotsLeftValue}>{player.shots_left}</span>
+        {player.shots_left_dashes > 0 && (
+          <span
+            className={styles.shotsLeftDashes}
+            aria-label={`${player.shots_left_dashes} shots left dashes`}
+          >
+            {Array.from({ length: player.shots_left_dashes }).map((_, index) => (
+              <span key={index} className={styles.shotsLeftDash} />
+            ))}
+          </span>
+        )}
+      </div>
+      <span className={styles.pps}>{player.pps.toFixed(2)}</span>
+    </div>
+  );
+}, (currentProps, nextProps) => (
+  currentProps.rank === nextProps.rank
+  && currentProps.isFfa === nextProps.isFfa
+  && arePlayersEqual(currentProps.player, nextProps.player)
+));
 
 const ShotHistoryPanel = React.memo(function ShotHistoryPanel({
   recentShots,
@@ -268,6 +360,7 @@ const StandingsPage: React.FC = () => {
  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
  const refreshInFlightRef = useRef(false);
  const refreshQueuedRef = useRef(false);
+ const hasLoadedStandingsRef = useRef(false);
  const isFfaSeason = season.season_name.toLowerCase().includes('ffa')
   || season.season_name.toLowerCase().includes('free for all');
  const isFfaTeam = (teamName: string) => teamName === 'Free For All';
@@ -354,8 +447,12 @@ const StandingsPage: React.FC = () => {
    * Includes player stats like shots left, scores, and streaks.
    */
   const fetchTeamsAndPlayers = useCallback(async () => {
+    const shouldShowLoading = !hasLoadedStandingsRef.current;
+
     try {
-      setIsLoading(true);
+      if (shouldShowLoading) {
+        setIsLoading(true);
+      }
 
       const { data: activeSeason, error: seasonError } = await supabase
         .from('seasons')
@@ -365,13 +462,14 @@ const StandingsPage: React.FC = () => {
 
       if (seasonError) throw seasonError;
       if (!activeSeason) {
-        setSeason({ season_id: -1, season_name: 'No Active Season', shot_total: 0, rules: '' });
-        setTeams([]);
-        setRecentShots([]);
+        const emptySeason = { season_id: -1, season_name: 'No Active Season', shot_total: 0, rules: '' };
+        setSeason((currentSeason) => (areSeasonsEqual(currentSeason, emptySeason) ? currentSeason : emptySeason));
+        setTeams((currentTeams) => (currentTeams.length === 0 ? currentTeams : []));
+        setRecentShots((currentShots) => (currentShots.length === 0 ? currentShots : []));
         return;
       }
 
-      setSeason(activeSeason);
+      setSeason((currentSeason) => (areSeasonsEqual(currentSeason, activeSeason) ? currentSeason : activeSeason));
       await fetchShotHistory(activeSeason.season_id);
 
       const { data: leaderboardRows, error: leaderboardError } = await supabase
@@ -392,6 +490,8 @@ const StandingsPage: React.FC = () => {
         };
 
         team.players.push({
+          player_id: row.player_id,
+          player_instance_id: row.player_instance_id,
           name: row.player_name,
           shots_left: Number(row.shots_left) || 0,
           shots_left_dashes: Math.max(0, Math.min(2, Number(row.shots_left_dashes) || 0)),
@@ -440,10 +540,11 @@ const StandingsPage: React.FC = () => {
       });
 
       teamsWithPlayers.sort((a, b) => b.team_score - a.team_score);
-      setTeams(teamsWithPlayers);
+      setTeams((currentTeams) => (areTeamsEqual(currentTeams, teamsWithPlayers) ? currentTeams : teamsWithPlayers));
     } catch (error) {
       console.error('Error fetching teams, players, and season info:', error);
     } finally {
+      hasLoadedStandingsRef.current = true;
       setIsLoading(false);
     }
   }, [fetchShotHistory]);
@@ -573,6 +674,7 @@ const StandingsPage: React.FC = () => {
         refreshDebounceRef.current = null;
       }
       hasInitializedRef.current = false;
+      hasLoadedStandingsRef.current = false;
     };
   }, [refreshStandings]);
 
@@ -641,7 +743,7 @@ const StandingsPage: React.FC = () => {
 
               return (
               <div
-                key={index}
+                key={team.team_id ?? team.team_name}
                 className={`${styles.team} ${teamBorderClassMap[team.team_name] ?? ''} ${index === 0 && !isFakeFfaTeam ? styles.teamLeader : ''}`}
               >
                 {/* Team Title */}
@@ -696,39 +798,13 @@ const StandingsPage: React.FC = () => {
                         return a.name.localeCompare(b.name);
                       })
                       .map((player, playerIndex) => (
-                      <div
-                        key={playerIndex}
-                        className={`${styles.row} ${styles.ffaRow} ${playerIndex === 0 ? styles.ffaLeaderRow : ''}`}
-                      >
-                        <span className={styles.ffaRankBadge}>{playerIndex + 1}</span>
-                        <div className={styles.playerNameColumn}>
-                          <div
-                            className={styles.playerName}
-                            style={{
-                              backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
-                            }}
-                          >
-                            <span className={styles.playerNameText}>{player.name}</span>
-                            <PlayerStatusIcons player={player} />
-                          </div>
-                        </div>
-                        <span className={styles.totalPoints}>{player.player_score}</span>
-                        <div className={styles.shotsLeft}>
-                          <span className={styles.shotsLeftValue}>{player.shots_left}</span>
-                          {player.shots_left_dashes > 0 && (
-                            <span
-                              className={styles.shotsLeftDashes}
-                              aria-label={`${player.shots_left_dashes} shots left dashes`}
-                            >
-                              {Array.from({ length: player.shots_left_dashes }).map((_, index) => (
-                                <span key={index} className={styles.shotsLeftDash} />
-                              ))}
-                            </span>
-                          )}
-                        </div>
-                        <span className={styles.pps}>{player.pps.toFixed(2)}</span>
-                      </div>
-                    ))}
+                        <StandingsPlayerRow
+                          key={player.player_instance_id}
+                          player={player}
+                          rank={playerIndex}
+                          isFfa
+                        />
+                      ))}
                   </>
                 ) : (
                   <>
@@ -738,37 +814,11 @@ const StandingsPage: React.FC = () => {
                       <span className={styles.columnHeader}>SL</span>
                       <span className={styles.columnHeader}>PPS</span>
                     </div>
-                    {team.players.map((player, playerIndex) => (
-                      <div key={playerIndex} className={styles.row}>
-                    {/* Player Name and Icons */}
-                    <div className={styles.playerNameColumn}>
-                      <div
-                        className={styles.playerName}
-                        style={{
-                          backgroundImage: `linear-gradient(90deg, ${player.tier_color}33 0%, ${player.tier_color}1A 60%, transparent 100%)`,
-                        }}
-                      >
-                        <span className={styles.playerNameText}>{player.name}</span>
-                        <PlayerStatusIcons player={player} />
-                      </div>
-                  </div>
-                    {/* Player Stats */}
-                    <span className={styles.totalPoints}>{player.player_score}</span>
-                  <div className={styles.shotsLeft}>
-                    <span className={styles.shotsLeftValue}>{player.shots_left}</span>
-                    {player.shots_left_dashes > 0 && (
-                      <span
-                        className={styles.shotsLeftDashes}
-                        aria-label={`${player.shots_left_dashes} shots left dashes`}
-                      >
-                        {Array.from({ length: player.shots_left_dashes }).map((_, index) => (
-                          <span key={index} className={styles.shotsLeftDash} />
-                        ))}
-                      </span>
-                    )}
-                  </div>
-                  <span className={styles.pps}>{player.pps.toFixed(2)}</span>
-                </div>
+                    {team.players.map((player) => (
+                      <StandingsPlayerRow
+                        key={player.player_instance_id}
+                        player={player}
+                      />
                     ))}
                   </>
                 )}

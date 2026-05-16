@@ -43,20 +43,20 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 This project is organized as follows:
 
 ```
-/app
-  /components    # Reusable UI components (e.g., modals, forms)
-  /hooks         # Custom hooks for state management and data fetching
-  /styles        # Global and modular styles
-  /pages         # Next.js pages
-  /api           # API routes (e.g., for user role management)
+src/
+  app/            # Next.js app routes and API endpoints
+  components/     # Reusable UI components (e.g., modals, forms)
+  hooks/          # Custom hooks for state management and data fetching
+  assets/         # Static assets
+  db/             # Database utilities
 ```
 
 Key files:
-- `app/page.tsx`: Home page for the app.
-- `supabaseClient.js`: Configuration for connecting to Supabase.
-- `components/Modal.tsx`: Core modal logic reused across the app.
-- `components/EditPlayerModal.tsx`: For editing player details.
-- `components/NextSeasonModal.tsx`: Handles next season configuration.
+- `src/app/page.tsx`: Home page for the app.
+- `src/supabaseClient.js`: Configuration for connecting to Supabase.
+- `src/components/Modal/Modal.tsx`: Core modal logic reused across the app.
+- `src/components/NextSeason/EditPlayerModal.tsx`: For editing player details.
+- `src/components/NextSeason/NextSeason.tsx`: Handles next season configuration.
 
 ---
 

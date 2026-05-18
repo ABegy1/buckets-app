@@ -10,11 +10,11 @@ type PlayerStats = {
   seasons_played: number;
   mvp_awards: number;
   team_wins: number;
+  ffa_wins: number;
   total_shots: number;
   total_score: number;
-  high: number;
-  low: number;
-  average_score: number;
+  high_score_team: number;
+  high_score_ffa: number;
   points_per_shot: number;
 };
 
@@ -75,8 +75,8 @@ const sortPlayers = (playerList: PlayerStats[], key: SortKey, direction: 'asc' |
  *
  * Key Features:
  * - Combines data from `players`, `stats`, and `player_instance` tables.
- * - Filters out hidden players.
- * - Calculates derived statistics like points per shot and average score.
+ * - Filters out hidden players and free agents.
+ * - Calculates derived statistics like points per shot and separates team/FFA highs.
  * - Displays player data in a sortable table (defaulted to alphabetical by last name).
  */
 const StatsPage: React.FC = () => {
@@ -109,21 +109,26 @@ const StatsPage: React.FC = () => {
       // Step 3: Fetch additional stats from the `stats` table
       const { data: statsData, error: statsError } = await supabase
         .from('stats')
-        .select('player_id, seasons_played, mvp_awards, team_wins, total_shots, total_score, high, low');
+        .select(
+          'player_id, seasons_played, mvp_awards, team_wins, ffa_wins, total_shots, total_score, high_score_team, high_score_ffa',
+        );
 
       if (statsError) throw statsError;
 
       // Step 4: Get active season details
       const { data: currentSeason, error: seasonError } = await supabase
         .from('seasons')
-        .select('season_id, shot_total, is_official')
+        .select('season_id, shot_total, is_official, is_team_tournament, is_ffa_tournament')
         .is('end_date', null) // Only fetch the active season
         .single();
 
       if (seasonError || !currentSeason) throw seasonError;
 
+      const seasonIsTeamTournament = Boolean(currentSeason.is_team_tournament);
+      const seasonIsFfaTournament = Boolean(currentSeason.is_ffa_tournament);
+      const includeCurrentSeasonStats =
+        Boolean(currentSeason.is_official) || seasonIsTeamTournament || seasonIsFfaTournament;
       const currentSeasonId = currentSeason.season_id; // Active season ID
-      const includeCurrentSeasonStats = Boolean(currentSeason.is_official);
       const seasonShotTotal = includeCurrentSeasonStats ? currentSeason.shot_total : 0; // Total shots for the season
 
       // Step 5: Fetch current season player instances
@@ -137,43 +142,56 @@ const StatsPage: React.FC = () => {
       if (instanceError) throw instanceError;
 
       // Step 6: Combine data for visible players
-      const combinedData = visiblePlayersData.map((player) => {
-        const playerStats = statsData?.find((stat) => stat.player_id === player.player_id);
-        const currentInstance = includeCurrentSeasonStats
-          ? currentSeasonData?.find((instance) => instance.player_id === player.player_id)
-          : undefined;
-        const currentSeasonScore = includeCurrentSeasonStats ? currentInstance?.score || 0 : 0;
-        const shotsLeft = includeCurrentSeasonStats ? currentInstance?.shots_left || 0 : 0;
+      const combinedData = visiblePlayersData
+        .map((player) => {
+          const playerStats = statsData?.find((stat) => stat.player_id === player.player_id);
+          const currentInstance = includeCurrentSeasonStats
+            ? currentSeasonData?.find((instance) => instance.player_id === player.player_id)
+            : undefined;
+          const currentSeasonScore = includeCurrentSeasonStats ? currentInstance?.score || 0 : 0;
+          const shotsLeft = includeCurrentSeasonStats ? currentInstance?.shots_left || 0 : 0;
 
-        // Calculate current season shots taken
-        const currentSeasonShots = includeCurrentSeasonStats
-          ? Math.max(0, seasonShotTotal - shotsLeft)
-          : 0;
+          // Calculate current season shots taken
+          const currentSeasonShots = includeCurrentSeasonStats
+            ? Math.max(0, seasonShotTotal - shotsLeft)
+            : 0;
 
-        // Calculate total shots and total score
-        const totalShots = (playerStats?.total_shots || 0) + currentSeasonShots;
-        const totalScore = (playerStats?.total_score || 0) + currentSeasonScore;
+          const hasPlayedOfficialSeason =
+            (playerStats?.seasons_played || 0) > 0 || (includeCurrentSeasonStats && currentSeasonShots > 0);
 
-        // Calculate derived stats
-        const high = playerStats?.high || 0;
-        const low = playerStats?.low || 0;
-        const averageScore = (high + low) / 2;
-        const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
+          if (!hasPlayedOfficialSeason) {
+            return null;
+          }
 
-        return {
-          player_id: player.player_id,
-          name: player.name,
-          seasons_played: playerStats?.seasons_played || 0,
-          mvp_awards: playerStats?.mvp_awards || 0,
-          team_wins: playerStats?.team_wins || 0,
-          total_shots: totalShots,
-          total_score: totalScore,
-          high,
-          low,
-          average_score: averageScore,
-          points_per_shot: pointsPerShot,
-        };
-      });
+          // Calculate total shots and total score
+          const totalShots = (playerStats?.total_shots || 0) + currentSeasonShots;
+          const totalScore = (playerStats?.total_score || 0) + currentSeasonScore;
+
+          const highScoreTeam = seasonIsTeamTournament
+            ? Math.max(playerStats?.high_score_team || 0, currentSeasonScore)
+            : playerStats?.high_score_team || 0;
+          const highScoreFfa = seasonIsFfaTournament
+            ? Math.max(playerStats?.high_score_ffa || 0, currentSeasonScore)
+            : playerStats?.high_score_ffa || 0;
+
+          // Calculate derived stats
+          const pointsPerShot = totalShots > 0 ? totalScore / totalShots : 0;
+
+          return {
+            player_id: player.player_id,
+            name: player.name,
+            seasons_played: playerStats?.seasons_played || 0,
+            mvp_awards: playerStats?.mvp_awards || 0,
+            team_wins: playerStats?.team_wins || 0,
+            ffa_wins: playerStats?.ffa_wins || 0,
+            total_shots: totalShots,
+            total_score: totalScore,
+            high_score_team: highScoreTeam,
+            high_score_ffa: highScoreFfa,
+            points_per_shot: pointsPerShot,
+          };
+        })
+        .filter((playerStat): playerStat is PlayerStats => Boolean(playerStat));
 
       // Sort players by last name alphabetically by default
       const sortedPlayers = sortPlayers(combinedData, 'name', 'asc');
@@ -236,6 +254,11 @@ const StatsPage: React.FC = () => {
                     </button>
                   </th>
                   <th>
+                    <button type="button" onClick={() => handleSort('ffa_wins')} className={styles.sortButton}>
+                      FFA Wins
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" onClick={() => handleSort('total_shots')} className={styles.sortButton}>
                       Total Shots
                     </button>
@@ -246,23 +269,18 @@ const StatsPage: React.FC = () => {
                     </button>
                   </th>
                   <th>
-                    <button type="button" onClick={() => handleSort('high')} className={styles.sortButton}>
-                      High Score
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort('low')} className={styles.sortButton}>
-                      Low Score
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" onClick={() => handleSort('average_score')} className={styles.sortButton}>
-                      Average Score
-                    </button>
-                  </th>
-                  <th>
                     <button type="button" onClick={() => handleSort('points_per_shot')} className={styles.sortButton}>
                       Points / Shot
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('high_score_team')} className={styles.sortButton}>
+                      High Score Team
+                    </button>
+                  </th>
+                  <th>
+                    <button type="button" onClick={() => handleSort('high_score_ffa')} className={styles.sortButton}>
+                      High Score FFA
                     </button>
                   </th>
                 </tr>
@@ -274,12 +292,12 @@ const StatsPage: React.FC = () => {
                     <td>{player.seasons_played}</td>
                     <td>{player.mvp_awards}</td>
                     <td>{player.team_wins}</td>
+                    <td>{player.ffa_wins}</td>
                     <td>{player.total_shots}</td>
                     <td>{player.total_score}</td>
-                    <td>{player.high}</td>
-                    <td>{player.low}</td>
-                    <td>{player.average_score.toFixed(2)}</td>
                     <td>{player.points_per_shot.toFixed(2)}</td>
+                    <td>{player.high_score_team}</td>
+                    <td>{player.high_score_ffa}</td>
                   </tr>
                 ))}
               </tbody>

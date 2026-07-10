@@ -7,9 +7,7 @@ import Sidebar from '@/components/Sidebar/Sidebar';
 import CurrentSeasonModal from '@/components/CurrentSeason/CurrentSeasonModal';
 import NextSeasonModal from '@/components/NextSeason/NextSeason';
 import AddPlayers from '@/components/AddPlayers';
-import AdminShotHistory from '@/components/AdminShotHistory';
 import { supabase } from '@/supabaseClient'; // Import the Supabase client
-import { User } from '@supabase/supabase-js';
 
 interface Player {
   player_id: number;
@@ -59,7 +57,6 @@ const sortPlayersByName = <T extends { name: string }>(players: T[] = []) =>
  */
 const AdminPage = () => {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null); // Tracks logged-in user
   const [tiers, setTiers] = useState<TierWithPlayers[]>([]); // Stores tiers and players
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility
   const [selectedName, setSelectedName] = useState(''); // Selected player's name for modal
@@ -71,24 +68,19 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true); // Page loading state
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Admin check
   const [seasonName, setSeasonName] = useState<string>(''); // Active season name
-  const [userView, setUserView] = useState<string>(''); // User's current view setting
   const [waiverByPlayerId, setWaiverByPlayerId] = useState<Record<number, boolean>>({});
   const [freeAgents, setFreeAgents] = useState<FreeAgentPlayer[]>([]);
-
-  const pageOptions = ['Standings', 'Rules', 'Shot History'];
 
   // 1. Verify user is admin
   useEffect(() => {
     const getUserSessionAndRole = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-
       if (session?.user) {
           // Check if the user has the 'Admin' role
 
         const { data, error } = await supabase
           .from('users')
-          .select('role, View')
+          .select('role')
           .eq('email', session.user.email)
           .single();
 
@@ -97,8 +89,6 @@ const AdminPage = () => {
           router.push('/');
         } else {
           setIsAdmin(true);
-          const nextView = pageOptions.includes(data.View) ? data.View : 'Standings';
-          setUserView(nextView); // Set default user view
         }
       }
       setLoading(false);// Mark loading as complete
@@ -107,7 +97,6 @@ const AdminPage = () => {
     getUserSessionAndRole();
      // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
       if (!session?.user) {
         router.push('/'); // Redirect unauthenticated users
       }
@@ -329,32 +318,6 @@ const AdminPage = () => {
     setIsSidebarOpen(false);
   };
 
-  // Update user "View" in the DB
-  const handleViewUpdate = async (newView: string) => {
-    if (!user) return;
-    try {
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ View: newView })
-        .eq('email', user.email);
-
-      if (updateError) {
-        console.error('Error updating user view:', updateError);
-      } else {
-        setUserView(newView); // Update local state
-        console.log(`User view updated to ${newView}`);
-      }
-    } catch (err) {
-      console.error('Error handling view update:', err);
-    }
-  };
-
-  // Dropdown selection handler
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedView = event.target.value;
-    handleViewUpdate(selectedView);
-  };
-
   // CurrentSeasonModal handlers
   const handleOpenCurrentSeasonModal = () => {
     setIsCurrentSeasonModalOpen(true);
@@ -419,7 +382,7 @@ const AdminPage = () => {
       {/* Main Content */}
       <main className={styles.adminContent}>
         <div className={styles.container}>
-          <h2>{userView === 'Shot History' ? 'Shot History' : `${seasonName} Standings`}</h2>
+          <h2>{`${seasonName} Standings`}</h2>
           <div className={styles.secondaryScreenOptions}>
             <div className={styles.secondaryButtons}>
               <button className={styles.button} onClick={handleOpenSidebar}>
@@ -429,19 +392,33 @@ const AdminPage = () => {
                 Add Player
               </button>
             </div>
+          </div>
 
-            {/* Dropdown for Page Options */}
-            <select
-              className={styles.dropdown}
-              value={userView}
-              onChange={handleSelectChange}
-            >
-              {pageOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
+          <div className={styles.players}>
+            {tiers
+              .filter((tier) => tier.players.some((player) => !player.is_hidden))
+              .map((tier) => (
+                <div key={tier.tier_name} className={styles.column}>
+                  <div className={styles.header}>{tier.tier_name}</div>
+                  {tier.players
+                    .filter((player) => !player.is_hidden)
+                    .map((player) => (
+                      <div
+                        key={player.player_id}
+                        className={styles.box}
+                        onClick={() => handleOpenModal(player.player_id, player.name)}
+                        style={{ color: tier.color }}
+                      >
+                        <span className={styles.playerName}>{player.name}</span>
+                        {waiverByPlayerId[player.player_id] && (
+                          <span className={styles.waiverBadge} aria-label="Waiver shot" title="Waiver shot">
+                            W
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                </div>
               ))}
-            </select>
           </div>
 
           {userView === 'Shot History' ? (

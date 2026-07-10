@@ -34,19 +34,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode; // The content to render inside the layout
 }>) {
+  const backToMain = process.env.NEXT_PUBLIC_MAIN_SITE_URL || '/';
   return (
     <html lang="en">
       {/* Include Google's GSI Client library for authentication */}
       <script src="https://accounts.google.com/gsi/client" async defer></script>
 
       <body className={inter.className}>
-
+        <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 bg-black text-white">
+          <Link href="/bracket" className="font-semibold">
+            Bracket Builder
+          </Link>
+          <Link href={backToMain} className="text-sm text-blue-300 hover:text-blue-200">
+            Back to Main Site
+          </Link>
+        </header>
         {/**
          * Main Content Area:
          * - The `children` prop represents the content of the current page being rendered.
          * - It is wrapped with padding for consistent spacing.
          */}
-        <main className="p-4 h-screen">
+        <main className="p-4 h-[calc(100vh-64px)] bg-zinc-950 text-white">
           <TooltipProvider></TooltipProvider>
           {children}
         </main>
